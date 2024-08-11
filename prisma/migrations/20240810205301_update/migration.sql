@@ -1,0 +1,32 @@
+-- CreateTable
+CREATE TABLE `NoProcesar` (
+    `ContratoHistoryId` INTEGER NOT NULL AUTO_INCREMENT,
+    `Estado` ENUM('PENDIENTE', 'PENDIENTE_INCIDENCIA', 'SIN_CONCILIAR', 'TRAMITADA', 'ANULADA', 'DESECHADO') NULL DEFAULT 'PENDIENTE',
+    `Operacion` ENUM('INSERTADO', 'ACTUALIZADO', 'DESECHADO', 'ELIMINADO') NULL,
+    `FechaOperacion` DATETIME(3) NULL,
+    `TipoOperacion` VARCHAR(191) NULL DEFAULT 'ALTA',
+    `FechaEfecto` DATETIME(3) NULL,
+    `AnuladoSEfecto` BOOLEAN NULL DEFAULT false,
+    `Suplemento` BOOLEAN NULL DEFAULT false,
+    `DNIAsegurado` VARCHAR(191) NULL,
+    `NombreAsegurado` VARCHAR(191) NULL,
+    `FechaNacimientoAsegurado` DATETIME(3) NULL,
+    `CSRespAfirmativas` BOOLEAN NULL,
+    `ProfesionAsegurado` VARCHAR(191) NULL,
+    `DeporteAsegurado` VARCHAR(191) NULL,
+    `DNITomador` VARCHAR(191) NULL,
+    `FechaValidezDNITomador` DATETIME(3) NULL,
+    `NombreTomador` VARCHAR(191) NULL,
+    `Operador` ENUM('ONE', 'HAM', 'TLPUCV', 'TLPPLV') NULL,
+    `IndicadorFDPRECON` BOOLEAN NULL,
+    `TipoEnvioPRECON` ENUM('PRESENCIAL', 'REMOTA') NULL,
+    `ResultadoFDPRECON` VARCHAR(191) NULL,
+    `IndicadorFDCON` BOOLEAN NULL,
+    `TipoEnvioCON` ENUM('PRESENCIAL', 'REMOTA') NULL,
+    `ResultadoFDCON` VARCHAR(191) NULL,
+    `Revisar` BOOLEAN NULL DEFAULT true,
+    `Conciliar` BOOLEAN NULL DEFAULT true,
+    `Incidencias` LONGTEXT NULL,
+
+    PRIMARY KEY (`ContratoHistoryId`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
