@@ -1,14 +1,20 @@
 import { Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
-import { policyValidator, validateCriticalErrorsToUNI } from './policiyValidator';
+import { policyValidator } from './policiyValidator';
 import { createContractHistory, fetchClave, fetchContrato, NoProcesar, policyCreator } from './policyCreator';
-import { ContractHistoryData } from '../../../interfaces/contractsInterfaces';
+import { ContractHistoryData, ESTADO_CONTRATO } from '../../../interfaces/contractsInterfaces';
 import moment from 'moment';
+import { json } from 'stream/consumers';
 
 export const processPolicyData = async (records: any[], user: { UsuarioId: any }) => {
       let ErrorLogs: any[] = [];
-      let RegistrosOk: number = 0;
-      let RegistrosError: number = 0;
+      let Insertados: number = 0;
+      let Desechados: number = 0;
+      let Actualizados: number = 0;
+      let TotalRegistros: number = records.length;
+
+      let conError: number = 0;
+
       const systemUser = await prismaClient.usuario.findFirst({
             where: {
                   Codigo: '0001',
@@ -16,15 +22,20 @@ export const processPolicyData = async (records: any[], user: { UsuarioId: any }
             },
       });
       for await (let record of records) {
-            let hasError = false;
             let errors: any[] = [];
             let errorMsg;
-            const claveOPeracion = fetchClave(record);
 
-            if (claveOPeracion === '') {
-                  RegistrosError++;
-                  const data: ContractHistoryData = {
-                        Estado: `Desechada de la compañia ${record['COMPAÑÍA']}`,
+            const { error: err } = await policyValidator(record);
+
+            if (
+                  (record['COMPAÑÍA'] == 'UCV' && !record['CCC']) ||
+                  (record['COMPAÑÍA'] != 'UCV' &&
+                        !record['CODIGO SOLICITUD'] &&
+                        record['COMPAÑÍA'] != 'UCV' &&
+                        !record['POLIZA_CONTRATO'])
+            ) {
+                  Desechados++;
+                  const data: any = {
                         Operacion: 'DESECHADO',
                         FechaEfecto: new Date(moment(record['FECHA EFECTO'], 'MM/DD/YYYY', true).toISOString()),
                         AnuladoSEfecto: record['ANULADO SIN EFECTO'] === 'S',
@@ -61,70 +72,43 @@ export const processPolicyData = async (records: any[], user: { UsuarioId: any }
                         ResultadoFDCON: record['RESULTADO FIRMA DIGITAL CON'],
                         Revisar: record['REVISAR'] === 'SI',
                         Conciliar: record['CONCILIAR'] === 'SI',
-                        Incidencias: 'Este contrato no se puede procesar porque no viene identificado',
+                        errores: err,
                   };
 
                   await NoProcesar(data);
-                  data.FechaOperacion =
-                        new Date(moment(record['FECHA DE OPERACIÓN'], 'MM/DD/YYYY', true).toISOString()) ?? null;
+
+                  if (record['FECHA DE OPERACIÓN'] != '') {
+                        data.FechaOperacion = new Date(
+                              moment(record['FECHA DE OPERACIÓN'], 'MM/DD/YYYY', true).toISOString(),
+                        );
+                  }
+
                   await createContractHistory(data);
-                  continue;
+
                   //
             } else {
                   //const conCriticalError = validateCriticalErrorsToUNI(record);
 
-                  const { hasError: hasErr, errors: err } = await policyValidator(record);
-
-                  if (hasErr) {
+                  /*   if (hasErr) {
                         hasError = true;
                         errors = [...err, ...errors];
                   }
+ */
 
-                  if (hasError) {
-                        ErrorLogs.push({
-                              ...record,
-                              errors,
-                        });
-                        RegistrosError++;
-                  } else {
-                        RegistrosOk++;
+                  const { hasError: hasErr, insert } = await policyCreator(record, systemUser as Usuario, user, err);
+
+                  if (hasErr) {
+                        conError++;
                   }
-
-                  await policyCreator(claveOPeracion, record, systemUser as Usuario, user, errors);
-                  const idContrato = await fetchContrato(claveOPeracion);
-                  const data: ContractHistoryData = {
-                        ContratoId: idContrato!.ContratoId,
-                        Estado: idContrato?.EstadoContrato,
-                        Operacion: 'INSERTADO',
-                        FechaEfecto: idContrato?.FechaEfecto,
-                        AnuladoSEfecto: idContrato?.AnuladoSEfecto,
-                        DNIAsegurado: idContrato?.DNIAsegurado,
-                        NombreAsegurado: idContrato?.NombreAsegurado,
-                        FechaNacimientoAsegurado: idContrato?.FechaNacimientoAsegurado,
-                        CSRespAfirmativas: idContrato?.CSRespAfirmativas,
-                        ProfesionAsegurado: idContrato?.ProfesionAsegurado ?? null,
-                        DeporteAsegurado: idContrato?.DeporteAsegurado ?? null,
-                        DNITomador: idContrato?.DNITomador,
-                        FechaValidezDNITomador: idContrato?.FechaValidezDNITomador,
-                        NombreTomador: idContrato?.NombreTomador,
-                        Operador: idContrato?.Operador,
-                        IndicadorFDPRECON: idContrato?.IndicadorFDPRECON ?? null,
-                        TipoEnvioPRECON: idContrato?.TipoEnvioPRECON,
-                        ResultadoFDPRECON: idContrato?.ResultadoFDPRECON ?? null,
-                        IndicadorFDCON: idContrato?.IndicadorFDCON,
-                        TipoEnvioCON: idContrato?.TipoEnvioCON ?? null,
-                        ResultadoFDCON: idContrato?.ResultadoFDCON ?? null,
-                        Revisar: idContrato?.Revisar,
-                        Conciliar: idContrato?.Conciliar,
-                        Incidencias: idContrato?.Incidencias,
-                  };
-                  await createContractHistory(data);
+                  insert ? Insertados++ : Actualizados++;
             }
       }
 
       return {
-            ErrorLogs,
-            RegistrosOk,
-            RegistrosError,
+            Insertados,
+            conError,
+            Actualizados,
+            Desechados,
+            TotalRegistros,
       };
 };

@@ -46,13 +46,14 @@ export const importData = async (req: Request, res: Response) => {
 
       //@ts-ignore
       const user = req.user;
+      console.log(req.file);
 
       let processedData = null;
       let result = null;
       switch (req.body.type) {
             case 'policy': {
                   processedData = await processPolicyData(records, user);
-                  const { ErrorLogs, RegistrosError, RegistrosOk } = processedData;
+                  const { Actualizados, Insertados, TotalRegistros, Desechados, conError } = processedData;
 
                   const policyLogAction = await prismaClient.log.create({
                         data: {
@@ -62,13 +63,16 @@ export const importData = async (req: Request, res: Response) => {
                                           UsuarioId: user.UsuarioId,
                                     },
                               },
-                              Detalles: `Registros con error: ${RegistrosError}, Registros ok: ${RegistrosOk}`,
+                              Detalles: `Registros desechados: ${Desechados}, Registros ok:`,
                         },
                   });
 
                   res.json({
-                        RegistrosError,
-                        RegistrosOk,
+                        Desechados,
+                        Insertados,
+                        Actualizados,
+                        conError,
+                        TotalRegistros,
                   });
 
                   /* result = await prismaClient.log.create({
@@ -91,9 +95,10 @@ export const importData = async (req: Request, res: Response) => {
             case 'digitalSignature': {
                   processedData = await processDigitalSignatureData(records, user);
 
-                  /* const digitalSignatureLogAction = await prismaClient.logAccion.create({
+                  const digitalSignatureLogAction = await prismaClient.log.create({
                         data: {
                               Accion: LogActionsEnum.CARGA_POLIZA,
+                              Detalles: `Archivo de firma digital ${req.file.originalname} cargado`,
                               Usuario: {
                                     connect: {
                                           UsuarioId: user.UsuarioId,
@@ -101,7 +106,7 @@ export const importData = async (req: Request, res: Response) => {
                               },
                         },
                   });
- */
+
                   /* result = await prismaClient.logCarga.create({
                         data: {
                               Tipo: LogCargaTypeEnum.DIGITAL_SIGNATURE,
