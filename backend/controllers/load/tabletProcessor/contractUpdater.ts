@@ -1,6 +1,8 @@
 import { Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import { ContractDocumentStatusesEnum } from '../../../constants/ContractDocumentStatusesEnum';
+import { TabletaRecord } from '../../../interfaces/contractsInterfaces';
+import { AnyAaaaRecord } from 'dns';
 
 const fetchContract = async (ccc: string) => {
       return prismaClient.contrato.findFirst({
@@ -16,17 +18,17 @@ const fetchContract = async (ccc: string) => {
       });
 };
 
-/* const fetchConciliationType = async (name: string) => {
+const fetchConciliationType = async (name: string) => {
       return prismaClient.tipoConciliacion.findFirst({
-            where: { Nombre: name },
+            where: { nombre: name },
       });
-}; */
+};
 
-/* const resolveIncidences = async (documentoContrato: any, systemUser: Usuario) => {
+const resolveIncidences = async (documentoContrato: any, systemUser: Usuario) => {
       for (const documentIncidence of documentoContrato.IncidenciaDocumento) {
             await prismaClient.incidenciaDocumento.update({
                   where: {
-                        IncidenciaId: documentIncidence.IncidenciaId,
+                        IncidenciaDocId: documentIncidence.IncidenciaDocId,
                   },
                   data: {
                         Resuelta: true,
@@ -38,7 +40,7 @@ const fetchContract = async (ccc: string) => {
                   },
             });
       }
-}; */
+};
 
 const updateDocumentStatus = async (documentoContrato: any, systemUser: Usuario) => {
       await prismaClient.documentoContrato.update({
@@ -57,26 +59,30 @@ const updateDocumentStatus = async (documentoContrato: any, systemUser: Usuario)
       });
 };
 
-const updateContractStatus = async (contractId: number, conciliationTypeId: number, record: any, systemUser: Usuario) => {
-      /* await prismaClient.contrato.update({
-        where: {
-            ContratoId: contractId
-        },
-        data: {
-            TipoConciliacion: {
-                connect: {
-                    TipoConciliacionId: conciliationTypeId
-                }
+const updateContractStatus = async (
+      contractId: number,
+      conciliationTypeId: number,
+      record: any,
+      systemUser: Usuario,
+) => {
+      await prismaClient.contrato.update({
+            where: {
+                  ContratoId: contractId,
             },
-            FechaConciliacion: new Date(),
-            ResultadoFDCON: record["RESULTADO"],
-            Usuario: {
-                connect: {
-                    UsuarioId: systemUser?.UsuarioId
-                }
-            }
-        }
-    }); */
+            data: {
+                  TipoConciliacion: {
+                        connect: {
+                              tipoConciliacioId: conciliationTypeId,
+                        },
+                  },
+                  ResultadoFDCON: record['SITUACION_FIRMA'],
+                  /*  Usuario: {
+                        connect: {
+                              UsuarioId: systemUser?.UsuarioId,
+                        },
+                  }, */
+            },
+      });
 };
 
 const checkAndUpdateContractStatus = async (contract: any, conciliationType: any, record: any, systemUser: Usuario) => {
@@ -95,21 +101,31 @@ const checkAndUpdateContractStatus = async (contract: any, conciliationType: any
 
 export const contractUpdater = async (record: any, systemUser: Usuario, user: { UsuarioId: any }) => {
       if (
-            (record['CODIGO_INTERNO_FORMULARIO'] === 'SOL' || record['CODIGO_INTERNO_FORMULARIO'] === 'SEPA' || record['CODIGO_INTERNO_FORMULARIO'] === 'CP') &&
-            record['SITUACION_FIRMA'] === 'Documento firmado'
+            ((record['CODIGO_INTERNO_FORMULARIO'] === 'SOL' ||
+                  record['CODIGO_INTERNO_FORMULARIO'] === 'SEPA' ||
+                  record['CODIGO_INTERNO_FORMULARIO'] === 'CP' ||
+                  record['CODIGO_INTERNO_FORMULARIO'] === 'CS' ||
+                  (record['CODIGO_INTERNO_FORMULARIO'] === 'PDFD' && record['DESC_OPERACION'] === 'Alta') ||
+                  (record['CODIGO_INTERNO_FORMULARIO'] === 'PDFD' && record['DESC_OPERACION'] === 'Solicitud') ||
+                  (record['CODIGO_INTERNO_FORMULARIO'] === 'PDFD' && record['*cuestio*']) ||
+                  (record['CODIGO_INTERNO_FORMULARIO'] === 'PDUR' && record['Alta']) ||
+                  (record['CODIGO_INTERNO_FORMULARIO'] === 'PDUR' && record['Solicitud']) ||
+                  (record['CODIGO_INTERNO_FORMULARIO'] === 'PDUR' && record['*cuestio*'])) &&
+                  record['FECHA_FIRMA']) ||
+            record['CONCILIAR'] === '1'
       ) {
             const contract = await fetchContract(record['CCC']);
-            /*             const conciliationType = await fetchConciliationType('Por Fichero Tableta (CCC)');
-             */
-            /*   if (contract && conciliationType) {
-            for (const documentoContrato of contract.DocumentoContrato) {
-                if (['SOL', 'SEPA', 'CP'].includes(documentoContrato.MaestroDocumentos.FamiliaDocumento.Codigo)) {
-                    await resolveIncidences(documentoContrato, systemUser);
-                    await updateDocumentStatus(documentoContrato, systemUser);
-                }
-            }
+            const conciliationType = await fetchConciliationType('Por Fichero Tableta (CCC)');
 
-            await checkAndUpdateContractStatus(contract, conciliationType, record, systemUser);
-        } */
+            if (contract && conciliationType) {
+                  for (const documentoContrato of contract.DocumentoContrato) {
+                        if (['SOL', 'SEPA', 'CP', 'CS'].includes(documentoContrato.MaestroDocumentos.Codigo)) {
+                              await resolveIncidences(documentoContrato, systemUser);
+                              await updateDocumentStatus(documentoContrato, systemUser);
+                        }
+                  }
+
+                  await checkAndUpdateContractStatus(contract, conciliationType, record, systemUser);
+            }
       }
 };

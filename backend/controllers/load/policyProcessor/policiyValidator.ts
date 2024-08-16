@@ -1,13 +1,14 @@
+import { ErroresContrato } from '../../../interfaces/contractsInterfaces';
 import { prismaClient } from '../../../server';
 import moment from 'moment';
 
-const validateField = (record: any, field: string, condition: boolean, message: string, errors: any[]) => {
+const validateField = (record: any, field: string, condition: boolean, message: string, errors: any) => {
       if (condition) {
-            errors.push(message);
+            errors[field] = message;
       }
 };
 
-export const validateCriticalErrorsToUNI = (record: any) => {
+/* export const validateCriticalErrorsToUNI = (record: any) => {
       if ((record['COMPAÑÍA'] == 'UCV' || record['COMPAÑÍA'] == 'UNI') && !record['CCC']) {
             return {
                   msg: 'Tiene que especificar un CCC obligatoriamente para poder proceder con la carga',
@@ -24,15 +25,14 @@ export const validateCriticalErrorsToUNI = (record: any) => {
             };
       }
 
-      return false;
-};
-const validateRequiredFields = (record: any, errors: any[]) => {
+      return false; 
+};*/
+const validateRequiredFields = (record: any, /* errors: any[] */ error: ErroresContrato) => {
       const requiredFields = [
             { field: 'COMPAÑÍA', message: 'La compañía no está presente' },
             { field: 'PRODUCTO', message: 'El producto no está presente' },
             { field: 'FECHA DE OPERACIÓN', message: 'La fecha de operación no está presente' },
             { field: 'FECHA EFECTO', message: 'La fecha de efecto no está presente' },
-            { field: 'ANULADO SIN EFECTO', message: 'Anulado sin efecto no está presente' },
             { field: 'ID_ASEGURADO', message: 'El DNI del asegurado no está presente' },
             { field: 'NOMBRE ASEGURADO', message: 'El nombre del asegurado no esta presente' },
             { field: 'FECHA DE NACIMIENTO', message: 'La fecha de nacimiento del asegurado no está presente' },
@@ -43,11 +43,11 @@ const validateRequiredFields = (record: any, errors: any[]) => {
       ];
 
       requiredFields.forEach(({ field, message }) => {
-            validateField(record, field, !record[field], message, errors);
+            validateField(record, field, !record[field], message, error);
       });
 };
 
-const validateOptionalFields = (record: any, errors: any[]) => {
+const validateOptionalFields = (record: any, error: any) => {
       const optionalFields = [
             {
                   field: 'ANULADO SIN EFECTO',
@@ -69,11 +69,11 @@ const validateOptionalFields = (record: any, errors: any[]) => {
       ];
 
       optionalFields.forEach(({ field, values, message }) => {
-            validateField(record, field, record[field] && !values.includes(record[field]), message, errors);
+            validateField(record, field, record[field] && !values.includes(record[field]), message, error);
       });
 };
 
-const validateDates = (record: any, errors: any[]) => {
+const validateDates = (record: any, error: any) => {
       const dateFields = [
             { field: 'FECHA DE OPERACIÓN', message: 'FECHA DE OPERACIÓN fecha no válida' },
             { field: 'FECHA EFECTO', message: 'FECHA EFECTO fecha no válida' },
@@ -86,7 +86,7 @@ const validateDates = (record: any, errors: any[]) => {
             if (record[field] && record[field] !== '') {
                   const dateValue = moment(record[field], 'DD/MM/YYYY', true);
                   if (!dateValue.isValid()) {
-                        errors.push(message);
+                        error[field] = message;
                   }
             }
       });
@@ -135,22 +135,17 @@ const validateMediator = async (record: any, errors: any[]) => {
 };
 
 export const policyValidator = async (record: any) => {
-      const errors: any[] = [];
-      let hasError = false;
-
-      validateRequiredFields(record, errors);
-      validateOptionalFields(record, errors);
-      validateDates(record, errors); // Note: not awaiting validateDates, as it's synchronous now
+      /*       const errors: any[] = [];
+       */ let hasError = false;
+      const error: { [key: string]: [value: string] } = {};
+      validateRequiredFields(record, error);
+      validateOptionalFields(record, error);
+      validateDates(record, error); // Note: not awaiting validateDates, as it's synchronous now
       /*  await validateCompany(record, errors);
       await validateBranch(record, errors);
       await validateMediator(record, errors); */
 
-      if (errors.length > 0) {
-            hasError = true;
-      }
-
       return {
-            hasError,
-            errors,
+            error,
       };
 };
