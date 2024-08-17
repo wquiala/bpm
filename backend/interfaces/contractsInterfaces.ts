@@ -1,3 +1,5 @@
+import { ESTADO_CONTRATO } from '@prisma/client';
+
 export interface Contrato {
       Compania?: number;
       Producto?: number;
@@ -33,7 +35,7 @@ export interface Contrato {
 
 export interface ContractHistoryData {
       ContratoId?: number;
-      EstadoContrato?: ESTADO_CONTRATO | null;
+      EstadoContrato?: ESTADO_CONTRATO;
       Operacion?: any;
       FechaOperacion?: any;
       FechaEfecto?: any;
@@ -97,14 +99,6 @@ enum TIPO_ENVIO {
       REMOTA = 'REMOTA',
 }
 
-export enum ESTADO_CONTRATO {
-      PENDIENTE = 'PENDIENTE',
-      PENDIENTE_INCIDENCIA = 'PENDIENTE_INCIDENCIA',
-      SIN_CONCILIAR = 'SIN_CONCILIAR',
-      TRAMITADA = 'TRAMITADA',
-      ANULADA = 'ANULADA',
-      DESECHADO = 'DESECHADO',
-}
 export enum OPERACION_CONTRATO {
       INSERTADO = 'INSERTADO',
       ACTUALIZADO = 'ACTUALIZADO',
@@ -236,6 +230,15 @@ export interface FirmaDigitalRecord {
       TOMADOR: string;
       MOVIL_TOMADOR: string;
       _16: string;
+}
+
+export interface Anuladas {
+      COMPAÑÍA?: string;
+      CLAVE_OPERACIÓN?: string;
+      'FECHA EMISIÓN ANULACIÓN'?: string;
+      'FECHA EFECTO ANULACIÓN'?: string;
+      'MOTIVO ANULACIÓN'?: string;
+      ''?: string;
 }
 
 enum TIPO_FIRMA {

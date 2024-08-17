@@ -309,7 +309,7 @@ model HistorialContrato {
 }
 
 model NoProcesar {
-  ContratoHistoryId        Int       @id @default(autoincrement())
+  NoprocesarId             Int       @id @default(autoincrement())
   Estado                   String?
   Operacion                String?
   FechaOperacion           DateTime?
@@ -484,4 +484,5 @@ enum OPERACION_CONTRATO {
   ACTUALIZADO
   DESECHADO
   ELIMINADO
+  ANULADO
 }

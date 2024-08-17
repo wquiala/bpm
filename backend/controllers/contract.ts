@@ -41,7 +41,7 @@ export const getContracts = async (req: Request, res: Response) => {
                   /*                   TipoConciliacion: true,
                    */ Producto: {
                         include: {
-                              RamoTipoOperacion: {
+                              ProductoTipoOperacion: {
                                     include: {
                                           ProductoDocumento: {
                                                 include: {

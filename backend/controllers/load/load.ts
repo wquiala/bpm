@@ -9,6 +9,7 @@ import { LogCargaTypeEnum } from '../../constants/LogCargaTypeEnum';
 import { processPolicyData } from './policyProcessor/policyProcessor';
 import { processDigitalSignatureData } from './digitalSignatureProcessor/digitalSignatureProcessor';
 import { processTabletData } from './tabletProcessor/tabletProcessor';
+import { anuladaProcessor } from './anuladasProcesoor/anuladaProcessor';
 
 export const getLoadLogs = async (req: Request, res: Response) => {
       const { type } = req.query;
@@ -152,6 +153,9 @@ export const importData = async (req: Request, res: Response) => {
                         },
                   }); */
                   break;
+            }
+            case 'anuladas': {
+                  processedData = await anuladaProcessor(records, user);
             }
             default:
                   break;

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+/* import { Request, Response } from "express";
 import { prismaClient } from "../server";
 import { createFamiliaDocumentoSchema, updateFamiliaDocumentoSchema } from "../schema/familyDocument";
 import { ErrorCode } from "../exceptions/root";
@@ -132,3 +132,4 @@ export const getFamilyDocumentById = async (req: Request, res: Response) => {
     );
   }
 };
+ */

@@ -2,9 +2,8 @@ import { Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import { policyValidator } from './policiyValidator';
 import { createContractHistory, fetchClave, fetchContrato, NoProcesar, policyCreator } from './policyCreator';
-import { ContractHistoryData, ESTADO_CONTRATO } from '../../../interfaces/contractsInterfaces';
+import { ContractHistoryData } from '../../../interfaces/contractsInterfaces';
 import moment from 'moment';
-import { json } from 'stream/consumers';
 
 export const processPolicyData = async (records: any[], user: { UsuarioId: any }) => {
       let ErrorLogs: any[] = [];

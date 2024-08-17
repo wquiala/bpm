@@ -1,5 +1,5 @@
 import { ContractDocumentStatusesEnum } from './../../../constants/ContractDocumentStatusesEnum';
-import { Usuario } from '@prisma/client';
+import { ESTADO_CONTRATO, Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import moment from 'moment';
 import { array, record } from 'zod';
@@ -8,7 +8,6 @@ import {
       ContractUpdate,
       Contrato,
       ErroresContrato,
-      ESTADO_CONTRATO,
       OPERACION_CONTRATO,
 } from '../../../interfaces/contractsInterfaces';
 import { validateCompany } from './policiyValidator';
