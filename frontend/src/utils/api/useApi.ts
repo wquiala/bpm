@@ -13,6 +13,7 @@ const api = create({
 api.addRequestTransform(request => {
     const accessToken = _.get(storage.get(), 'user.token')
     if (accessToken && request && request.headers) request.headers.Authorization = accessToken
+
 })
 
 api.addResponseTransform((response: any) => {

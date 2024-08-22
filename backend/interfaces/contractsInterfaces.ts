@@ -107,12 +107,12 @@ export enum OPERACION_CONTRATO {
 }
 
 export interface ErroresContrato {
-      COMPAÑÍA?: string;
+      'COMPA��A'?: string;
       PRODUCTO?: string;
       MEDIADOR?: string;
       EstadoContrato?: string;
       ClaveOperacion?: string;
-      'FECHA DE OPERACIÓN'?: string;
+      'FECHA DE OPERACI�N'?: string;
       CCC?: string;
       CodigoSolicitud?: string;
       CodigoPoliza?: string;

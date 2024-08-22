@@ -6,194 +6,213 @@ import { BadRequestsException } from '../../exceptions/bad-requests';
 import { parseCsv, parseExcel } from '../../utils/fileProcessors';
 import { LogActionsEnum } from '../../constants/LogActionsEnum';
 import { LogCargaTypeEnum } from '../../constants/LogCargaTypeEnum';
-import { processPolicyData } from './policyProcessor/policyProcessor';
-import { processDigitalSignatureData } from './digitalSignatureProcessor/digitalSignatureProcessor';
-import { processTabletData } from './tabletProcessor/tabletProcessor';
-import { anuladaProcessor } from './anuladasProcesoor/anuladaProcessor';
+import { processPolicyData } from '../../services/carga/policy/policyProcessor';
+import { anuladaProcessor } from '../../services/carga/anuladas/anuladaProcessor';
+import { processDigitalSignatureData } from '../../services/carga/digitalSignature/digitalSignatureProcessor';
+import { processTabletData } from '../../services/carga/tablets/tabletProcessor';
+import { TIPO_CARGA } from '@prisma/client';
 
 export const getLoadLogs = async (req: Request, res: Response) => {
-      const { type } = req.query;
-      /*  const loadLogs = await prismaClient.logCarga.findMany({
-            where: {
-                  ...(type && type !== ''
-                        ? {
-                                Tipo: type as string,
-                          }
-                        : {}),
-            },
-      }); */
+   const { type } = req.query;
+   const loadLogs = await prismaClient.logCarga.findMany({
+      where: {
+         ...(type && type !== ''
+            ? {
+                 Tipo: type as TIPO_CARGA,
+              }
+            : {}),
+      },
+   });
 
-      /*       res.json(loadLogs);
-       */
+   res.json(loadLogs);
 };
 
 export const importData = async (req: Request, res: Response) => {
-      if (!req.file) {
-            throw new BadRequestsException('File is required', ErrorCode.BAD_REQUEST_EXCEPTION);
+   if (!req.file) {
+      throw new BadRequestsException('File is required', ErrorCode.BAD_REQUEST_EXCEPTION);
+   }
+
+   if (!req.body.type) {
+      throw new BadRequestsException('Type is required', ErrorCode.BAD_REQUEST_EXCEPTION);
+   }
+
+   let records: any[] = [];
+   if (req.file.mimetype === 'text/csv' || req.file.mimetype === 'text/plain') {
+      records = await parseCsv(req.file);
+   } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+      records = await parseExcel(req.file);
+   } else {
+      throw new Error('Unsupported file format');
+   }
+
+   //@ts-ignore
+   const user = req.user;
+
+   let processedData = null;
+   let result = null;
+   switch (req.body.type) {
+      case 'policy': {
+         processedData = await processPolicyData(records, user);
+         const { Actualizados, Insertados, TotalRegistros, Desechados, conError } = processedData;
+
+         const policyLogAction = await prismaClient.logAccion.create({
+            data: {
+               Accion: 'CARGA',
+               Usuario: { connect: { UsuarioId: user.UsuarioId } },
+            },
+         });
+
+         result = await prismaClient.logCarga.create({
+            data: {
+               TotalRegistros: TotalRegistros,
+               Actualizados: Actualizados,
+               Insertados: Insertados,
+               ConError: conError,
+               Desechados: Desechados,
+               Tipo: 'POLIZA',
+               LogAccion: { connect: { LogId: policyLogAction.LogId } },
+               Details: '',
+            },
+         });
+
+         res.json({
+            Desechados,
+            Insertados,
+            Actualizados,
+            conError,
+            TotalRegistros,
+         });
+
+         break;
       }
+      case 'digitalSignature': {
+         const { RegistrosError, actualizados, noactualizados, totalRegistros } = await processDigitalSignatureData(
+            records,
+            user,
+         );
 
-      if (!req.body.type) {
-            throw new BadRequestsException('Type is required', ErrorCode.BAD_REQUEST_EXCEPTION);
+         const digitalSignatureLogAction = await prismaClient.logAccion.create({
+            data: {
+               Accion: 'UPDATE_CARGA',
+
+               Usuario: {
+                  connect: {
+                     UsuarioId: user.UsuarioId,
+                  },
+               },
+            },
+         });
+
+         result = await prismaClient.logCarga.create({
+            data: {
+               Tipo: 'DIGITAL',
+               LogAccion: {
+                  connect: {
+                     LogId: digitalSignatureLogAction.LogId,
+                  },
+               },
+               Actualizados: actualizados,
+               ConError: RegistrosError,
+               TotalRegistros: totalRegistros,
+               Details: `${noactualizados} registros que no se encontraron`,
+            },
+         });
+         break;
       }
+      case 'tablet': {
+         const { actualizados, noactualizados, RegistrosError } = await processTabletData(records, user);
 
-      let records: any[] = [];
-      if (req.file.mimetype === 'text/csv' || req.file.mimetype === 'text/plain') {
-            records = await parseCsv(req.file);
-      } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-            records = await parseExcel(req.file);
-      } else {
-            throw new Error('Unsupported file format');
+         const tabletLogAction = await prismaClient.logAccion.create({
+            data: {
+               Accion: 'UPDATE_CARGA',
+               Usuario: {
+                  connect: {
+                     UsuarioId: user.UsuarioId,
+                  },
+               },
+            },
+         });
+
+         result = await prismaClient.logCarga.create({
+            data: {
+               Tipo: 'TABLETA',
+               Actualizados: actualizados,
+               ConError: RegistrosError,
+               TotalRegistros: records.length,
+               Details: `${noactualizados} registros no se encontraron`,
+               LogAccion: {
+                  connect: {
+                     LogId: tabletLogAction.LogId,
+                  },
+               },
+            },
+         });
+         break;
       }
+      case 'anuladas': {
+         const { actualizados, noactualizados, conError } = await anuladaProcessor(records, user);
+         const tabletLogAction = await prismaClient.logAccion.create({
+            data: {
+               Accion: 'UPDATE_CARGA',
+               Usuario: {
+                  connect: {
+                     UsuarioId: user.UsuarioId,
+                  },
+               },
+            },
+         });
 
-      //@ts-ignore
-      const user = req.user;
-      console.log(req.file);
-
-      let processedData = null;
-      let result = null;
-      switch (req.body.type) {
-            case 'policy': {
-                  processedData = await processPolicyData(records, user);
-                  const { Actualizados, Insertados, TotalRegistros, Desechados, conError } = processedData;
-
-                  const policyLogAction = await prismaClient.log.create({
-                        data: {
-                              Accion: LogActionsEnum.CARGA_POLIZA,
-                              Usuario: {
-                                    connect: {
-                                          UsuarioId: user.UsuarioId,
-                                    },
-                              },
-                              Detalles: `Registros desechados: ${Desechados}, Registros ok:`,
-                        },
-                  });
-
-                  res.json({
-                        Desechados,
-                        Insertados,
-                        Actualizados,
-                        conError,
-                        TotalRegistros,
-                  });
-
-                  /* result = await prismaClient.log.create({
-                        data: {
-                              Tipo: LogCargaTypeEnum.POLICY,
-                              RegistrosOk: processedData.RegistrosOk,
-                              RegistrosError: processedData.RegistrosError,
-                              TotalRegistros: records.length,
-                              ErrorLogs: JSON.stringify(processedData.ErrorLogs),
-                              LogAccion: {
-                                    connect: {
-                                          LogId: policyLogAction.LogId,
-                                    },
-                              },
-                        },
-                  }); */
-
-                  break;
-            }
-            case 'digitalSignature': {
-                  processedData = await processDigitalSignatureData(records, user);
-
-                  const digitalSignatureLogAction = await prismaClient.log.create({
-                        data: {
-                              Accion: LogActionsEnum.CARGA_POLIZA,
-                              Detalles: `Archivo de firma digital ${req.file.originalname} cargado`,
-                              Usuario: {
-                                    connect: {
-                                          UsuarioId: user.UsuarioId,
-                                    },
-                              },
-                        },
-                  });
-
-                  /* result = await prismaClient.logCarga.create({
-                        data: {
-                              Tipo: LogCargaTypeEnum.DIGITAL_SIGNATURE,
-                              RegistrosOk: processedData.RegistrosOk,
-                              RegistrosError: processedData.RegistrosError,
-                              TotalRegistros: records.length,
-                              ErrorLogs: JSON.stringify(processedData.ErrorLogs),
-                              LogAccion: {
-                                    connect: {
-                                          LogId: digitalSignatureLogAction.LogId,
-                                    },
-                              },
-                        },
-                  }); */
-                  break;
-            }
-            case 'tablet': {
-                  processedData = await processTabletData(records, user);
-
-                  /*   const tabletLogAction = await prismaClient.logAccion.create({
-                        data: {
-                              Accion: LogActionsEnum.CARGA_POLIZA,
-                              Usuario: {
-                                    connect: {
-                                          UsuarioId: user.UsuarioId,
-                                    },
-                              },
-                        },
-                  }); */
-
-                  /* result = await prismaClient.logCarga.create({
-                        data: {
-                              Tipo: LogCargaTypeEnum.TABLET,
-                              RegistrosOk: processedData.RegistrosOk,
-                              RegistrosError: processedData.RegistrosError,
-                              TotalRegistros: records.length,
-                              ErrorLogs: JSON.stringify(processedData.ErrorLogs),
-                              LogAccion: {
-                                    connect: {
-                                          LogId: tabletLogAction.LogId,
-                                    },
-                              },
-                        },
-                  }); */
-                  break;
-            }
-            case 'anuladas': {
-                  processedData = await anuladaProcessor(records, user);
-            }
-            default:
-                  break;
+         result = await prismaClient.logCarga.create({
+            data: {
+               Tipo: 'ANULADA',
+               Actualizados: actualizados,
+               ConError: conError,
+               TotalRegistros: records.length,
+               Details: `${noactualizados} registros no se encontraron`,
+               LogAccion: {
+                  connect: {
+                     LogId: tabletLogAction.LogId,
+                  },
+               },
+            },
+         });
       }
+      default:
+         break;
+   }
 
-      res.status(200).json({ result });
+   res.status(200).json({ result });
 };
 
 export const getLoadLogById = async (req: Request, res: Response) => {
-      try {
-            /*  const logCarga = await prismaClient.logCarga.findFirstOrThrow({
-                  where: {
-                        LogCargaId: parseInt(req.params.id),
-                  },
-            }); */
-            /*             res.json(logCarga);
-             */
-      } catch (error) {
-            throw new NotFoundException('logCarga not found', ErrorCode.NOT_FOUND_EXCEPTION);
-      }
+   try {
+      const logCarga = await prismaClient.logCarga.findFirstOrThrow({
+         where: {
+            LogCargaId: parseInt(req.params.id),
+         },
+      });
+      res.json(logCarga);
+   } catch (error) {
+      throw new NotFoundException('logCarga not found', ErrorCode.NOT_FOUND_EXCEPTION);
+   }
 };
 
 export const deleteLoadLog = async (req: Request, res: Response) => {
-      try {
-            /*  await prismaClient.logCarga.findFirstOrThrow({
-                  where: {
-                        LogCargaId: parseInt(req.params.id),
-                  },
-            }); */
-      } catch (error) {
-            throw new NotFoundException('logCarga not found', ErrorCode.NOT_FOUND_EXCEPTION);
-      }
+   try {
+      await prismaClient.logCarga.findFirstOrThrow({
+         where: {
+            LogCargaId: parseInt(req.params.id),
+         },
+      });
+   } catch (error) {
+      throw new NotFoundException('logCarga not found', ErrorCode.NOT_FOUND_EXCEPTION);
+   }
 
-      /*  await prismaClient.logCarga.delete({
-            where: {
-                  LogCargaId: parseInt(req.params.id),
-            },
-      }); */
+   await prismaClient.logCarga.delete({
+      where: {
+         LogCargaId: parseInt(req.params.id),
+      },
+   });
 
-      res.json({ message: 'deleted' });
+   res.json({ message: 'deleted' });
 };

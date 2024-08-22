@@ -5,8 +5,8 @@ import * as excel from 'exceljs';
 export const parseCsv = async (file: Express.Multer.File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
         const results: any[] = [];
-        const stream = createReadStream(file.path, 'latin1')
-            .pipe(csvParser({ separator: ';' }));
+        const stream = createReadStream(file.path)
+            .pipe(csvParser({ separator: ';'}));
 
         stream.on('data', (data: any) => results.push(data));
         stream.on('end', () => resolve(results));
