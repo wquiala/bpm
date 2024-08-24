@@ -71,6 +71,10 @@ const Table = forwardRef(
          },
       }));
 
+      const handleTotal = () => {
+         console.log('Este es el total');
+      };
+
       const initTabulator = () => {
          if (tableRef.current) {
             tabulator.current = new Tabulator(tableRef.current, {
@@ -81,6 +85,7 @@ const Table = forwardRef(
                      Authorization: _.get(storage.get(), 'user.token'),
                   },
                },
+
                ajaxResponse: function (url, params, response) {
                   if (response) {
                      let responseData = response;
@@ -109,11 +114,13 @@ const Table = forwardRef(
                responsiveLayout: 'collapse',
                placeholder: t('noData'),
                dataLoaderLoading: `${t('loading')}`,
+
                columns: [
                   ...columns,
+
                   hasActions
                      ? {
-                          title: t('actions'),
+                          title: 'Acciones',
                           minWidth: 150,
                           field: 'actions',
                           responsive: 1,
@@ -123,7 +130,7 @@ const Table = forwardRef(
                           print: false,
                           download: false,
                           formatter(cell) {
-                             const response: any = cell.getData();
+                             const response = cell.getData();
                              const a = stringToHTML(`<div class="flex lg:justify-center items-center">
                                                         ${
                                                            onClickEdit

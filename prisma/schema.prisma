@@ -58,7 +58,7 @@ model LogCarga {
   Actualizados   Int        @default(0)
   Desechados     Int        @default(0)
   ConError       Int        @default(0)
-  Details        String     @db.Text
+  Details        String     @db.LongText
   createdAt      DateTime   @default(now())
   LogAccion      LogAccion  @relation(fields: [LogId], references: [LogId])
 }
@@ -235,13 +235,13 @@ model ProductoDocumento {
 }
 
 model TipoConciliacion {
-  tipoConciliacioId Int        @id @default(autoincrement())
-  nombre            String
-  createdAt         DateTime   @default(now())
-  fechaBaja         DateTime?
-  updatedAt         DateTime   @default(now()) @updatedAt
-  Activo            Boolean    @default(true)
-  Contrato          Contrato[]
+  tipoConciliacionId Int        @id @default(autoincrement())
+  nombre             String
+  createdAt          DateTime   @default(now())
+  fechaBaja          DateTime?
+  updatedAt          DateTime   @default(now()) @updatedAt
+  Activo             Boolean    @default(true)
+  Contrato           Contrato[]
 }
 
 model Contrato {
@@ -251,30 +251,30 @@ model Contrato {
   CompaniaId               Int
   ProductoId               Int
   FechaOperacion           DateTime?
-  TipoOperacion            String?               @default("ALTA")
-  CCC                      String?
-  CodigoSolicitud          String?
-  CodigoPoliza             String?
+  TipoOperacion            String                @default("ALTA")
+  CCC                      String                @default("")
+  CodigoSolicitud          String                @default("")
+  CodigoPoliza             String                @default("")
   FechaEfecto              DateTime?
   AnuladoSEfecto           Boolean?              @default(false)
-  Suplemento               Boolean?              @default(false)
-  DNIAsegurado             String?
-  NombreAsegurado          String?
+  Suplemento               Boolean               @default(false)
+  DNIAsegurado             String                @default("")
+  NombreAsegurado          String                @default("")
   FechaNacimientoAsegurado DateTime?
   CSRespAfirmativas        Boolean?
-  ProfesionAsegurado       String?
-  DeporteAsegurado         String?
-  DNITomador               String?
+  ProfesionAsegurado       String                @default("")
+  DeporteAsegurado         String                @default("")
+  DNITomador               String                @default("")
   FechaValidezDNITomador   DateTime?
-  NombreTomador            String?
+  NombreTomador            String                @default("")
   MediadorId               Int
-  Operador                 String?
+  Operador                 String                @default("")
   IndicadorFDPRECON        Boolean?              @default(false)
-  TipoEnvioPRECON          String?
-  ResultadoFDPRECON        String?
+  TipoEnvioPRECON          String                @default("")
+  ResultadoFDPRECON        String                @default("")
   IndicadorFDCON           Boolean?
-  TipoEnvioCON             String?
-  ResultadoFDCON           String?
+  TipoEnvioCON             String                @default("")
+  ResultadoFDCON           String                @default("")
   Revisar                  Boolean
   Conciliar                Boolean
   errores                  Json?
@@ -283,7 +283,7 @@ model Contrato {
   Compania                 Compania              @relation(fields: [CompaniaId], references: [CompaniaId])
   Producto                 Producto              @relation(fields: [ProductoId], references: [ProductoId])
   Mediador                 Mediador              @relation(fields: [MediadorId], references: [MediadorId])
-  TipoConciliacion         TipoConciliacion?     @relation(fields: [TipoConciliacionId], references: [tipoConciliacioId])
+  TipoConciliacion         TipoConciliacion?     @relation(fields: [TipoConciliacionId], references: [tipoConciliacionId])
   TipoConciliacionId       Int?
   DetalleObservacion       DetalleObservacion[]
   DocumentoContrato        DocumentoContrato[]

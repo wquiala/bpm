@@ -1,3 +1,4 @@
+import { Record } from '../interfaces/contractsInterfaces';
 import { prismaClient } from '../server';
 
 const validateRequiredFields = (record: any, errors: any[]) => {
@@ -31,6 +32,7 @@ export const digitalSignatureValidator = async (record: any) => {
    let hasError = false;
 
    validateRequiredFields(record, errors);
+   await validateNumPolicy(record, errors);
 
    if (errors.length > 0) {
       hasError = true;

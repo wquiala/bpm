@@ -9,12 +9,14 @@ import {
    Contrato,
    ErroresContrato,
    OPERACION_CONTRATO,
+   Record,
 } from '../../../interfaces/contractsInterfaces';
 import { validateCompany } from '../../../helpers/policiyValidator';
 import { updatePolicy } from './policyUpdater';
 import { Company } from '../../../interfaces/company';
+import { resourceLimits } from 'worker_threads';
 
-const fetchCompany = async (code: string, err: ErroresContrato /* errors?: string[] */) => {
+const fetchCompany = async (code: string = '', err: { [key: string]: string } /* errors?: string[] */) => {
    let companyCode = code;
    let comp;
 
@@ -32,24 +34,24 @@ const fetchCompany = async (code: string, err: ErroresContrato /* errors?: strin
       comp = query!;
    } else {
       comp = prismaClient.compania.findFirst({
-         where: { Nombre: 'Sin Compania' },
+         where: { Nombre: 'Sin Companía' },
       });
 
-      err['COMPA��A']
-         ? (err['COMPA��A'] +=
+      err['compania']
+         ? (err['compania'] +=
               '. Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal')
-         : (err['COMPA��A'] =
+         : (err['compania'] =
               'Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal');
    }
 
    return comp;
 };
 
-export const fetchClave = (record: any) => {
+export const fetchClave = (record: Record) => {
    let clave: string;
-   const CCC = record['CCC'];
-   const SOLICITUD = record['CODIGO SOLICITUD'];
-   const CONTRATO = record['POLIZA_CONTRATO'];
+   const CCC = record.ccc;
+   const SOLICITUD = record.codigoSolicitud;
+   const CONTRATO = record.polizaContrato;
 
    if (CCC) {
       clave = CCC;
@@ -60,23 +62,23 @@ export const fetchClave = (record: any) => {
    return clave;
 };
 
-export const fetchContrato = async (record: any, clave: string) => {
+export const fetchContrato = async (record: Record, clave: string) => {
    let solicitud;
    let id;
    let newClave: string | null = null;
    let query;
    let actualizar = false;
 
-   if (clave == record['POLIZA_CONTRATO']) {
+   if (clave == record.polizaContrato) {
       query = await prismaClient.contrato.findFirst({
-         where: { ClaveOperacion: record['POLIZA_CONTRATO'] },
+         where: { ClaveOperacion: record.polizaContrato },
       });
 
       if (query != null) {
          actualizar = true;
       } else {
          query = await prismaClient.contrato.findFirst({
-            where: { ClaveOperacion: record['CODIGO SOLICITUD'] },
+            where: { ClaveOperacion: record.codigoSolicitud },
          });
 
          if (query != null) {
@@ -84,9 +86,9 @@ export const fetchContrato = async (record: any, clave: string) => {
             actualizar = true;
          }
       }
-   } else if (clave == record['CODIGO SOLICITUD']) {
+   } else if (clave == record.codigoSolicitud) {
       query = await prismaClient.contrato.findFirst({
-         where: { ClaveOperacion: record['CODIGO SOLICITUD'] },
+         where: { ClaveOperacion: record.codigoSolicitud },
       });
 
       if (query != null) {
@@ -94,7 +96,7 @@ export const fetchContrato = async (record: any, clave: string) => {
       }
    } else {
       query = await prismaClient.contrato.findFirst({
-         where: { ClaveOperacion: record['CCC'] },
+         where: { ClaveOperacion: record.ccc },
       });
       if (query != null) {
          actualizar = true;
@@ -108,7 +110,7 @@ export const fetchContrato = async (record: any, clave: string) => {
    };
 };
 
-const fetchBranch = async (code: string /* errors?: string[] */, err: ErroresContrato) => {
+const fetchBranch = async (code: string = '' /* errors?: string[] */, err: { [key: string]: string }) => {
    let producto;
 
    const query = await prismaClient.producto.findFirst({
@@ -131,7 +133,7 @@ const fetchBranch = async (code: string /* errors?: string[] */, err: ErroresCon
    return producto;
 };
 
-const fetchMediator = async (code: string, /*  errors?: string[] */ err: ErroresContrato) => {
+const fetchMediator = async (code: string = '', /*  errors?: string[] */ err: { [key: string]: string }) => {
    let mediador;
    const query = await prismaClient.mediador.findFirst({
       where: { Codigo: code },
@@ -153,103 +155,90 @@ const fetchMediator = async (code: string, /*  errors?: string[] */ err: Errores
    return mediador;
 };
 export const policyCreator = async (
-   record: any,
+   record: Record,
    systemUser: Usuario,
    user: { UsuarioId: number },
    /* errors: string[] */
    err: any,
+   details: any,
 ) => {
    let conError = 0;
    let hasError;
    let insert: boolean;
 
-   const company = await fetchCompany(record['COMPA��A'], err);
+   const company = await fetchCompany(record.compania, err);
 
-   const branch = await fetchBranch(record['PRODUCTO'], err);
+   const branch = await fetchBranch(record.producto, err);
 
-   const mediator = await fetchMediator(record['MEDIADOR'], err);
+   const mediator = await fetchMediator(record.mediador, err);
 
    const clave = fetchClave(record);
 
    const { actualizar, query, solicitud } = await fetchContrato(record, clave);
 
-   const CONTRATO = record['POLIZA_CONTRATO'];
+   const CONTRATO = record.polizaContrato;
    if (actualizar) {
       const data: ContractUpdate = {
          EstadoContrato: ESTADO_CONTRATO.PENDIENTE_INCIDENCIA,
 
-         CompaniaId: query!.CompaniaId == 5 && company?.CompaniaId != 5 ? company!.CompaniaId! : query!!.CompaniaId!,
-         ProductoId: query!.ProductoId == 191 && branch?.ProductoId != 191 ? branch!.ProductoId : query!.ProductoId!,
          FechaOperacion:
-            !query!.FechaOperacion && record['FECHA DE OPERACI�N']
-               ? new Date(moment(record['FECHA DE OPERACI�N'], 'MM/DD/YYYY', true).toISOString())
+            !query!.FechaOperacion && record.fechaOperacion
+               ? new Date(moment(record.fechaOperacion, 'MM/DD/YYYY', true).toISOString())
                : query!.FechaOperacion,
-         CodigoPoliza:
-            !query!.CodigoPoliza && record['POLIZA_CONTRATO'] ? record['POLIZA_CONTRATO'] : query!.CodigoPoliza,
-         FechaEfecto: !query!.FechaEfecto && record['FECHA EFECTO'] ? record['FECHA EFECTO'] : query!.FechaEfecto,
-         AnuladoSEfecto: query!.AnuladoSEfecto == false && record['ANULADO SIN EFECTO'] === 'S' ? true : false,
-         DNIAsegurado: !query!.DNIAsegurado && record['ID_ASEGURADO'] ? record['ID_ASEGURADO'] : query!.DNIAsegurado,
+         CodigoPoliza: !query?.CodigoPoliza && record.polizaContrato ? record.polizaContrato : query!.CodigoPoliza,
+         FechaEfecto: !query?.FechaEfecto && record.fechaEfecto ? record.fechaEfecto : query!.FechaEfecto,
+         AnuladoSEfecto: query?.AnuladoSEfecto == false && record.anulaSE === 'S' ? true : false,
+         DNIAsegurado: !query?.DNIAsegurado && record.dniAsegurado ? record.dniAsegurado : query?.DNIAsegurado,
          NombreAsegurado:
-            !query!.NombreAsegurado && record['NOMBRE ASEGURADO'] ? record['NOMBRE ASEGURADO'] : query!.NombreAsegurado,
+            !query!.NombreAsegurado && record.nombreAsegurado ? record.nombreAsegurado : query!.NombreAsegurado,
          FechaNacimientoAsegurado:
-            !query!.FechaNacimientoAsegurado && record['FECHA DE NACIMIENTO']
-               ? new Date(moment(record['FECHA DE NACIMIENTO'], 'MM/DD/YYYY', true).toISOString())
+            !query?.FechaNacimientoAsegurado && record.fechaNacimiento
+               ? new Date(moment(record.fechaNacimiento, 'MM/DD/YYYY', true).toISOString())
                : query!.FechaNacimientoAsegurado,
          CSRespAfirmativas:
-            !query!.CSRespAfirmativas &&
-            record['CS CON RESPUESTAS AFIRMATIVAS'] &&
-            record['CS CON RESPUESTAS AFIRMATIVAS'] == 'S'
+            !query?.CSRespAfirmativas && record.csResAfirm && record.csResAfirm == 'S'
                ? true
                : query!.CSRespAfirmativas,
 
          ProfesionAsegurado:
-            !query!.ProfesionAsegurado && record['PROFESION'] ? record['PROFESION'] : query!.ProfesionAsegurado,
+            !query?.ProfesionAsegurado && record.profesion ? record.profesion : query!.ProfesionAsegurado,
 
-         DeporteAsegurado: !query!.DeporteAsegurado && record['DEPORTE'] ? record['DEPORTE'] : query!.DeporteAsegurado,
-         DNITomador:
-            !query!.DNITomador && record['ID_TOMADOR_PARTICIPE'] ? record['ID_TOMADOR_PARTICIPE'] : query!.DNITomador,
+         DeporteAsegurado: !query?.DeporteAsegurado && record.deporte ? record.deporte : query!.DeporteAsegurado,
+         DNITomador: !query?.DNITomador && record.dniTomador ? record.dniTomador : query!.DNITomador,
          FechaValidezDNITomador:
-            !query!.FechaValidezDNITomador && record['FECHA VALIDEZ IDENTIDAD TOMADOR']
-               ? new Date(moment(record['FECHA VALIDEZ IDENTIDAD TOMADOR'], 'MM/DD/YYYY', true).toISOString())
+            !query?.FechaValidezDNITomador && record.fechaValidezDniT
+               ? new Date(moment(record.fechaValidezDniT, 'MM/DD/YYYY', true).toISOString())
                : query!.FechaValidezDNITomador,
 
-         NombreTomador:
-            !query?.NombreTomador && record['NOMBRE TOMADOR_PARTICIPE']
-               ? record['NOMBRE TOMADOR_PARTICIPE']
-               : query!.NombreTomador,
+         NombreTomador: !query?.NombreTomador && record.nombreTomador ? record.nombreTomador : query?.NombreTomador,
 
          MediadorId:
             query?.MediadorId == 26314 && mediator!.MediadorId != 26314 ? mediator!.MediadorId : query?.MediadorId,
-         Operador: !query?.Operador && record['OPERADOR'] ? record['OPERADOR'] : query!.Operador,
+         Operador: !query?.Operador && record.operador ? record.operador : query!.Operador,
          IndicadorFDPRECON:
-            query?.IndicadorFDPRECON && record['INDICADOR FIRMA DIGITAL PRECON'] === 'SI'
-               ? true
-               : query!.IndicadorFDPRECON,
+            query?.IndicadorFDPRECON && record.indicadorPrecon === 'SI' ? true : query!.IndicadorFDPRECON,
          TipoEnvioPRECON:
-            !query!.TipoEnvioPRECON && record['TIPO DE ENV�O PRECON']
-               ? record['TIPO DE ENVÍO PRECON']
-               : query!.TipoEnvioPRECON,
+            !query!.TipoEnvioPRECON && record.tipoEnvioPrecon ? record.tipoEnvioPrecon : query!.TipoEnvioPRECON,
          ResultadoFDPRECON:
-            !query!.ResultadoFDPRECON && record['RESULTADO FIRMA DIGITAL PRECON']
-               ? record['RESULTADO FIRMA DIGITAL PRECON']
-               : query!.ResultadoFDPRECON,
-         IndicadorFDCON:
-            !query!.IndicadorFDCON && record['INDICADOR FIRMA DIGITAL CON'] === 'SI' ? true : query!.IndicadorFDCON,
-         TipoEnvioCON:
-            !query!.TipoEnvioCON && record['TIPO DE ENV�O CON'] ? record['TIPO DE ENV�O CON'] : query!.TipoEnvioCON,
-         ResultadoFDCON:
-            !query!.ResultadoFDCON && record['RESULTADO FIRMA DIGITAL CON']
-               ? record['RESULTADO FIRMA DIGITAL CON']
-               : query!.ResultadoFDCON,
-         Revisar: record['REVISAR'] === 'SI',
-         Conciliar: record['CONCILIAR'] === 'SI',
+            !query!.ResultadoFDPRECON && record.resultadoPrecon ? record.resultadoPrecon : query!.ResultadoFDPRECON,
+         IndicadorFDCON: !query!.IndicadorFDCON && record.indicadorCon === 'SI' ? true : query!.IndicadorFDCON,
+         TipoEnvioCON: !query!.TipoEnvioCON && record.tipoEnvioC ? record.tipoEnvioC : query!.TipoEnvioCON,
+         ResultadoFDCON: !query!.ResultadoFDCON && record.resultadoCon ? record.resultadoCon : query!.ResultadoFDCON,
+         Revisar: record.revisar === 'SI',
+         Conciliar: record.conciliar === 'SI',
          errores: err,
       };
 
+      if (branch?.ProductoId != 191 && query?.ProductoId == 191) data.ProductoId = branch?.ProductoId;
+      if (company?.CompaniaId != 5 && query?.CompaniaId == 5) data.CompaniaId = company?.CompaniaId;
       if (solicitud) data.ClaveOperacion = CONTRATO;
 
       const updated = await updatePolicy(data, query!.ContratoId);
       insert = false;
+      details.push({
+         ...record,
+         estado: 'ACTUALIZADO',
+      });
 
       const { CompaniaId, ProductoId, CodigoPoliza, MediadorId, ClaveOperacion, ...rest } = data;
       const histC: ContractHistoryData = rest;
@@ -262,6 +251,10 @@ export const policyCreator = async (
    } else {
       const createdContract = await createContract(record, company, branch, mediator, user, err, clave);
       insert = true;
+      details.push({
+         ...record,
+         estado: 'INSERTADO',
+      });
 
       if (
          (createdContract?.ResultadoFDCON === 'Transacción aceptada' && createdContract?.IndicadorFDCON) ||
@@ -296,7 +289,6 @@ export const policyCreator = async (
          TipoConciliacionId,
          ...data
       } = createdContract;
-
       const dataH: ContractHistoryData = data;
 
       await createContractHistory(dataH, OPERACION_CONTRATO.INSERTADO, ESTADO_CONTRATO.PENDIENTE);
@@ -354,7 +346,7 @@ export const createContractHistory = async (
 };
 
 const createContract = async (
-   record: any,
+   record: Record,
    company: Company | null,
    branch: any,
    mediator: any,
@@ -363,7 +355,6 @@ const createContract = async (
    err: any,
    claveOPeracion: string,
 ) => {
-   console.log(record);
    return prismaClient.contrato.create({
       data: {
          Compania: { connect: { CompaniaId: company?.CompaniaId } },
@@ -371,41 +362,40 @@ const createContract = async (
          Mediador: { connect: { MediadorId: mediator.MediadorId } },
          EstadoContrato: ESTADO_CONTRATO.PENDIENTE,
          ClaveOperacion: claveOPeracion,
-         FechaOperacion: record['FECHA DE OPERACI�N']
-            ? new Date(moment(record['FECHA DE OPERACI�N'], 'MM/DD/YYYY', true).toISOString())
+         FechaOperacion: record.fechaOperacion
+            ? new Date(moment(record.fechaOperacion, 'MM/DD/YYYY', true).toISOString())
             : null,
-         CCC: record['CCC'] ?? null,
-         CodigoSolicitud: record['CODIGO SOLICITUD'] ?? null,
-         CodigoPoliza: record['POLIZA_CONTRATO'] ?? null,
-         FechaEfecto: record['FECHA EFECTO']
-            ? new Date(moment(record['FECHA EFECTO'], 'MM/DD/YYYY', true).toISOString())
+         CCC: record.ccc,
+         CodigoSolicitud: record.codigoSolicitud,
+         CodigoPoliza: record.polizaContrato,
+         FechaEfecto: record.fechaEfecto
+            ? new Date(moment(record.fechaEfecto, 'MM/DD/YYYY', true).toISOString())
             : null,
-         AnuladoSEfecto: record['ANULADO SIN EFECTO'] === 'S',
-         DNIAsegurado: record['ID_ASEGURADO'],
-         NombreAsegurado: record['NOMBRE ASEGURADO'],
-         FechaNacimientoAsegurado: record['FECHA DE NACIMIENTO']
-            ? new Date(moment(record['FECHA DE NACIMIENTO'], 'MM/DD/YYYY', true).toISOString())
+         AnuladoSEfecto: record.anulaSE === 'S',
+         DNIAsegurado: record.dniAsegurado,
+         NombreAsegurado: record.nombreAsegurado,
+         FechaNacimientoAsegurado: record.fechaNacimiento
+            ? new Date(moment(record.fechaNacimiento, 'MM/DD/YYYY', true).toISOString())
             : null,
-         CSRespAfirmativas:
-            record['CS CON RESPUESTAS AFIRMATIVAS'] && record['CS CON RESPUESTAS AFIRMATIVAS'] == 'S' ? true : false,
-         ProfesionAsegurado: record['PROFESION'] ?? null,
-         DeporteAsegurado: record['DEPORTE'] ?? null,
-         DNITomador: record['ID_TOMADOR_PARTICIPE'],
-         NombreTomador: record['NOMBRE TOMADOR_PARTICIPE'],
+         CSRespAfirmativas: record.csResAfirm && record.csResAfirm == 'S' ? true : false,
+         ProfesionAsegurado: record.profesion,
+         DeporteAsegurado: record.deporte,
+         DNITomador: record.dniTomador,
+         NombreTomador: record.nombreTomador,
          FechaValidezDNITomador:
-            record['FECHA VALIDEZ IDENTIDAD TOMADOR'] && record['FECHA VALIDEZ IDENTIDAD TOMADOR'] !== ''
-               ? new Date(moment(record['FECHA VALIDEZ IDENTIDAD TOMADOR'], 'MM/DD/YYYY', true).toISOString())
+            record.fechaValidezDniT && record.fechaValidezDniT !== ''
+               ? new Date(moment(record.fechaValidezDniT, 'MM/DD/YYYY', true).toISOString())
                : null,
-         Operador: record['OPERADOR'] ?? null,
-         IndicadorFDPRECON: record['INDICADOR FIRMA DIGITAL PRECON'] === 'SI',
-         TipoEnvioPRECON: record['TIPO DE ENV�O PRECON'] ?? null,
-         ResultadoFDPRECON: record['RESULTADO FIRMA DIGITAL PRECON'] ?? null,
-         IndicadorFDCON: record['INDICADOR FIRMA DIGITAL CON'] === 'SI',
-         TipoEnvioCON: record['TIPO DE ENV�O CON'] ?? null,
-         ResultadoFDCON: record['RESULTADO FIRMA DIGITAL CON'] ?? null,
-         Revisar: record['REVISAR'] === 'SI',
-         Conciliar: record['CONCILIAR'] === 'SI',
-         Suplemento: (record['SUPLEMENTO'] && parseInt(record['SUPLEMENTO']) === 1) ?? false,
+         Operador: record.operador,
+         IndicadorFDPRECON: record.indicadorPrecon === 'SI',
+         TipoEnvioPRECON: record.tipoEnvioPrecon,
+         ResultadoFDPRECON: record.resultadoPrecon,
+         IndicadorFDCON: record.indicadorCon === 'SI',
+         TipoEnvioCON: record.tipoEnvioC,
+         ResultadoFDCON: record.resultadoCon,
+         Revisar: record.revisar === 'SI',
+         Conciliar: record.conciliar === 'SI',
+         Suplemento: record.suplemento && record.suplemento == '1' ? true : false,
          errores: err,
       },
       include: {
@@ -478,7 +468,7 @@ const handlePreLoadConciliation = async (createdContract: any) => {
          data: {
             TipoConciliacion: {
                connect: {
-                  tipoConciliacioId: preLoadConciliation?.tipoConciliacioId,
+                  tipoConciliacionId: preLoadConciliation?.tipoConciliacionId,
                },
             },
             EstadoContrato: 'TRAMITADA',

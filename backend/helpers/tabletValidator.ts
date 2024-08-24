@@ -15,26 +15,26 @@ const validateRequiredFields = (record: any, errors: any[]) => {
    });
 };
 
-/* const validateCCC = async (record: any, errors: any[]) => {
-      if (record['CCC']) {
-            const contract = await prismaClient.contrato.findFirst({
-                  where: {
-                        CCC: `${record['CCC']}`,
-                  },
-            });
-            if (!contract) {
-                  errors.push('Contrato no encontrado');
-            }
+const validateCCC = async (record: any, errors: any[]) => {
+   if (record['CCC']) {
+      const contract = await prismaClient.contrato.findFirst({
+         where: {
+            CCC: `${record['CCC']}`,
+         },
+      });
+      if (!contract) {
+         errors.push('Contrato no encontrado');
       }
-}; */
+   }
+};
 
 export const tabletValidator = async (record: TabletaRecord) => {
    const errors: any[] = [];
    let hasError = false;
 
    validateRequiredFields(record, errors);
-   /*    await validateCCC(record, errors);
-    */
+   await validateCCC(record, errors);
+
    if (errors.length > 0) {
       hasError = true;
    }

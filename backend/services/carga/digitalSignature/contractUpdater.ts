@@ -72,7 +72,7 @@ export const contractUpdater = async (record: any, systemUser: Usuario, user: { 
             data: {
                TipoConciliacion: {
                   connect: {
-                     tipoConciliacioId: conciliationType.tipoConciliacioId,
+                     tipoConciliacionId: conciliationType.tipoConciliacionId,
                   },
                },
                FechaEfecto: new Date(),

@@ -73,7 +73,7 @@ const updateContractStatus = async (
       data: {
          TipoConciliacion: {
             connect: {
-               tipoConciliacioId: conciliationTypeId,
+               tipoConciliacionId: conciliationTypeId,
             },
          },
          ResultadoFDCON: record['SITUACION_FIRMA'],
@@ -100,7 +100,7 @@ const checkAndUpdateContractStatus = async (contract: any, conciliationType: any
    }
 };
 
-export const contractUpdater = async (record: any, systemUser: Usuario, user: { UsuarioId: any }) => {
+export const contractUpdater = async (record: any, systemUser: Usuario, user: { UsuarioId: any }, details: any) => {
    let updated;
    if (
       ((record['CODIGO_INTERNO_FORMULARIO'] === 'SOL' ||
@@ -114,13 +114,17 @@ export const contractUpdater = async (record: any, systemUser: Usuario, user: { 
          (record['CODIGO_INTERNO_FORMULARIO'] === 'PDUR' && record['Solicitud']) ||
          (record['CODIGO_INTERNO_FORMULARIO'] === 'PDUR' && record['*cuestio*'])) &&
          record['FECHA_FIRMA']) ||
-      record['CONCILIAR'] === '0'
+      record['CONCILIAR'] === '1'
    ) {
       const contract = await fetchContract(record['CCC']);
       const conciliationType = await fetchConciliationType('Por Fichero Tableta (CCC)');
 
       if (contract && conciliationType) {
          await tabletsCreator(record, true);
+         details.push({
+            ...record,
+            estado: 'DOCUMENTO ACTUALIZADO',
+         });
          updated = true;
 
          for (const documentoContrato of contract.DocumentoContrato) {

@@ -11,6 +11,8 @@ import { anuladaProcessor } from '../../services/carga/anuladas/anuladaProcessor
 import { processDigitalSignatureData } from '../../services/carga/digitalSignature/digitalSignatureProcessor';
 import { processTabletData } from '../../services/carga/tablets/tabletProcessor';
 import { TIPO_CARGA } from '@prisma/client';
+import { json } from 'stream/consumers';
+import { Record } from '../../interfaces/contractsInterfaces';
 
 export const getLoadLogs = async (req: Request, res: Response) => {
    const { type } = req.query;
@@ -36,24 +38,65 @@ export const importData = async (req: Request, res: Response) => {
       throw new BadRequestsException('Type is required', ErrorCode.BAD_REQUEST_EXCEPTION);
    }
 
-   let records: any[] = [];
+   let data: any[] = [];
    if (req.file.mimetype === 'text/csv' || req.file.mimetype === 'text/plain') {
-      records = await parseCsv(req.file);
+      data = await parseCsv(req.file);
    } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-      records = await parseExcel(req.file);
+      data = await parseExcel(req.file);
    } else {
       throw new Error('Unsupported file format');
    }
+   const records: Record[] = data.map((d) => {
+      return {
+         compania: d['COMPAÑÍA'],
+         producto: d['PRODUCTO'],
+         mediador: d['MEDIADOR'],
+         operador: d['OPERADOR'],
 
+         ccc: d['CCC'],
+         codigoSolicitud: d['CODIGO SOLICITUD'],
+         polizaContrato: d['POLIZA_CONTRATO'],
+
+         tipoOperacion: d['TIPO DE OPERACIÓN'],
+
+         anulaSE: d['ANULADO SIN EFECTO'],
+
+         dniAsegurado: d['ID_ASEGURADO'],
+         nombreAsegurado: d['NOMBRE ASEGURADO'],
+         fechaNacimiento: d['FECHA DE NACIMIENTO'],
+         deporte: d['DEPORTE'],
+         profesion: d['PROFESION'],
+
+         dniTomador: d['ID_TOMADOR_PARTICIPE'],
+         nombreTomador: d['NOMBRE TOMADOR_PARTICIPE'],
+         fechaValidezDniT: d['FECHA VALIDEZ IDENTIDAD TOMADOR'],
+
+         fechaEfecto: d['FECHA EFECTO'],
+         fechaOperacion: d['FECHA DE OPERACIÓN'],
+
+         csResAfirm: d['CS CON RESPUESTAS AFIRMATIVAS'],
+
+         indicadorPrecon: d['INDICADOR FIRMA DIGITAL PRECON'],
+         tipoEnvioPrecon: d['TIPO DE ENVÍO PRECON'],
+         resultadoPrecon: d['RESULTADO FIRMA DIGITAL PRECON'],
+
+         indicadorCon: d['INDICADOR FIRMA DIGITAL CON'],
+         tipoEnvioC: d['TIPO DE ENVÍO CON'],
+         resultadoCon: d['RESULTADO FIRMA DIGITAL CON'],
+
+         suplemento: d['SUPLEMENTO'],
+         revisar: d['REVISAR'],
+         conciliar: d['CONCILIAR'],
+      };
+   });
    //@ts-ignore
    const user = req.user;
-
    let processedData = null;
    let result = null;
    switch (req.body.type) {
       case 'policy': {
          processedData = await processPolicyData(records, user);
-         const { Actualizados, Insertados, TotalRegistros, Desechados, conError } = processedData;
+         /* const { Actualizados, Insertados, TotalRegistros, Desechados, conError, details } = processedData;
 
          const policyLogAction = await prismaClient.logAccion.create({
             data: {
@@ -64,14 +107,14 @@ export const importData = async (req: Request, res: Response) => {
 
          result = await prismaClient.logCarga.create({
             data: {
-               TotalRegistros: TotalRegistros,
-               Actualizados: Actualizados,
-               Insertados: Insertados,
+               TotalRegistros,
+               Actualizados,
+               Insertados,
                ConError: conError,
-               Desechados: Desechados,
+               Desechados,
                Tipo: 'POLIZA',
                LogAccion: { connect: { LogId: policyLogAction.LogId } },
-               Details: '',
+               Details: JSON.stringify(details),
             },
          });
 
@@ -81,15 +124,13 @@ export const importData = async (req: Request, res: Response) => {
             Actualizados,
             conError,
             TotalRegistros,
-         });
+         }); */
 
          break;
       }
       case 'digitalSignature': {
-         const { RegistrosError, actualizados, noactualizados, totalRegistros } = await processDigitalSignatureData(
-            records,
-            user,
-         );
+         const { RegistrosError, actualizados, noactualizados, totalRegistros, details } =
+            await processDigitalSignatureData(records, user);
 
          const digitalSignatureLogAction = await prismaClient.logAccion.create({
             data: {
@@ -114,13 +155,13 @@ export const importData = async (req: Request, res: Response) => {
                Actualizados: actualizados,
                ConError: RegistrosError,
                TotalRegistros: totalRegistros,
-               Details: `${noactualizados} registros que no se encontraron`,
+               Details: JSON.stringify(details),
             },
          });
          break;
       }
       case 'tablet': {
-         const { actualizados, noactualizados, RegistrosError } = await processTabletData(records, user);
+         const { actualizados, noactualizados, RegistrosError, details } = await processTabletData(records, user);
 
          const tabletLogAction = await prismaClient.logAccion.create({
             data: {
@@ -139,7 +180,7 @@ export const importData = async (req: Request, res: Response) => {
                Actualizados: actualizados,
                ConError: RegistrosError,
                TotalRegistros: records.length,
-               Details: `${noactualizados} registros no se encontraron`,
+               Details: JSON.stringify(details),
                LogAccion: {
                   connect: {
                      LogId: tabletLogAction.LogId,

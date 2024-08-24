@@ -9,7 +9,7 @@ import { contractUpdater } from './contractUpdater';
 export const processTabletData = async (records: TabletaRecord[], user: { UsuarioId: any }) => {
    let actualizados = 0;
    let noactualizados = 0;
-   let ErrorLogs: any[] = [];
+   let details: any[] = [];
    let RegistrosOk: number = 0;
    let RegistrosError: number = 0;
 
@@ -32,13 +32,13 @@ export const processTabletData = async (records: TabletaRecord[], user: { Usuari
       }
 
       if (hasError) {
-         ErrorLogs.push({
+         details.push({
             ...record,
-            errors,
+            estado: 'DOCUMENTO NO ACTUALIZADO',
          });
          RegistrosError++;
       } else {
-         const { updated } = await contractUpdater(record, systemUser as Usuario, user);
+         const { updated } = await contractUpdater(record, systemUser as Usuario, user, details);
 
          updated ? actualizados++ : noactualizados++;
       }
@@ -47,7 +47,7 @@ export const processTabletData = async (records: TabletaRecord[], user: { Usuari
    return {
       actualizados,
       noactualizados,
-      ErrorLogs,
+      details,
       RegistrosOk,
       RegistrosError,
    };
