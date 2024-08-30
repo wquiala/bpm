@@ -1,7 +1,7 @@
 import { TabletaRecord } from '../interfaces/contractsInterfaces';
 import { prismaClient } from '../server';
 
-const validateRequiredFields = (record: any, errors: any[]) => {
+const validateRequiredFields = (record: any, errors: { [key: string]: string }) => {
    const requiredFields = [
       { field: 'CCC', message: 'CCC es obligatorio' },
       { field: 'CODIGO_INTERNO_FORMULARIO', message: 'CODIGO_INTERNO_FORMULARIO es obligatorio' },
@@ -10,37 +10,32 @@ const validateRequiredFields = (record: any, errors: any[]) => {
 
    requiredFields.forEach(({ field, message }) => {
       if (!record[field]) {
-         errors.push(message);
+         errors[field] = message;
       }
    });
 };
 
-/* const validateCCC = async (record: any, errors: any[]) => {
-      if (record['CCC']) {
-            const contract = await prismaClient.contrato.findFirst({
-                  where: {
-                        CCC: `${record['CCC']}`,
-                  },
-            });
-            if (!contract) {
-                  errors.push('Contrato no encontrado');
-            }
+const validateCCC = async (record: any, error: { [key: string]: string }) => {
+   if (record['CCC']) {
+      const contract = await prismaClient.contrato.findFirst({
+         where: {
+            CCC: `${record['CCC']}`,
+         },
+      });
+      if (!contract) {
+         error['contrato'] = 'Contrato no encontrado';
       }
-}; */
+   }
+};
 
 export const tabletValidator = async (record: TabletaRecord) => {
-   const errors: any[] = [];
+   const error: { [key: string]: string } = {};
    let hasError = false;
 
-   validateRequiredFields(record, errors);
-   /*    await validateCCC(record, errors);
-    */
-   if (errors.length > 0) {
-      hasError = true;
-   }
+   validateRequiredFields(record, error);
+   await validateCCC(record, error);
 
    return {
-      hasError,
-      errors,
+      error,
    };
 };

@@ -2,8 +2,7 @@ import moment from 'moment';
 import { TabletaRecord } from '../../../interfaces/contractsInterfaces';
 import { prismaClient } from '../../../server';
 
-export const tabletsCreator = async (record: any, actualizado: boolean) => {
-   console.log(record);
+export const tabletsCreator = async (record: any, actualizado: boolean, err: { [key: string]: string }) => {
    return await prismaClient.tableta.create({
       data: {
          Compannia: record['#COMPANNIA'],
@@ -44,6 +43,7 @@ export const tabletsCreator = async (record: any, actualizado: boolean) => {
          FechaGeneracion: new Date(moment(record.FECHA_GENERACION, 'MM/DD/YYYY', true).toISOString()),
          FechaCarga: new Date(moment(record.FECHA_CARGA, 'MM/DD/YYYY', true).toISOString()),
          Actualiazado: actualizado,
+         errores: err,
       },
    });
 };

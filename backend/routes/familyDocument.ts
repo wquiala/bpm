@@ -1,8 +1,15 @@
-/* import { Router } from 'express';
+import { Router } from 'express';
 import { errorHandler } from '../error-handler';
 
 import adminMiddleware from '../middlewares/admin';
 import authMiddleware from '../middlewares/auth';
+import {
+   createFamilyDocument,
+   deleteFamilyDocument,
+   getFamilyDocumentById,
+   getFamilyDocuments,
+   updateFamilyDocument,
+} from '../controllers/familyDocument';
 
 const familyDocumentRoutes: Router = Router();
 
@@ -13,4 +20,3 @@ familyDocumentRoutes.delete('/:id', [authMiddleware, adminMiddleware], errorHand
 familyDocumentRoutes.get('/:id', [authMiddleware], errorHandler(getFamilyDocumentById));
 
 export default familyDocumentRoutes;
- */

@@ -9,7 +9,7 @@ import { digitalSignature } from './digitalSignatureCreator';
 export const processDigitalSignatureData = async (records: any[], user: { UsuarioId: any }) => {
    let actualizados = 0;
    let noactualizados = 0;
-   let ErrorLogs: any[] = [];
+   let details: any[] = [];
    let RegistrosOk: number = 0;
    let RegistrosError: number = 0;
 
@@ -24,21 +24,16 @@ export const processDigitalSignatureData = async (records: any[], user: { Usuari
       let hasError = false;
       let errors: any[] = [];
 
-      const { hasError: hasErr, errors: err } = await digitalSignatureValidator(record);
+      const { errors: err } = await digitalSignatureValidator(record);
 
-      if (hasErr) {
-         hasError = true;
-         errors = [...err, ...errors];
-      }
-
-      if (hasError) {
-         ErrorLogs.push({
+      if (!record['NUM_POLIZA']) {
+         details.push({
             ...record,
-            errors,
+            estado: 'DESECHADA',
+            errores: err,
          });
-         RegistrosError++;
       } else {
-         const { updated } = await contractUpdater(record, systemUser as Usuario, user);
+         const { updated } = await contractUpdater(record, systemUser as Usuario, user, err, details);
 
          updated ? actualizados++ : noactualizados++;
       }
@@ -47,6 +42,7 @@ export const processDigitalSignatureData = async (records: any[], user: { Usuari
    return {
       actualizados,
       noactualizados,
+      details,
       /*       ErrorLogs,
        */ RegistrosError,
       totalRegistros: records.length,

@@ -1,136 +1,158 @@
-import { AlertContext } from '@/utils/Contexts/AlertContext'
-import { LoadingContext } from '@/utils/Contexts/LoadingContext'
-import { yupResolver } from '@hookform/resolvers/yup'
-import React, { useContext, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
-import { defaultValues, schema } from './components/schemas'
-import moment from 'moment'
-import ContractHeaderInputs from './components/ContractHeaderInputs'
-import { Tab } from '@/components/Base/Headless'
-import ContractAdiniotalDataInputs from './components/ContractAdiniotalDataInputs'
-import DocumentList from './components/DocumentList'
+import { AlertContext } from '@/utils/Contexts/AlertContext';
+import { LoadingContext } from '@/utils/Contexts/LoadingContext';
+import { yupResolver } from '@hookform/resolvers/yup';
+import React, { useContext, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { defaultValues, schema } from './components/schemas';
+import moment from 'moment';
+import ContractHeaderInputs from './components/ContractHeaderInputs';
+import { Tab } from '@/components/Base/Headless';
+import ContractAdiniotalDataInputs from './components/ContractAdiniotalDataInputs';
+import DocumentList from './components/DocumentList';
 
 type Props = {
-    selectedContract: any,
-    setSelectedContract: (contract: any) => void
-}
+   selectedContract: any;
+   setSelectedContract: (contract: any) => void;
+};
 
 const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
+   const { t } = useTranslation();
+   const navigate = useNavigate();
 
-    const { t } = useTranslation()
-    const navigate = useNavigate();
+   const [, setAlert] = useContext(AlertContext);
+   const [, setLoading] = useContext(LoadingContext);
+   const {
+      control,
+      reset,
+      formState: { isValid },
+      handleSubmit,
+   } = useForm({
+      mode: 'onChange',
+      resolver: yupResolver(schema(t)),
+      defaultValues: defaultValues,
+   });
 
-    const [, setAlert] = useContext(AlertContext);
-    const [, setLoading] = useContext(LoadingContext);
+   useEffect(() => {
+      const resetFormFiels = async () => {
+         const docList = [];
+         const contractDocuments = selectedContract?.DocumentoContrato;
 
-    const {
-        control,
-        reset,
-        formState: { isValid },
-        handleSubmit
-    } = useForm({
-        mode: "onChange",
-        resolver: yupResolver(schema(t)),
-        defaultValues: defaultValues
-    });
+         function createIncidence(incidence: any, document: any) {
+            const isIncidenceUnresolved =
+               document.IncidenciaDocumento.find((inci: any) => inci.TipoIncidenciaId === incidence.TipoIncidenciaId)
+                  ?.Resuelta === false;
+            return {
+               id: incidence.TipoIncidenciaId,
+               name: incidence.Nombre,
+               checked: isIncidenceUnresolved,
+            };
+         }
+         /* 
+         for (const contractDocument of contractDocuments) {
+            const isPresent = contractDocument.EstadoDoc === 'PRESENT' || contractDocument.EstadoDoc === 'CORRECT';
+            const isConciliar = selectedContract.Conciliar === true;
+            const present = isPresent || isConciliar;
 
-    useEffect(() => {
-        const resetFormFiels = async () => {
-            const docList = []
-            const contractDocuments = selectedContract?.DocumentoContrato;
+            const incidences = contractDocument.MaestroDocumentos.FamiliaDocumento.MaestroIncidencias.map(
+               (incidence: any) => createIncidence(incidence, contractDocument),
+            );
 
-            function createIncidence(incidence: any, document: any) {
-                const isIncidenceUnresolved = document.IncidenciaDocumento.find((inci: any) => inci.TipoIncidenciaId === incidence.TipoIncidenciaId)?.Resuelta === false;
-                return {
-                    id: incidence.TipoIncidenciaId,
-                    name: incidence.Nombre,
-                    checked: isIncidenceUnresolved
-                }
-            }
+            docList.push({
+               id: contractDocument.DocumentoId,
+               docTypeId: contractDocument.TipoDocId,
+               present: present,
+               name: contractDocument.MaestroDocumentos.Nombre,
+               incidences: incidences,
+            });
+         } */
 
-            for (const contractDocument of contractDocuments) {
-                const isPresent = contractDocument.EstadoDoc === 'PRESENT' || contractDocument.EstadoDoc === 'CORRECT';
-                const isConciliar = selectedContract.Conciliar === true;
-                const present = isPresent || isConciliar;
+         reset({
+            ClaveOperacion: selectedContract.ClaveOperacion,
+            EstadoContrato: selectedContract.EstadoContrato,
+            CCC: selectedContract?.CCC,
+            CodigoSolicitud: selectedContract?.CodigoSolicitud,
+            CodigoPoliza: selectedContract?.CodigoPoliza,
+            DNIAsegurado: selectedContract?.DNIAsegurado,
+            NombreAsegurado: selectedContract?.NombreAsegurado,
+            FechaOperacion: moment(selectedContract?.FechaAltaSolicitud).format('YYYY-MM-DD'),
+            NombreMediador: selectedContract?.CanalMediador?.Codigo ?? null,
+            Revisar: selectedContract?.Revisar,
+            Conciliar: selectedContract.ResultadoFDCON != 'Transacci�n aceptada' || !selectedContract.Conciliar,
 
-                const incidences = contractDocument.MaestroDocumentos.FamiliaDocumento.MaestroIncidencias.map((incidence: any) => createIncidence(incidence, contractDocument));
+            ProductoId: selectedContract?.ProductoId,
+            ProductoNombre: selectedContract?.Producto.Codigo,
+            ProductoDesc: selectedContract?.Producto.Descripcion,
+            FechaEfecto: selectedContract?.FechaEfectoSolicitud
+               ? moment(selectedContract?.FechaEfectoSolicitud).format('YYYY-MM-DD')
+               : '',
+            IndicadorFDCON: selectedContract?.IndicadorFDCON,
+            IndicadorFDPRECON: selectedContract?.IndicadorFDPRECON,
 
-                docList.push({
-                    id: contractDocument.DocumentoId,
-                    docTypeId: contractDocument.TipoDocId,
-                    present: present,
-                    name: contractDocument.MaestroDocumentos.Nombre,
-                    incidences: incidences
-                });
-            }
+            TipoOperacion: selectedContract?.Producto[0]?.RamoTipoOperacion?.TipoOperacion ?? null,
+            Suplemento: selectedContract?.Suplemento,
+            AnuladoSE: selectedContract?.AnuladoSE,
+            CanalMediador: selectedContract?.CanalMediador?.Canal ?? null,
+            TipoConciliacion: selectedContract?.TipoConciliacion?.Nombre ?? null,
 
-            reset({
-                CCC: selectedContract?.CCC,
-                CodigoSolicitud: selectedContract?.CodigoSolicitud,
-                CodigoPoliza: selectedContract?.CodigoPoliza,
-                DNIAsegurado: selectedContract?.DNIAsegurado,
-                NombreAsegurado: selectedContract?.NombreAsegurado,
-                FechaAltaSolicitud: moment(selectedContract?.FechaAltaSolicitud).format('YYYY-MM-DD'),
-                CodigoMediador: selectedContract?.CanalMediador?.Codigo ?? null,
-                Revisar: selectedContract?.Revisar,
-                Conciliar: selectedContract?.Conciliar,
+            EdadAsegurado: moment().diff(
+               moment(selectedContract?.FechaNacimientoAsegurado).format('YYYY-MM-DD'),
+               'years',
+            ),
+            DeporteAsegurado: selectedContract?.DeporteAsegurado,
+            FechaNacimientoAsegurado: selectedContract?.FechaNacimientoAsegurado
+               ? moment(selectedContract?.FechaNacimientoAsegurado).format('YYYY-MM-DD')
+               : '',
 
-                RamoId: selectedContract?.RamoId,
-                RamoCodigo: selectedContract?.Ramo.Codigo,
-                RamoDesc: selectedContract?.Ramo.Descripcion,
-                FechaEfecto: selectedContract?.FechaEfectoSolicitud ? moment(selectedContract?.FechaEfectoSolicitud).format('YYYY-MM-DD') : '',
-                IndicadorFDCON: selectedContract?.IndicadorFDCON,
-                IndicadorFDPRECON: selectedContract?.IndicadorFDPRECON,
+            ProfesionAsegurado: selectedContract?.ProfesionAsegurado,
+            CSRespAfirm: selectedContract?.CSRespAfirm,
 
-                TipoOperacion: selectedContract?.Ramo[0]?.RamoTipoOperacion?.TipoOperacion ?? null,
-                Suplemento: selectedContract?.Suplemento,
-                AnuladoSE: selectedContract?.AnuladoSE,
-                CanalMediador: selectedContract?.CanalMediador?.Canal ?? null,
-                TipoConciliacion: selectedContract?.TipoConciliacion?.Nombre ?? null,
+            NombreTomador: selectedContract?.NombreTomador,
+            DNITomador: selectedContract?.DNITomador,
+            FechaDNITomador: selectedContract?.FechaDNITomador
+               ? moment(selectedContract?.FechaDNITomador).format('YYYY-MM-DD')
+               : '',
 
-                EdadAsegurado: moment().diff(moment(selectedContract?.FechaNacimientoAsegurado).format('YYYY-MM-DD'), 'years'),
-                DeporteAsegurado: selectedContract?.DeporteAsegurado,
-                FechaNacimientoAsegurado: selectedContract?.FechaNacimientoAsegurado ? moment(selectedContract?.FechaNacimientoAsegurado).format('YYYY-MM-DD') : '',
+            NoDigitalizar: false,
+            observations: [],
+            /*             documents: docList,
+             */
+         });
+      };
+      if (selectedContract) {
+         console.log(selectedContract, 'SELECTED contracts ');
+         resetFormFiels();
+      }
+   }, [selectedContract]);
+   return (
+      <div>
+         <ContractHeaderInputs control={control} />
 
-                ProfesionAsegurado: selectedContract?.ProfesionAsegurado,
-                CSRespAfirm: selectedContract?.CSRespAfirm,
-
-                NombreTomador: selectedContract?.NombreTomador,
-                DNITomador: selectedContract?.DNITomador,
-                FechaDNITomador: selectedContract?.FechaDNITomador ? moment(selectedContract?.FechaDNITomador).format('YYYY-MM-DD') : '',
-
-                NoDigitalizar: false,
-                observations: [],
-                documents: docList
-            })
-        }
-        if (selectedContract) {
-            console.log(selectedContract, "SELECTED contracts ")
-            resetFormFiels()
-        }
-    }, [selectedContract])
-    return (
-        <div>
-            <ContractHeaderInputs
-                control={control}
-            />
-
-            <div className="box mt-3 mx-3">
-                <Tab.Group>
-                    <Tab.List variant="boxed-tabs">
-                        <Tab>
-                            <Tab.Button className="w-full py-2" as="button">
-                                Datos Adicionales
-                            </Tab.Button>
-                        </Tab>
-                        <Tab>
-                            <Tab.Button className="w-full py-2" as="button">
-                                Documentos-Incidencias
-                            </Tab.Button>
-                        </Tab>
-                        {/* <Tab>
+         <div className="box mt-3 mx-3">
+            <Tab.Group>
+               <Tab.List variant="boxed-tabs">
+                  <Tab>
+                     <Tab.Button className="w-full py-2" as="button">
+                        Datos Adicionales
+                     </Tab.Button>
+                  </Tab>
+                  <Tab>
+                     <Tab.Button className="w-full py-2" as="button">
+                        Documentos-Incidencias
+                     </Tab.Button>
+                  </Tab>
+                  <Tab>
+                     <Tab.Button className="w-full py-2" as="button">
+                        Reclamaciones
+                     </Tab.Button>
+                  </Tab>
+                  <Tab>
+                     <Tab.Button className="w-full py-2" as="button">
+                        Firma Digital
+                     </Tab.Button>
+                  </Tab>
+                  {/* <Tab>
                             <Tab.Button className="w-full py-2" as="button">
                                 Reclamaciones
                             </Tab.Button>
@@ -140,15 +162,21 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
                                 Firma Digital
                             </Tab.Button>
                         </Tab> */}
-                    </Tab.List>
-                    <Tab.Panels className="mt-5">
-                        <Tab.Panel className="leading-relaxed">
-                            <ContractAdiniotalDataInputs control={control} />
-                        </Tab.Panel>
-                        <Tab.Panel className="leading-relaxed">
-                            <DocumentList selectedContract={selectedContract} control={control} />
-                        </Tab.Panel>
-                        {/* <Tab.Panel className="leading-relaxed">
+               </Tab.List>
+               <Tab.Panels className="mt-5">
+                  <Tab.Panel className="leading-relaxed">
+                     <ContractAdiniotalDataInputs control={control} />
+                  </Tab.Panel>
+                  <Tab.Panel className="leading-relaxed">
+                     <DocumentList selectedContract={selectedContract} control={control} />
+                  </Tab.Panel>
+                  <Tab.Panel className="leading-relaxed">
+                     <ContractAdiniotalDataInputs control={control} />
+                  </Tab.Panel>
+                  <Tab.Panel className="leading-relaxed">
+                     <DocumentList selectedContract={selectedContract} control={control} />
+                  </Tab.Panel>
+                  {/* <Tab.Panel className="leading-relaxed">
                             It is a long established fact that a reader will be
                             distracted by the readable content of a page when
                             looking at its layout. The point of using Lorem Ipsum
@@ -176,12 +204,11 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
                             over the years, sometimes by accident, sometimes on
                             purpose (injected humour and the like).
                         </Tab.Panel> */}
-                    </Tab.Panels>
-                </Tab.Group>
-            </div>
+               </Tab.Panels>
+            </Tab.Group>
+         </div>
+      </div>
+   );
+};
 
-        </div>
-    )
-}
-
-export default ContractData
+export default ContractData;

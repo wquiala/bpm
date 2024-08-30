@@ -157,7 +157,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
 
          reset({
             AnuladoSEfecto: selectedContract.AnuladoSEfecto ? true : false,
-            Conciliar: selectedContract.ResultadoFDCON != 'Transacci�n aceptada' || !selectedContract.Conciliar,
+            Conciliar: selectedContract.Conciliar,
             ResultadoFDCON: selectedContract.ResultadoFDCON,
             EstadoContrato: selectedContract.EstadoContrato,
             ClaveOperacion: selectedContract.ClaveOperacion,

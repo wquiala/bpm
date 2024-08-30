@@ -7,6 +7,7 @@ import columns from './Columns';
 import { ColumnDefinition } from 'tabulator-tables';
 import UploadDetail from './UploadDetail';
 import UploadFile from './UploadFile';
+import UploadDetailData from './UploadDetailData';
 
 type Props = {
    tableName: string;
@@ -16,9 +17,11 @@ type Props = {
 
 const List = ({ tableName, endpoint, uploadType }: Props) => {
    const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
+   const [showDetailModalData, setShowDetailModalData] = useState<boolean>(false);
    const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
-   const [selectedRow, setSelectedRow] = useState<any>(null);
+   const [selectedField, setSelectedField] = useState<string>('');
 
+   const [selectedRow, setSelectedRow] = useState<any>(null);
    const table = useRef();
 
    const [filter, setFilter] = useState({
@@ -26,6 +29,12 @@ const List = ({ tableName, endpoint, uploadType }: Props) => {
       type: 'like',
       value: '',
    });
+
+   const handleCellClick = (rowData: any, fieldName: string) => {
+      setSelectedRow(rowData);
+      setSelectedField(fieldName);
+      setShowDetailModalData(true);
+   };
 
    const onResetFilter = () => {
       setFilter({
@@ -93,17 +102,23 @@ const List = ({ tableName, endpoint, uploadType }: Props) => {
                ref={table}
                tableName={tableName}
                endpoint={endpoint}
-               columns={columns() as ColumnDefinition[]}
+               columns={columns(handleCellClick) as ColumnDefinition[]}
                filter={filter}
                setFilter={setFilter}
-               onClickDetail={(row: any) => {
+               onClickDetail={(row) => {
                   setSelectedRow(row);
+
                   setShowDetailModal(true);
                }}
                hasActions
             />
 
-            <UploadDetail show={showDetailModal} setShow={setShowDetailModal} selectedRow={selectedRow} />
+            <UploadDetailData
+               show={showDetailModalData}
+               setShow={setShowDetailModalData}
+               selectedRow={selectedRow}
+               select={selectedField}
+            />
 
             <UploadFile
                uploadType={uploadType}

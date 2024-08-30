@@ -9,9 +9,10 @@ import { contractUpdater } from './contractUpdater';
 export const processTabletData = async (records: TabletaRecord[], user: { UsuarioId: any }) => {
    let actualizados = 0;
    let noactualizados = 0;
-   let ErrorLogs: any[] = [];
+   let details: any[] = [];
    let RegistrosOk: number = 0;
    let RegistrosError: number = 0;
+   let Desechado: number = 0;
 
    const systemUser = await prismaClient.usuario.findFirst({
       where: {
@@ -24,30 +25,31 @@ export const processTabletData = async (records: TabletaRecord[], user: { Usuari
       let hasError = false;
       let errors: any[] = [];
 
-      const { hasError: hasErr, errors: err } = await tabletValidator(record);
+      const { error: errs } = await tabletValidator(record);
 
-      if (hasErr) {
-         hasError = true;
-         errors = [...err, ...errors];
-      }
-
-      if (hasError) {
-         ErrorLogs.push({
+      /* for (const key in errs) {
+         if (errs.hasOwnProperty(key)) {
+            const value = errs[key];
+            if (value) {
+               Desechado++;
+            }
+         }
+         if (Desechado > 0) break;
+         details.push({
             ...record,
-            errors,
+            estado: 'DOCUMENTO DESECHADO',
+            errs,
          });
-         RegistrosError++;
-      } else {
-         const { updated } = await contractUpdater(record, systemUser as Usuario, user);
+      } */
+      const { updated } = await contractUpdater(record, systemUser as Usuario, user, details, errs);
 
-         updated ? actualizados++ : noactualizados++;
-      }
+      updated == true ? actualizados++ : noactualizados++;
    }
 
    return {
       actualizados,
       noactualizados,
-      ErrorLogs,
+      details,
       RegistrosOk,
       RegistrosError,
    };

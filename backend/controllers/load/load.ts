@@ -11,6 +11,8 @@ import { anuladaProcessor } from '../../services/carga/anuladas/anuladaProcessor
 import { processDigitalSignatureData } from '../../services/carga/digitalSignature/digitalSignatureProcessor';
 import { processTabletData } from '../../services/carga/tablets/tabletProcessor';
 import { TIPO_CARGA } from '@prisma/client';
+import { json } from 'stream/consumers';
+import { RecordDiaria } from '../../interfaces/contractsInterfaces';
 
 export const getLoadLogs = async (req: Request, res: Response) => {
    const { type } = req.query;
@@ -21,6 +23,9 @@ export const getLoadLogs = async (req: Request, res: Response) => {
                  Tipo: type as TIPO_CARGA,
               }
             : {}),
+      },
+      orderBy: {
+         createdAt: 'desc', // Ordena por la columna createdAt en orden descendente
       },
    });
 
@@ -47,14 +52,12 @@ export const importData = async (req: Request, res: Response) => {
 
    //@ts-ignore
    const user = req.user;
-
    let processedData = null;
    let result = null;
    switch (req.body.type) {
       case 'policy': {
          processedData = await processPolicyData(records, user);
-         const { Actualizados, Insertados, TotalRegistros, Desechados, conError } = processedData;
-
+         const { Actualizados, Insertados, TotalRegistros, Desechados, conError, details } = processedData;
          const policyLogAction = await prismaClient.logAccion.create({
             data: {
                Accion: 'CARGA',
@@ -64,32 +67,22 @@ export const importData = async (req: Request, res: Response) => {
 
          result = await prismaClient.logCarga.create({
             data: {
-               TotalRegistros: TotalRegistros,
-               Actualizados: Actualizados,
-               Insertados: Insertados,
+               TotalRegistros,
+               Actualizados,
+               Insertados,
                ConError: conError,
-               Desechados: Desechados,
+               Desechados,
                Tipo: 'POLIZA',
                LogAccion: { connect: { LogId: policyLogAction.LogId } },
-               Details: '',
+               Details: JSON.stringify(details),
             },
-         });
-
-         res.json({
-            Desechados,
-            Insertados,
-            Actualizados,
-            conError,
-            TotalRegistros,
          });
 
          break;
       }
       case 'digitalSignature': {
-         const { RegistrosError, actualizados, noactualizados, totalRegistros } = await processDigitalSignatureData(
-            records,
-            user,
-         );
+         const { RegistrosError, actualizados, noactualizados, totalRegistros, details } =
+            await processDigitalSignatureData(records, user);
 
          const digitalSignatureLogAction = await prismaClient.logAccion.create({
             data: {
@@ -114,13 +107,13 @@ export const importData = async (req: Request, res: Response) => {
                Actualizados: actualizados,
                ConError: RegistrosError,
                TotalRegistros: totalRegistros,
-               Details: `${noactualizados} registros que no se encontraron`,
+               Details: JSON.stringify(details),
             },
          });
          break;
       }
       case 'tablet': {
-         const { actualizados, noactualizados, RegistrosError } = await processTabletData(records, user);
+         const { actualizados, noactualizados, RegistrosError, details } = await processTabletData(records, user);
 
          const tabletLogAction = await prismaClient.logAccion.create({
             data: {
@@ -139,7 +132,7 @@ export const importData = async (req: Request, res: Response) => {
                Actualizados: actualizados,
                ConError: RegistrosError,
                TotalRegistros: records.length,
-               Details: `${noactualizados} registros no se encontraron`,
+               Details: JSON.stringify(details),
                LogAccion: {
                   connect: {
                      LogId: tabletLogAction.LogId,
@@ -150,7 +143,7 @@ export const importData = async (req: Request, res: Response) => {
          break;
       }
       case 'anuladas': {
-         const { actualizados, noactualizados, conError } = await anuladaProcessor(records, user);
+         const { actualizados, noactualizados, conError, details } = await anuladaProcessor(records, user);
          const tabletLogAction = await prismaClient.logAccion.create({
             data: {
                Accion: 'UPDATE_CARGA',
@@ -168,7 +161,7 @@ export const importData = async (req: Request, res: Response) => {
                Actualizados: actualizados,
                ConError: conError,
                TotalRegistros: records.length,
-               Details: `${noactualizados} registros no se encontraron`,
+               Details: JSON.stringify(details),
                LogAccion: {
                   connect: {
                      LogId: tabletLogAction.LogId,

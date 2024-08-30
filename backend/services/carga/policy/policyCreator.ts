@@ -1,20 +1,17 @@
 import { ContractDocumentStatusesEnum } from '../../../constants/ContractDocumentStatusesEnum';
-import { ESTADO_CONTRATO, ProductoDocumento, Usuario } from '@prisma/client';
+import { ESTADO_CONTRATO, Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import moment from 'moment';
-import { array, record } from 'zod';
 import {
    ContractHistoryData,
    ContractUpdate,
-   Contrato,
-   ErroresContrato,
    OPERACION_CONTRATO,
+   RecordDiaria,
 } from '../../../interfaces/contractsInterfaces';
-import { validateCompany } from '../../../helpers/policiyValidator';
 import { updatePolicy } from './policyUpdater';
 import { Company } from '../../../interfaces/company';
 
-const fetchCompany = async (code: string, err: ErroresContrato /* errors?: string[] */) => {
+const fetchCompany = async (err: { [key: string]: string }, code?: string) => {
    let companyCode = code;
    let comp;
 
@@ -32,24 +29,25 @@ const fetchCompany = async (code: string, err: ErroresContrato /* errors?: strin
       comp = query!;
    } else {
       comp = prismaClient.compania.findFirst({
-         where: { Nombre: 'Sin Compania' },
+         where: { Nombre: 'Sin Companía' },
       });
 
-      err['COMPA��A']
-         ? (err['COMPA��A'] +=
-              '. Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal')
-         : (err['COMPA��A'] =
-              'Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal');
+      if (err['compania'])
+         err['compania'] +=
+            '. Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal';
+      else
+         err['compania'] =
+            'Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal';
    }
 
    return comp;
 };
 
-export const fetchClave = (record: any) => {
+export const fetchClave = (record: RecordDiaria) => {
    let clave: string;
-   const CCC = record['CCC'];
-   const SOLICITUD = record['CODIGO SOLICITUD'];
-   const CONTRATO = record['POLIZA_CONTRATO'];
+   const CCC = record.ccc;
+   const SOLICITUD = record.codigoSolicitud;
+   const CONTRATO = record.polizaContrato;
 
    if (CCC) {
       clave = CCC;
@@ -60,23 +58,23 @@ export const fetchClave = (record: any) => {
    return clave;
 };
 
-export const fetchContrato = async (record: any, clave: string) => {
+export const fetchContrato = async (record: RecordDiaria, clave: string) => {
    let solicitud;
    let id;
    let newClave: string | null = null;
    let query;
    let actualizar = false;
 
-   if (clave == record['POLIZA_CONTRATO']) {
+   if (clave == record.polizaContrato) {
       query = await prismaClient.contrato.findFirst({
-         where: { ClaveOperacion: record['POLIZA_CONTRATO'] },
+         where: { ClaveOperacion: record.polizaContrato },
       });
 
       if (query != null) {
          actualizar = true;
       } else {
          query = await prismaClient.contrato.findFirst({
-            where: { ClaveOperacion: record['CODIGO SOLICITUD'] },
+            where: { ClaveOperacion: record.codigoSolicitud },
          });
 
          if (query != null) {
@@ -84,9 +82,9 @@ export const fetchContrato = async (record: any, clave: string) => {
             actualizar = true;
          }
       }
-   } else if (clave == record['CODIGO SOLICITUD']) {
+   } else if (clave == record.codigoSolicitud) {
       query = await prismaClient.contrato.findFirst({
-         where: { ClaveOperacion: record['CODIGO SOLICITUD'] },
+         where: { ClaveOperacion: record.codigoSolicitud },
       });
 
       if (query != null) {
@@ -94,7 +92,7 @@ export const fetchContrato = async (record: any, clave: string) => {
       }
    } else {
       query = await prismaClient.contrato.findFirst({
-         where: { ClaveOperacion: record['CCC'] },
+         where: { ClaveOperacion: record.ccc },
       });
       if (query != null) {
          actualizar = true;
@@ -108,7 +106,7 @@ export const fetchContrato = async (record: any, clave: string) => {
    };
 };
 
-const fetchBranch = async (code: string /* errors?: string[] */, err: ErroresContrato) => {
+const fetchBranch = async (err: { [key: string]: string }, code: string = '') => {
    let producto;
 
    const query = await prismaClient.producto.findFirst({
@@ -122,16 +120,17 @@ const fetchBranch = async (code: string /* errors?: string[] */, err: ErroresCon
          where: { Codigo: 'Sin Producto' },
       });
 
-      err['PRODUCTO']
-         ? (err['PRODUCTO'] +=
-              '. El producto no se encuentra registrado en la tabla maestra de productos del sistema, se asignará un código de producto temporal')
-         : (err['PRODUCTO'] =
-              'El producto no se encuentra registrado en la tabla maestra de productos del sistema, se asignará un código de producto temporal');
+      if (err['producto'])
+         err['producto'] +=
+            '. El producto no se encuentra registrado en la tabla maestra de productos del sistema, se asignará un código de producto temporal';
+      else
+         err['producto'] =
+            'El producto no se encuentra registrado en la tabla maestra de productos del sistema, se asignará un código de producto temporal';
    }
    return producto;
 };
 
-const fetchMediator = async (code: string, /*  errors?: string[] */ err: ErroresContrato) => {
+const fetchMediator = async (err: { [key: string]: string }, code: string = '') => {
    let mediador;
    const query = await prismaClient.mediador.findFirst({
       where: { Codigo: code },
@@ -144,137 +143,221 @@ const fetchMediator = async (code: string, /*  errors?: string[] */ err: Errores
          where: { Codigo: 'Sin Mediador' },
       });
 
-      err['MEDIADOR']
-         ? (err['MEDIADOR'] +=
-              '. El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal')
-         : (err['MEDIADOR'] =
-              'El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal');
+      if (err['mediador'])
+         err['mediador'] +=
+            '. El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal';
+      else
+         err['mediador'] =
+            'El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal';
    }
    return mediador;
 };
 export const policyCreator = async (
-   record: any,
+   record: RecordDiaria,
    systemUser: Usuario,
    user: { UsuarioId: number },
-   /* errors: string[] */
    err: any,
+   details: any,
 ) => {
    let conError = 0;
    let hasError;
-   let insert: boolean;
+   let insert: boolean | null = null;
 
-   const company = await fetchCompany(record['COMPA��A'], err);
+   const company = await fetchCompany(err, record.compania);
 
-   const branch = await fetchBranch(record['PRODUCTO'], err);
+   const branch = await fetchBranch(err, record.producto);
 
-   const mediator = await fetchMediator(record['MEDIADOR'], err);
+   const mediator = await fetchMediator(err, record.mediador);
 
    const clave = fetchClave(record);
 
    const { actualizar, query, solicitud } = await fetchContrato(record, clave);
 
-   const CONTRATO = record['POLIZA_CONTRATO'];
+   const CONTRATO = record.polizaContrato;
    if (actualizar) {
-      const data: ContractUpdate = {
-         EstadoContrato: ESTADO_CONTRATO.PENDIENTE_INCIDENCIA,
+      let upd = false;
+      const data: ContractUpdate = {};
 
-         CompaniaId: query!.CompaniaId == 5 && company?.CompaniaId != 5 ? company!.CompaniaId! : query!!.CompaniaId!,
-         ProductoId: query!.ProductoId == 191 && branch?.ProductoId != 191 ? branch!.ProductoId : query!.ProductoId!,
-         FechaOperacion:
-            !query!.FechaOperacion && record['FECHA DE OPERACI�N']
-               ? new Date(moment(record['FECHA DE OPERACI�N'], 'MM/DD/YYYY', true).toISOString())
-               : query!.FechaOperacion,
-         CodigoPoliza:
-            !query!.CodigoPoliza && record['POLIZA_CONTRATO'] ? record['POLIZA_CONTRATO'] : query!.CodigoPoliza,
-         FechaEfecto: !query!.FechaEfecto && record['FECHA EFECTO'] ? record['FECHA EFECTO'] : query!.FechaEfecto,
-         AnuladoSEfecto: query!.AnuladoSEfecto == false && record['ANULADO SIN EFECTO'] === 'S' ? true : false,
-         DNIAsegurado: !query!.DNIAsegurado && record['ID_ASEGURADO'] ? record['ID_ASEGURADO'] : query!.DNIAsegurado,
-         NombreAsegurado:
-            !query!.NombreAsegurado && record['NOMBRE ASEGURADO'] ? record['NOMBRE ASEGURADO'] : query!.NombreAsegurado,
-         FechaNacimientoAsegurado:
-            !query!.FechaNacimientoAsegurado && record['FECHA DE NACIMIENTO']
-               ? new Date(moment(record['FECHA DE NACIMIENTO'], 'MM/DD/YYYY', true).toISOString())
-               : query!.FechaNacimientoAsegurado,
-         CSRespAfirmativas:
-            !query!.CSRespAfirmativas &&
-            record['CS CON RESPUESTAS AFIRMATIVAS'] &&
-            record['CS CON RESPUESTAS AFIRMATIVAS'] == 'S'
-               ? true
-               : query!.CSRespAfirmativas,
+      if (query?.Conciliar && record.conciliar == 'NO') {
+         data.Conciliar = false;
+         upd = true;
+      }
+      if (!query?.ResultadoFDCON && record.resultadoCon) {
+         data.ResultadoFDCON = record.resultadoCon;
+         upd = true;
+      }
+      if (!query?.TipoEnvioCON && record.tipoEnvioC) {
+         data.TipoEnvioCON = record.tipoEnvioC = query?.TipoEnvioCON;
+         upd = true;
+      }
+      if (!query?.IndicadorFDCON && record.indicadorCon === 'SI') {
+         data.IndicadorFDCON = true;
+         upd = true;
+      }
+      if (!query?.ResultadoFDPRECON && record.resultadoPrecon) {
+         data.ResultadoFDPRECON = record.resultadoPrecon;
+         upd = true;
+      }
 
-         ProfesionAsegurado:
-            !query!.ProfesionAsegurado && record['PROFESION'] ? record['PROFESION'] : query!.ProfesionAsegurado,
+      if (!query?.TipoEnvioPRECON && record.tipoEnvioPrecon) {
+         data.TipoEnvioPRECON = record.tipoEnvioPrecon;
+         upd = true;
+      }
+      if (!query?.IndicadorFDPRECON && record.indicadorPrecon === 'SI') {
+         data.IndicadorFDPRECON = true;
+         upd = true;
+      }
 
-         DeporteAsegurado: !query!.DeporteAsegurado && record['DEPORTE'] ? record['DEPORTE'] : query!.DeporteAsegurado,
-         DNITomador:
-            !query!.DNITomador && record['ID_TOMADOR_PARTICIPE'] ? record['ID_TOMADOR_PARTICIPE'] : query!.DNITomador,
-         FechaValidezDNITomador:
-            !query!.FechaValidezDNITomador && record['FECHA VALIDEZ IDENTIDAD TOMADOR']
-               ? new Date(moment(record['FECHA VALIDEZ IDENTIDAD TOMADOR'], 'MM/DD/YYYY', true).toISOString())
-               : query!.FechaValidezDNITomador,
+      if (!query?.Operador && record.operador) {
+         data.Operador = record.operador;
+         upd = true;
+      }
 
-         NombreTomador:
-            !query?.NombreTomador && record['NOMBRE TOMADOR_PARTICIPE']
-               ? record['NOMBRE TOMADOR_PARTICIPE']
-               : query!.NombreTomador,
+      if (query?.MediadorId == 26314 && mediator!.MediadorId != 26314) {
+         data.MediadorId = mediator?.MediadorId;
+         upd = true;
+      }
 
-         MediadorId:
-            query?.MediadorId == 26314 && mediator!.MediadorId != 26314 ? mediator!.MediadorId : query?.MediadorId,
-         Operador: !query?.Operador && record['OPERADOR'] ? record['OPERADOR'] : query!.Operador,
-         IndicadorFDPRECON:
-            query?.IndicadorFDPRECON && record['INDICADOR FIRMA DIGITAL PRECON'] === 'SI'
-               ? true
-               : query!.IndicadorFDPRECON,
-         TipoEnvioPRECON:
-            !query!.TipoEnvioPRECON && record['TIPO DE ENV�O PRECON']
-               ? record['TIPO DE ENVÍO PRECON']
-               : query!.TipoEnvioPRECON,
-         ResultadoFDPRECON:
-            !query!.ResultadoFDPRECON && record['RESULTADO FIRMA DIGITAL PRECON']
-               ? record['RESULTADO FIRMA DIGITAL PRECON']
-               : query!.ResultadoFDPRECON,
-         IndicadorFDCON:
-            !query!.IndicadorFDCON && record['INDICADOR FIRMA DIGITAL CON'] === 'SI' ? true : query!.IndicadorFDCON,
-         TipoEnvioCON:
-            !query!.TipoEnvioCON && record['TIPO DE ENV�O CON'] ? record['TIPO DE ENV�O CON'] : query!.TipoEnvioCON,
-         ResultadoFDCON:
-            !query!.ResultadoFDCON && record['RESULTADO FIRMA DIGITAL CON']
-               ? record['RESULTADO FIRMA DIGITAL CON']
-               : query!.ResultadoFDCON,
-         Revisar: record['REVISAR'] === 'SI',
-         Conciliar: record['CONCILIAR'] === 'SI',
-         errores: err,
-      };
+      if (!query?.NombreTomador && record.nombreTomador) {
+         data.NombreTomador = record.nombreTomador;
+         upd = true;
+      }
+      if (!query?.FechaValidezDNITomador && record.fechaValidezDniT) {
+         data.FechaValidezDNITomador = new Date(moment(record.fechaValidezDniT, 'MM/DD/YYYY', true).toISOString());
+         upd = true;
+      }
+      if (!query?.DNITomador && record.dniTomador) {
+         data.DNITomador = record.dniTomador;
+         upd = true;
+      }
 
-      if (solicitud) data.ClaveOperacion = CONTRATO;
+      if (!query?.DeporteAsegurado && record.deporte) {
+         data.DeporteAsegurado = record.deporte;
+         upd = true;
+      }
+      if (!query?.ProfesionAsegurado && record.profesion) {
+         data.ProfesionAsegurado = record.profesion;
+         upd = true;
+      }
+      if (!query?.CSRespAfirmativas && record.csResAfirm && record.csResAfirm == 'S') {
+         data.CSRespAfirmativas = true;
+         upd = true;
+      }
 
-      const updated = await updatePolicy(data, query!.ContratoId);
-      insert = false;
+      if (!query?.FechaNacimientoAsegurado && record.fechaNacimiento) {
+         data.FechaNacimientoAsegurado = new Date(moment(record.fechaNacimiento, 'MM/DD/YYYY', true).toISOString());
+         upd = true;
+      }
+      if (!query?.NombreAsegurado && record.nombreAsegurado) {
+         data.NombreAsegurado = record.nombreAsegurado;
+         upd = true;
+      }
 
-      const { CompaniaId, ProductoId, CodigoPoliza, MediadorId, ClaveOperacion, ...rest } = data;
-      const histC: ContractHistoryData = rest;
+      if (!query?.DNIAsegurado && record.dniAsegurado) {
+         data.DNIAsegurado = record.dniAsegurado;
+         upd = true;
+      }
 
-      const history = await createContractHistory({
-         ...histC,
-         Operacion: OPERACION_CONTRATO.ACTUALIZADO,
-         EstadoContrato: ESTADO_CONTRATO.PENDIENTE_INCIDENCIA,
-      });
+      if (!query?.AnuladoSEfecto && record.anulaSE === 'S') {
+         data.AnuladoSEfecto = true;
+         upd = true;
+      }
+
+      if (!query?.FechaEfecto && record.fechaEfecto) {
+         data.FechaEfecto = record.fechaEfecto;
+         upd = true;
+      }
+
+      if (!query?.CodigoPoliza && data.CodigoPoliza) {
+         data.CodigoPoliza = record.polizaContrato;
+         upd = true;
+      }
+
+      if (!query?.FechaOperacion && record.fechaOperacion) {
+         data.FechaOperacion = new Date(moment(record.fechaOperacion, 'MM/DD/YYYY', true).toISOString());
+         upd = true;
+      }
+      if (branch?.ProductoId != 191 && query?.ProductoId == 191) {
+         data.ProductoId = branch?.ProductoId;
+         upd = true;
+      }
+      if (company?.CompaniaId != 5 && query?.CompaniaId == 5) {
+         data.CompaniaId = company?.CompaniaId;
+         upd = true;
+      }
+      if (solicitud && CONTRATO) {
+         data.CodigoPoliza = CONTRATO;
+         data.ClaveOperacion = CONTRATO;
+         upd = true;
+      }
+
+      if (upd == true && query?.EstadoContrato != 'TRAMITADA') {
+         data.EstadoContrato = ESTADO_CONTRATO.PENDIENTE_INCIDENCIA;
+         const updated = await updatePolicy(data, query!.ContratoId);
+         insert = false;
+         details.push({
+            ...record,
+            estado: 'ACTUALIZADO',
+            errores: err,
+         });
+         if ((data?.ResultadoFDCON?.includes('acept') && data?.IndicadorFDCON) || !data.Conciliar) {
+            const query1 = await findDocumentContracts(updated.ContratoId);
+
+            for (const dc of query1)
+               await prismaClient.documentoContrato.update({
+                  where: {
+                     DocumentoId: dc.DocumentoId,
+                  },
+                  data: {
+                     EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
+                  },
+               });
+
+            await prismaClient.contrato.update({
+               where: {
+                  ContratoId: updated.ContratoId,
+               },
+               data: {
+                  EstadoContrato: 'TRAMITADA',
+                  Conciliar: false,
+               },
+            });
+         }
+         data.ContratoId = updated.ContratoId;
+         const { CompaniaId, ProductoId, CodigoPoliza, MediadorId, ClaveOperacion, ...rest } = data;
+
+         await createContractHistory({
+            ...rest,
+            Operacion: OPERACION_CONTRATO.ACTUALIZADO,
+            /*          EstadoContrato: ESTADO_CONTRATO.PENDIENTE_INCIDENCIA,
+             */
+         });
+      }
    } else {
       const createdContract = await createContract(record, company, branch, mediator, user, err, clave);
       insert = true;
+      details.push({
+         ...record,
+         estado: 'INSERTADO',
+         errores: err,
+      });
 
       if (
-         (createdContract?.ResultadoFDCON === 'Transacción aceptada' && createdContract?.IndicadorFDCON) ||
+         (createdContract?.ResultadoFDCON.includes('acept') && createdContract?.IndicadorFDCON) ||
          !createdContract.Conciliar
       ) {
+         console.log('Entrando aqui 1 ');
+
          await createDocuments(createdContract, systemUser, ContractDocumentStatusesEnum.CORRECT, false);
-         await handlePreLoadConciliation(createdContract);
+         //await handlePreLoadConciliation(createdContract);
       } else if (
-         (createdContract?.ResultadoFDCON !== 'Transacción aceptada' && createdContract?.IndicadorFDCON) ||
-         (createdContract?.IndicadorFDPRECON && createdContract?.ResultadoFDPRECON === 'Transacción aceptada')
+         /*  (createdContract?.ResultadoFDCON !== 'Transacción aceptada' && createdContract?.IndicadorFDCON) || */
+         createdContract?.ResultadoFDPRECON.includes('acept') &&
+         !createdContract?.ResultadoFDCON.includes('acept') /*  === 'Transacción aceptada' */
       ) {
+         console.log('Entrando aqui 2 ');
          await createDocuments(createdContract, systemUser, ContractDocumentStatusesEnum.CORRECT, true);
-         await handlePreLoadConciliation(createdContract);
+         // await handlePreLoadConciliation(createdContract);
       } else {
          await handleIncidences(createdContract, systemUser);
       }
@@ -296,7 +379,6 @@ export const policyCreator = async (
          TipoConciliacionId,
          ...data
       } = createdContract;
-
       const dataH: ContractHistoryData = data;
 
       await createContractHistory(dataH, OPERACION_CONTRATO.INSERTADO, ESTADO_CONTRATO.PENDIENTE);
@@ -354,16 +436,14 @@ export const createContractHistory = async (
 };
 
 const createContract = async (
-   record: any,
+   record: RecordDiaria,
    company: Company | null,
    branch: any,
    mediator: any,
    user: { UsuarioId: any },
-   /* errors: string[], */
    err: any,
    claveOPeracion: string,
 ) => {
-   console.log(record);
    return prismaClient.contrato.create({
       data: {
          Compania: { connect: { CompaniaId: company?.CompaniaId } },
@@ -371,41 +451,40 @@ const createContract = async (
          Mediador: { connect: { MediadorId: mediator.MediadorId } },
          EstadoContrato: ESTADO_CONTRATO.PENDIENTE,
          ClaveOperacion: claveOPeracion,
-         FechaOperacion: record['FECHA DE OPERACI�N']
-            ? new Date(moment(record['FECHA DE OPERACI�N'], 'MM/DD/YYYY', true).toISOString())
+         FechaOperacion: record.fechaOperacion
+            ? new Date(moment(record.fechaOperacion, 'MM/DD/YYYY', true).toISOString())
             : null,
-         CCC: record['CCC'] ?? null,
-         CodigoSolicitud: record['CODIGO SOLICITUD'] ?? null,
-         CodigoPoliza: record['POLIZA_CONTRATO'] ?? null,
-         FechaEfecto: record['FECHA EFECTO']
-            ? new Date(moment(record['FECHA EFECTO'], 'MM/DD/YYYY', true).toISOString())
+         CCC: record.ccc,
+         CodigoSolicitud: record.codigoSolicitud,
+         CodigoPoliza: record.polizaContrato,
+         FechaEfecto: record.fechaEfecto
+            ? new Date(moment(record.fechaEfecto, 'MM/DD/YYYY', true).toISOString())
             : null,
-         AnuladoSEfecto: record['ANULADO SIN EFECTO'] === 'S',
-         DNIAsegurado: record['ID_ASEGURADO'],
-         NombreAsegurado: record['NOMBRE ASEGURADO'],
-         FechaNacimientoAsegurado: record['FECHA DE NACIMIENTO']
-            ? new Date(moment(record['FECHA DE NACIMIENTO'], 'MM/DD/YYYY', true).toISOString())
+         AnuladoSEfecto: record.anulaSE === 'S',
+         DNIAsegurado: record.dniAsegurado,
+         NombreAsegurado: record.nombreAsegurado,
+         FechaNacimientoAsegurado: record.fechaNacimiento
+            ? new Date(moment(record.fechaNacimiento, 'MM/DD/YYYY', true).toISOString())
             : null,
-         CSRespAfirmativas:
-            record['CS CON RESPUESTAS AFIRMATIVAS'] && record['CS CON RESPUESTAS AFIRMATIVAS'] == 'S' ? true : false,
-         ProfesionAsegurado: record['PROFESION'] ?? null,
-         DeporteAsegurado: record['DEPORTE'] ?? null,
-         DNITomador: record['ID_TOMADOR_PARTICIPE'],
-         NombreTomador: record['NOMBRE TOMADOR_PARTICIPE'],
+         CSRespAfirmativas: record.csResAfirm == 'S',
+         ProfesionAsegurado: record.profesion,
+         DeporteAsegurado: record.deporte,
+         DNITomador: record.dniTomador,
+         NombreTomador: record.nombreTomador,
          FechaValidezDNITomador:
-            record['FECHA VALIDEZ IDENTIDAD TOMADOR'] && record['FECHA VALIDEZ IDENTIDAD TOMADOR'] !== ''
-               ? new Date(moment(record['FECHA VALIDEZ IDENTIDAD TOMADOR'], 'MM/DD/YYYY', true).toISOString())
+            record.fechaValidezDniT && record.fechaValidezDniT !== ''
+               ? new Date(moment(record.fechaValidezDniT, 'MM/DD/YYYY', true).toISOString())
                : null,
-         Operador: record['OPERADOR'] ?? null,
-         IndicadorFDPRECON: record['INDICADOR FIRMA DIGITAL PRECON'] === 'SI',
-         TipoEnvioPRECON: record['TIPO DE ENV�O PRECON'] ?? null,
-         ResultadoFDPRECON: record['RESULTADO FIRMA DIGITAL PRECON'] ?? null,
-         IndicadorFDCON: record['INDICADOR FIRMA DIGITAL CON'] === 'SI',
-         TipoEnvioCON: record['TIPO DE ENV�O CON'] ?? null,
-         ResultadoFDCON: record['RESULTADO FIRMA DIGITAL CON'] ?? null,
-         Revisar: record['REVISAR'] === 'SI',
-         Conciliar: record['CONCILIAR'] === 'SI',
-         Suplemento: (record['SUPLEMENTO'] && parseInt(record['SUPLEMENTO']) === 1) ?? false,
+         Operador: record.operador,
+         IndicadorFDPRECON: record.indicadorPrecon === 'SI',
+         TipoEnvioPRECON: record.tipoEnvioPrecon,
+         ResultadoFDPRECON: record.resultadoPrecon,
+         IndicadorFDCON: record.indicadorCon === 'SI',
+         TipoEnvioCON: record.tipoEnvioC,
+         ResultadoFDCON: record.resultadoCon,
+         Revisar: record.revisar === 'SI',
+         Conciliar: record.conciliar === 'SI',
+         Suplemento: record.suplemento === '1',
          errores: err,
       },
       include: {
@@ -427,70 +506,29 @@ const createContract = async (
 };
 
 export const findDocumentContract = async (contractId: number, documentId: number) => {
-   return await prismaClient.documentoContrato.findFirst({
+   const query = await prismaClient.documentoContrato.findFirst({
       where: {
-         AND: [{ ContratoId: contractId }, { DocumentoId: documentId }],
+         ContratoId: contractId,
+         DocumentoId: documentId,
       },
    });
+
+   return query;
+};
+export const findDocumentContracts = async (contractId: number) => {
+   const query = await prismaClient.documentoContrato.findMany({
+      where: {
+         ContratoId: contractId,
+      },
+   });
+
+   return query;
 };
 
 const createDocuments = async (createdContract: any, systemUser: Usuario, status: string, forPrecon: boolean) => {
    for (const productoTipoOperacion of createdContract.Producto.ProductoTipoOperacion) {
       for (const productoDocumento of productoTipoOperacion.ProductoDocumento) {
-         /* const findDC = await findDocumentContract(productoDocumento.DocumentoId, createdContract.ContratoId);
-         if (!findDC) { */
-         if ((forPrecon && productoDocumento.Fase === 'PRECON') || !forPrecon) {
-            await prismaClient.documentoContrato.create({
-               data: {
-                  Contrato: {
-                     connect: {
-                        ContratoId: createdContract.ContratoId,
-                     },
-                  },
-                  MaestroDocumentos: {
-                     connect: {
-                        DocumentoId: productoDocumento.MaestroDocumento.DocumentoId,
-                     },
-                  },
-                  Usuario: {
-                     connect: {
-                        UsuarioId: systemUser?.UsuarioId,
-                     },
-                  },
-                  EstadoDoc: status,
-                  FechaConciliacion: new Date(),
-               },
-            });
-         }
-         /* } */
-      }
-   }
-};
-
-const handlePreLoadConciliation = async (createdContract: any) => {
-   const preLoadConciliation = await prismaClient.tipoConciliacion.findFirst({
-      where: { nombre: 'Carga previa' },
-   });
-
-   if (preLoadConciliation) {
-      await prismaClient.contrato.update({
-         where: { ContratoId: createdContract.ContratoId },
-         data: {
-            TipoConciliacion: {
-               connect: {
-                  tipoConciliacioId: preLoadConciliation?.tipoConciliacioId,
-               },
-            },
-            EstadoContrato: 'TRAMITADA',
-         },
-      });
-   }
-};
-
-const handleIncidences = async (createdContract: any, systemUser: Usuario) => {
-   for (const productoTipoOperacion of createdContract.Producto.ProductoTipoOperacion) {
-      for (const productoDocumento of productoTipoOperacion.ProductoDocumento) {
-         const documentoContrato = await prismaClient.documentoContrato.create({
+         await prismaClient.documentoContrato.create({
             data: {
                Contrato: {
                   connect: {
@@ -508,6 +546,100 @@ const handleIncidences = async (createdContract: any, systemUser: Usuario) => {
                   },
                },
                EstadoDoc: ContractDocumentStatusesEnum.NOT_PRESENT,
+               FechaConciliacion: new Date(),
+               ProdctoDoc: productoDocumento.ProductoDocId,
+            },
+         });
+      }
+   }
+
+   if (!forPrecon) {
+      console.log('primer if');
+      await prismaClient.documentoContrato.updateMany({
+         where: {
+            ContratoId: createdContract.ContratoId,
+         },
+         data: {
+            EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
+         },
+      });
+
+      await handlePreLoadConciliation(createdContract);
+   } else if (forPrecon) {
+      console.log('segundo if');
+
+      const documentosPrecon = await prismaClient.productoDocumento.findMany({
+         where: {
+            ProductoId: createdContract.ProductoId,
+            Fase: 'PRECON', // Asegúrate de que esto coincida con la fase utilizada en la base de datos
+         },
+         select: {
+            DocumentoId: true,
+            ProductoDocId: true,
+         },
+      });
+
+      const preconIds = documentosPrecon.map((doc) => doc.DocumentoId);
+      const preconIdsPD = documentosPrecon.map((id) => id.ProductoDocId);
+
+      console.log(preconIds);
+
+      await prismaClient.documentoContrato.updateMany({
+         where: {
+            ContratoId: createdContract.ContratoId,
+            DocId: { in: preconIds },
+            ProdctoDoc: { in: preconIdsPD },
+         },
+         data: {
+            EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
+         },
+      });
+   }
+};
+
+const handlePreLoadConciliation = async (createdContract: any) => {
+   const preLoadConciliation = await prismaClient.tipoConciliacion.findFirst({
+      where: { nombre: 'Carga previa' },
+   });
+
+   if (preLoadConciliation) {
+      await prismaClient.contrato.update({
+         where: { ContratoId: createdContract.ContratoId },
+         data: {
+            TipoConciliacion: {
+               connect: {
+                  tipoConciliacionId: preLoadConciliation?.tipoConciliacionId,
+               },
+            },
+            EstadoContrato: 'TRAMITADA',
+            Conciliar: false,
+         },
+      });
+   }
+};
+
+const handleIncidences = async (createdContract: any, systemUser: Usuario) => {
+   for (const productoTipoOperacion of createdContract.Producto.ProductoTipoOperacion) {
+      for (const productoDocumento of productoTipoOperacion.ProductoDocumento) {
+         await prismaClient.documentoContrato.create({
+            data: {
+               Contrato: {
+                  connect: {
+                     ContratoId: createdContract.ContratoId,
+                  },
+               },
+               MaestroDocumentos: {
+                  connect: {
+                     DocumentoId: productoDocumento.MaestroDocumento.DocumentoId,
+                  },
+               },
+               Usuario: {
+                  connect: {
+                     UsuarioId: systemUser?.UsuarioId,
+                  },
+               },
+               EstadoDoc: ContractDocumentStatusesEnum.NOT_PRESENT,
+               ProdctoDoc: productoDocumento.ProductoDocId,
             },
          });
 

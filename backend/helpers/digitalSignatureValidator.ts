@@ -1,6 +1,6 @@
 import { prismaClient } from '../server';
 
-const validateRequiredFields = (record: any, errors: any[]) => {
+const validateRequiredFields = (record: any, errors: { [key: string]: string }) => {
    const requiredFields = [
       { field: 'NUM_POLIZA', message: 'NUM_POLIZA es obligatorio' },
       { field: 'RESULTADO', message: 'RESULTADO es obligatorio' },
@@ -8,12 +8,12 @@ const validateRequiredFields = (record: any, errors: any[]) => {
 
    requiredFields.forEach(({ field, message }) => {
       if (!record[field]) {
-         errors.push(message);
+         errors[field] = message;
       }
    });
 };
 
-const validateNumPolicy = async (record: any, errors: any[]) => {
+const validateNumPolicy = async (record: any, errors: { [key: string]: string }) => {
    if (record['NUM_POLIZA']) {
       const contract = await prismaClient.contrato.findFirst({
          where: {
@@ -21,23 +21,19 @@ const validateNumPolicy = async (record: any, errors: any[]) => {
          },
       });
       if (!contract) {
-         errors.push('Contrato no encontrado');
+         errors['contrato'] = 'Contrato no encontrado';
       }
    }
 };
 
 export const digitalSignatureValidator = async (record: any) => {
-   const errors: any[] = [];
+   const errors: { [key: string]: string } = {};
    let hasError = false;
 
    validateRequiredFields(record, errors);
-
-   if (errors.length > 0) {
-      hasError = true;
-   }
+   await validateNumPolicy(record, errors);
 
    return {
-      hasError,
       errors,
    };
 };

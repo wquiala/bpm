@@ -20,12 +20,14 @@ function Main() {
 
    const [filteredContracts, setFilteredContracts] = useState<any[]>([]);
    const [selectedContract, setSelectedContract] = useState<any>(null);
+   console.log(filteredContracts);
 
    const [selectContractModal, setSelectContractModal] = useState<boolean>(false);
 
    const getContracts = async (params: any) => {
       setLoading(true);
       const [error, response, data] = await handlePromise(ContractService.getContracts(params));
+      console.log({ msg: 'cargando data', data });
       setLoading(false);
       if (!response.ok) {
          return setAlert({
@@ -78,6 +80,7 @@ function Main() {
       }
 
       setSelectedContract(null);
+      console.log(toSend);
 
       await getContracts(toSend);
    };
