@@ -1,22 +1,17 @@
 import { ContractDocumentStatusesEnum } from '../../../constants/ContractDocumentStatusesEnum';
-import { ESTADO_CONTRATO, ProductoDocumento, Usuario } from '@prisma/client';
+import { ESTADO_CONTRATO, Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import moment from 'moment';
-import { array, record } from 'zod';
 import {
    ContractHistoryData,
    ContractUpdate,
-   Contrato,
-   ErroresContrato,
    OPERACION_CONTRATO,
-   Record,
+   RecordDiaria,
 } from '../../../interfaces/contractsInterfaces';
-import { validateCompany } from '../../../helpers/policiyValidator';
 import { updatePolicy } from './policyUpdater';
 import { Company } from '../../../interfaces/company';
-import { resourceLimits } from 'worker_threads';
 
-const fetchCompany = async (code: string = '', err: { [key: string]: string } /* errors?: string[] */) => {
+const fetchCompany = async (err: { [key: string]: string }, code?: string) => {
    let companyCode = code;
    let comp;
 
@@ -37,17 +32,18 @@ const fetchCompany = async (code: string = '', err: { [key: string]: string } /*
          where: { Nombre: 'Sin Companía' },
       });
 
-      err['compania']
-         ? (err['compania'] +=
-              '. Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal')
-         : (err['compania'] =
-              'Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal');
+      if (err['compania'])
+         err['compania'] +=
+            '. Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal';
+      else
+         err['compania'] =
+            'Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal';
    }
 
    return comp;
 };
 
-export const fetchClave = (record: Record) => {
+export const fetchClave = (record: RecordDiaria) => {
    let clave: string;
    const CCC = record.ccc;
    const SOLICITUD = record.codigoSolicitud;
@@ -62,7 +58,7 @@ export const fetchClave = (record: Record) => {
    return clave;
 };
 
-export const fetchContrato = async (record: Record, clave: string) => {
+export const fetchContrato = async (record: RecordDiaria, clave: string) => {
    let solicitud;
    let id;
    let newClave: string | null = null;
@@ -110,7 +106,7 @@ export const fetchContrato = async (record: Record, clave: string) => {
    };
 };
 
-const fetchBranch = async (code: string = '' /* errors?: string[] */, err: { [key: string]: string }) => {
+const fetchBranch = async (err: { [key: string]: string }, code: string = '') => {
    let producto;
 
    const query = await prismaClient.producto.findFirst({
@@ -124,16 +120,17 @@ const fetchBranch = async (code: string = '' /* errors?: string[] */, err: { [ke
          where: { Codigo: 'Sin Producto' },
       });
 
-      err['PRODUCTO']
-         ? (err['PRODUCTO'] +=
-              '. El producto no se encuentra registrado en la tabla maestra de productos del sistema, se asignará un código de producto temporal')
-         : (err['PRODUCTO'] =
-              'El producto no se encuentra registrado en la tabla maestra de productos del sistema, se asignará un código de producto temporal');
+      if (err['producto'])
+         err['producto'] +=
+            '. El producto no se encuentra registrado en la tabla maestra de productos del sistema, se asignará un código de producto temporal';
+      else
+         err['producto'] =
+            'El producto no se encuentra registrado en la tabla maestra de productos del sistema, se asignará un código de producto temporal';
    }
    return producto;
 };
 
-const fetchMediator = async (code: string = '', /*  errors?: string[] */ err: { [key: string]: string }) => {
+const fetchMediator = async (err: { [key: string]: string }, code: string = '') => {
    let mediador;
    const query = await prismaClient.mediador.findFirst({
       where: { Codigo: code },
@@ -146,31 +143,31 @@ const fetchMediator = async (code: string = '', /*  errors?: string[] */ err: { 
          where: { Codigo: 'Sin Mediador' },
       });
 
-      err['MEDIADOR']
-         ? (err['MEDIADOR'] +=
-              '. El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal')
-         : (err['MEDIADOR'] =
-              'El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal');
+      if (err['mediador'])
+         err['mediador'] +=
+            '. El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal';
+      else
+         err['mediador'] =
+            'El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal';
    }
    return mediador;
 };
 export const policyCreator = async (
-   record: Record,
+   record: RecordDiaria,
    systemUser: Usuario,
    user: { UsuarioId: number },
-   /* errors: string[] */
    err: any,
    details: any,
 ) => {
    let conError = 0;
    let hasError;
-   let insert: boolean;
+   let insert: boolean | null = null;
 
-   const company = await fetchCompany(record.compania, err);
+   const company = await fetchCompany(err, record.compania);
 
-   const branch = await fetchBranch(record.producto, err);
+   const branch = await fetchBranch(err, record.producto);
 
-   const mediator = await fetchMediator(record.mediador, err);
+   const mediator = await fetchMediator(err, record.mediador);
 
    const clave = fetchClave(record);
 
@@ -178,96 +175,189 @@ export const policyCreator = async (
 
    const CONTRATO = record.polizaContrato;
    if (actualizar) {
-      const data: ContractUpdate = {
-         EstadoContrato: ESTADO_CONTRATO.PENDIENTE_INCIDENCIA,
+      let upd = false;
+      const data: ContractUpdate = {};
 
-         FechaOperacion:
-            !query!.FechaOperacion && record.fechaOperacion
-               ? new Date(moment(record.fechaOperacion, 'MM/DD/YYYY', true).toISOString())
-               : query!.FechaOperacion,
-         CodigoPoliza: !query?.CodigoPoliza && record.polizaContrato ? record.polizaContrato : query!.CodigoPoliza,
-         FechaEfecto: !query?.FechaEfecto && record.fechaEfecto ? record.fechaEfecto : query!.FechaEfecto,
-         AnuladoSEfecto: query?.AnuladoSEfecto == false && record.anulaSE === 'S' ? true : false,
-         DNIAsegurado: !query?.DNIAsegurado && record.dniAsegurado ? record.dniAsegurado : query?.DNIAsegurado,
-         NombreAsegurado:
-            !query!.NombreAsegurado && record.nombreAsegurado ? record.nombreAsegurado : query!.NombreAsegurado,
-         FechaNacimientoAsegurado:
-            !query?.FechaNacimientoAsegurado && record.fechaNacimiento
-               ? new Date(moment(record.fechaNacimiento, 'MM/DD/YYYY', true).toISOString())
-               : query!.FechaNacimientoAsegurado,
-         CSRespAfirmativas:
-            !query?.CSRespAfirmativas && record.csResAfirm && record.csResAfirm == 'S'
-               ? true
-               : query!.CSRespAfirmativas,
+      if (query?.Conciliar && record.conciliar == 'NO') {
+         data.Conciliar = false;
+         upd = true;
+      }
+      if (!query?.ResultadoFDCON && record.resultadoCon) {
+         data.ResultadoFDCON = record.resultadoCon;
+         upd = true;
+      }
+      if (!query?.TipoEnvioCON && record.tipoEnvioC) {
+         data.TipoEnvioCON = record.tipoEnvioC = query?.TipoEnvioCON;
+         upd = true;
+      }
+      if (!query?.IndicadorFDCON && record.indicadorCon === 'SI') {
+         data.IndicadorFDCON = true;
+         upd = true;
+      }
+      if (!query?.ResultadoFDPRECON && record.resultadoPrecon) {
+         data.ResultadoFDPRECON = record.resultadoPrecon;
+         upd = true;
+      }
 
-         ProfesionAsegurado:
-            !query?.ProfesionAsegurado && record.profesion ? record.profesion : query!.ProfesionAsegurado,
+      if (!query?.TipoEnvioPRECON && record.tipoEnvioPrecon) {
+         data.TipoEnvioPRECON = record.tipoEnvioPrecon;
+         upd = true;
+      }
+      if (!query?.IndicadorFDPRECON && record.indicadorPrecon === 'SI') {
+         data.IndicadorFDPRECON = true;
+         upd = true;
+      }
 
-         DeporteAsegurado: !query?.DeporteAsegurado && record.deporte ? record.deporte : query!.DeporteAsegurado,
-         DNITomador: !query?.DNITomador && record.dniTomador ? record.dniTomador : query!.DNITomador,
-         FechaValidezDNITomador:
-            !query?.FechaValidezDNITomador && record.fechaValidezDniT
-               ? new Date(moment(record.fechaValidezDniT, 'MM/DD/YYYY', true).toISOString())
-               : query!.FechaValidezDNITomador,
+      if (!query?.Operador && record.operador) {
+         data.Operador = record.operador;
+         upd = true;
+      }
 
-         NombreTomador: !query?.NombreTomador && record.nombreTomador ? record.nombreTomador : query?.NombreTomador,
+      if (query?.MediadorId == 26314 && mediator!.MediadorId != 26314) {
+         data.MediadorId = mediator?.MediadorId;
+         upd = true;
+      }
 
-         MediadorId:
-            query?.MediadorId == 26314 && mediator!.MediadorId != 26314 ? mediator!.MediadorId : query?.MediadorId,
-         Operador: !query?.Operador && record.operador ? record.operador : query!.Operador,
-         IndicadorFDPRECON:
-            query?.IndicadorFDPRECON && record.indicadorPrecon === 'SI' ? true : query!.IndicadorFDPRECON,
-         TipoEnvioPRECON:
-            !query!.TipoEnvioPRECON && record.tipoEnvioPrecon ? record.tipoEnvioPrecon : query!.TipoEnvioPRECON,
-         ResultadoFDPRECON:
-            !query!.ResultadoFDPRECON && record.resultadoPrecon ? record.resultadoPrecon : query!.ResultadoFDPRECON,
-         IndicadorFDCON: !query!.IndicadorFDCON && record.indicadorCon === 'SI' ? true : query!.IndicadorFDCON,
-         TipoEnvioCON: !query!.TipoEnvioCON && record.tipoEnvioC ? record.tipoEnvioC : query!.TipoEnvioCON,
-         ResultadoFDCON: !query!.ResultadoFDCON && record.resultadoCon ? record.resultadoCon : query!.ResultadoFDCON,
-         Revisar: record.revisar === 'SI',
-         Conciliar: record.conciliar === 'SI',
-         errores: err,
-      };
+      if (!query?.NombreTomador && record.nombreTomador) {
+         data.NombreTomador = record.nombreTomador;
+         upd = true;
+      }
+      if (!query?.FechaValidezDNITomador && record.fechaValidezDniT) {
+         data.FechaValidezDNITomador = new Date(moment(record.fechaValidezDniT, 'MM/DD/YYYY', true).toISOString());
+         upd = true;
+      }
+      if (!query?.DNITomador && record.dniTomador) {
+         data.DNITomador = record.dniTomador;
+         upd = true;
+      }
 
-      if (branch?.ProductoId != 191 && query?.ProductoId == 191) data.ProductoId = branch?.ProductoId;
-      if (company?.CompaniaId != 5 && query?.CompaniaId == 5) data.CompaniaId = company?.CompaniaId;
-      if (solicitud) data.ClaveOperacion = CONTRATO;
+      if (!query?.DeporteAsegurado && record.deporte) {
+         data.DeporteAsegurado = record.deporte;
+         upd = true;
+      }
+      if (!query?.ProfesionAsegurado && record.profesion) {
+         data.ProfesionAsegurado = record.profesion;
+         upd = true;
+      }
+      if (!query?.CSRespAfirmativas && record.csResAfirm && record.csResAfirm == 'S') {
+         data.CSRespAfirmativas = true;
+         upd = true;
+      }
 
-      const updated = await updatePolicy(data, query!.ContratoId);
-      insert = false;
-      details.push({
-         ...record,
-         estado: 'ACTUALIZADO',
-      });
+      if (!query?.FechaNacimientoAsegurado && record.fechaNacimiento) {
+         data.FechaNacimientoAsegurado = new Date(moment(record.fechaNacimiento, 'MM/DD/YYYY', true).toISOString());
+         upd = true;
+      }
+      if (!query?.NombreAsegurado && record.nombreAsegurado) {
+         data.NombreAsegurado = record.nombreAsegurado;
+         upd = true;
+      }
 
-      const { CompaniaId, ProductoId, CodigoPoliza, MediadorId, ClaveOperacion, ...rest } = data;
-      const histC: ContractHistoryData = rest;
+      if (!query?.DNIAsegurado && record.dniAsegurado) {
+         data.DNIAsegurado = record.dniAsegurado;
+         upd = true;
+      }
 
-      const history = await createContractHistory({
-         ...histC,
-         Operacion: OPERACION_CONTRATO.ACTUALIZADO,
-         EstadoContrato: ESTADO_CONTRATO.PENDIENTE_INCIDENCIA,
-      });
+      if (!query?.AnuladoSEfecto && record.anulaSE === 'S') {
+         data.AnuladoSEfecto = true;
+         upd = true;
+      }
+
+      if (!query?.FechaEfecto && record.fechaEfecto) {
+         data.FechaEfecto = record.fechaEfecto;
+         upd = true;
+      }
+
+      if (!query?.CodigoPoliza && data.CodigoPoliza) {
+         data.CodigoPoliza = record.polizaContrato;
+         upd = true;
+      }
+
+      if (!query?.FechaOperacion && record.fechaOperacion) {
+         data.FechaOperacion = new Date(moment(record.fechaOperacion, 'MM/DD/YYYY', true).toISOString());
+         upd = true;
+      }
+      if (branch?.ProductoId != 191 && query?.ProductoId == 191) {
+         data.ProductoId = branch?.ProductoId;
+         upd = true;
+      }
+      if (company?.CompaniaId != 5 && query?.CompaniaId == 5) {
+         data.CompaniaId = company?.CompaniaId;
+         upd = true;
+      }
+      if (solicitud && CONTRATO) {
+         data.CodigoPoliza = CONTRATO;
+         data.ClaveOperacion = CONTRATO;
+         upd = true;
+      }
+
+      if (upd == true && query?.EstadoContrato != 'TRAMITADA') {
+         data.EstadoContrato = ESTADO_CONTRATO.PENDIENTE_INCIDENCIA;
+         const updated = await updatePolicy(data, query!.ContratoId);
+         insert = false;
+         details.push({
+            ...record,
+            estado: 'ACTUALIZADO',
+            errores: err,
+         });
+         if ((data?.ResultadoFDCON?.includes('acept') && data?.IndicadorFDCON) || !data.Conciliar) {
+            const query1 = await findDocumentContracts(updated.ContratoId);
+
+            for (const dc of query1)
+               await prismaClient.documentoContrato.update({
+                  where: {
+                     DocumentoId: dc.DocumentoId,
+                  },
+                  data: {
+                     EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
+                  },
+               });
+
+            await prismaClient.contrato.update({
+               where: {
+                  ContratoId: updated.ContratoId,
+               },
+               data: {
+                  EstadoContrato: 'TRAMITADA',
+                  Conciliar: false,
+               },
+            });
+         }
+         data.ContratoId = updated.ContratoId;
+         const { CompaniaId, ProductoId, CodigoPoliza, MediadorId, ClaveOperacion, ...rest } = data;
+
+         await createContractHistory({
+            ...rest,
+            Operacion: OPERACION_CONTRATO.ACTUALIZADO,
+            /*          EstadoContrato: ESTADO_CONTRATO.PENDIENTE_INCIDENCIA,
+             */
+         });
+      }
    } else {
       const createdContract = await createContract(record, company, branch, mediator, user, err, clave);
       insert = true;
       details.push({
          ...record,
          estado: 'INSERTADO',
+         errores: err,
       });
 
       if (
-         (createdContract?.ResultadoFDCON === 'Transacción aceptada' && createdContract?.IndicadorFDCON) ||
+         (createdContract?.ResultadoFDCON.includes('acept') && createdContract?.IndicadorFDCON) ||
          !createdContract.Conciliar
       ) {
+         console.log('Entrando aqui 1 ');
+
          await createDocuments(createdContract, systemUser, ContractDocumentStatusesEnum.CORRECT, false);
-         await handlePreLoadConciliation(createdContract);
+         //await handlePreLoadConciliation(createdContract);
       } else if (
-         (createdContract?.ResultadoFDCON !== 'Transacción aceptada' && createdContract?.IndicadorFDCON) ||
-         (createdContract?.IndicadorFDPRECON && createdContract?.ResultadoFDPRECON === 'Transacción aceptada')
+         /*  (createdContract?.ResultadoFDCON !== 'Transacción aceptada' && createdContract?.IndicadorFDCON) || */
+         createdContract?.ResultadoFDPRECON.includes('acept') &&
+         !createdContract?.ResultadoFDCON.includes('acept') /*  === 'Transacción aceptada' */
       ) {
+         console.log('Entrando aqui 2 ');
          await createDocuments(createdContract, systemUser, ContractDocumentStatusesEnum.CORRECT, true);
-         await handlePreLoadConciliation(createdContract);
+         // await handlePreLoadConciliation(createdContract);
       } else {
          await handleIncidences(createdContract, systemUser);
       }
@@ -346,12 +436,11 @@ export const createContractHistory = async (
 };
 
 const createContract = async (
-   record: Record,
+   record: RecordDiaria,
    company: Company | null,
    branch: any,
    mediator: any,
    user: { UsuarioId: any },
-   /* errors: string[], */
    err: any,
    claveOPeracion: string,
 ) => {
@@ -377,7 +466,7 @@ const createContract = async (
          FechaNacimientoAsegurado: record.fechaNacimiento
             ? new Date(moment(record.fechaNacimiento, 'MM/DD/YYYY', true).toISOString())
             : null,
-         CSRespAfirmativas: record.csResAfirm && record.csResAfirm == 'S' ? true : false,
+         CSRespAfirmativas: record.csResAfirm == 'S',
          ProfesionAsegurado: record.profesion,
          DeporteAsegurado: record.deporte,
          DNITomador: record.dniTomador,
@@ -395,7 +484,7 @@ const createContract = async (
          ResultadoFDCON: record.resultadoCon,
          Revisar: record.revisar === 'SI',
          Conciliar: record.conciliar === 'SI',
-         Suplemento: record.suplemento && record.suplemento == '1' ? true : false,
+         Suplemento: record.suplemento === '1',
          errores: err,
       },
       include: {
@@ -417,43 +506,94 @@ const createContract = async (
 };
 
 export const findDocumentContract = async (contractId: number, documentId: number) => {
-   return await prismaClient.documentoContrato.findFirst({
+   const query = await prismaClient.documentoContrato.findFirst({
       where: {
-         AND: [{ ContratoId: contractId }, { DocumentoId: documentId }],
+         ContratoId: contractId,
+         DocumentoId: documentId,
       },
    });
+
+   return query;
+};
+export const findDocumentContracts = async (contractId: number) => {
+   const query = await prismaClient.documentoContrato.findMany({
+      where: {
+         ContratoId: contractId,
+      },
+   });
+
+   return query;
 };
 
 const createDocuments = async (createdContract: any, systemUser: Usuario, status: string, forPrecon: boolean) => {
    for (const productoTipoOperacion of createdContract.Producto.ProductoTipoOperacion) {
       for (const productoDocumento of productoTipoOperacion.ProductoDocumento) {
-         /* const findDC = await findDocumentContract(productoDocumento.DocumentoId, createdContract.ContratoId);
-         if (!findDC) { */
-         if ((forPrecon && productoDocumento.Fase === 'PRECON') || !forPrecon) {
-            await prismaClient.documentoContrato.create({
-               data: {
-                  Contrato: {
-                     connect: {
-                        ContratoId: createdContract.ContratoId,
-                     },
+         await prismaClient.documentoContrato.create({
+            data: {
+               Contrato: {
+                  connect: {
+                     ContratoId: createdContract.ContratoId,
                   },
-                  MaestroDocumentos: {
-                     connect: {
-                        DocumentoId: productoDocumento.MaestroDocumento.DocumentoId,
-                     },
-                  },
-                  Usuario: {
-                     connect: {
-                        UsuarioId: systemUser?.UsuarioId,
-                     },
-                  },
-                  EstadoDoc: status,
-                  FechaConciliacion: new Date(),
                },
-            });
-         }
-         /* } */
+               MaestroDocumentos: {
+                  connect: {
+                     DocumentoId: productoDocumento.MaestroDocumento.DocumentoId,
+                  },
+               },
+               Usuario: {
+                  connect: {
+                     UsuarioId: systemUser?.UsuarioId,
+                  },
+               },
+               EstadoDoc: ContractDocumentStatusesEnum.NOT_PRESENT,
+               FechaConciliacion: new Date(),
+               ProdctoDoc: productoDocumento.ProductoDocId,
+            },
+         });
       }
+   }
+
+   if (!forPrecon) {
+      console.log('primer if');
+      await prismaClient.documentoContrato.updateMany({
+         where: {
+            ContratoId: createdContract.ContratoId,
+         },
+         data: {
+            EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
+         },
+      });
+
+      await handlePreLoadConciliation(createdContract);
+   } else if (forPrecon) {
+      console.log('segundo if');
+
+      const documentosPrecon = await prismaClient.productoDocumento.findMany({
+         where: {
+            ProductoId: createdContract.ProductoId,
+            Fase: 'PRECON', // Asegúrate de que esto coincida con la fase utilizada en la base de datos
+         },
+         select: {
+            DocumentoId: true,
+            ProductoDocId: true,
+         },
+      });
+
+      const preconIds = documentosPrecon.map((doc) => doc.DocumentoId);
+      const preconIdsPD = documentosPrecon.map((id) => id.ProductoDocId);
+
+      console.log(preconIds);
+
+      await prismaClient.documentoContrato.updateMany({
+         where: {
+            ContratoId: createdContract.ContratoId,
+            DocId: { in: preconIds },
+            ProdctoDoc: { in: preconIdsPD },
+         },
+         data: {
+            EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
+         },
+      });
    }
 };
 
@@ -472,6 +612,7 @@ const handlePreLoadConciliation = async (createdContract: any) => {
                },
             },
             EstadoContrato: 'TRAMITADA',
+            Conciliar: false,
          },
       });
    }
@@ -480,7 +621,7 @@ const handlePreLoadConciliation = async (createdContract: any) => {
 const handleIncidences = async (createdContract: any, systemUser: Usuario) => {
    for (const productoTipoOperacion of createdContract.Producto.ProductoTipoOperacion) {
       for (const productoDocumento of productoTipoOperacion.ProductoDocumento) {
-         const documentoContrato = await prismaClient.documentoContrato.create({
+         await prismaClient.documentoContrato.create({
             data: {
                Contrato: {
                   connect: {
@@ -498,6 +639,7 @@ const handleIncidences = async (createdContract: any, systemUser: Usuario) => {
                   },
                },
                EstadoDoc: ContractDocumentStatusesEnum.NOT_PRESENT,
+               ProdctoDoc: productoDocumento.ProductoDocId,
             },
          });
 

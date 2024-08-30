@@ -64,6 +64,7 @@ export interface ContractHistoryData {
 }
 
 export interface ContractUpdate {
+   ContratoId?: number;
    EstadoContrato?: ESTADO_CONTRATO;
    CompaniaId?: number;
    ProductoId?: number;
@@ -81,7 +82,7 @@ export interface ContractUpdate {
    DNITomador?: string;
    FechaValidezDNITomador?: Date | null;
    NombreTomador?: string;
-   MediadorId?: number | null;
+   MediadorId?: number;
    Operador?: string;
    IndicadorFDPRECON?: boolean | null;
    TipoEnvioPRECON?: string;
@@ -140,7 +141,7 @@ export interface ErroresContrato {
    Incidencias?: string;
 }
 
-export interface Record {
+export interface RecordDiaria {
    compania?: string;
    producto?: string;
    fechaOperacion?: string;
@@ -170,10 +171,6 @@ export interface Record {
    resultadoCon?: string;
    revisar?: string;
    conciliar?: string;
-}
-
-export interface Details extends Record {
-   estado: string;
 }
 
 export interface TabletaRecord {

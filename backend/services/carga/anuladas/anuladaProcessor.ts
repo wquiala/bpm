@@ -8,59 +8,129 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
    let conError = 0;
    let actualizados = 0;
    let noactualizados = 0;
-   console.log(records);
+   let details: any[] = [];
+
    for (let record of records) {
-      if (!record['CLAVE_OPERACI�N'] || !record['FECHA EMISI�N ANULACI�N']) {
+      if (!record['CLAVE_OPERACIÓN'] || !record['FECHA EMISIÓN ANULACIÓN']) {
          conError++;
-      } else if (!moment(record['FECHA EMISI�N ANULACI�N'], 'DD/MM/YYYY', true).isValid()) {
-         conError++;
-      } else {
-         const contract = await prismaClient.contrato.findFirst({
-            where: {
-               ClaveOperacion: record['CLAVE_OPERACI�N'],
+         details.push({
+            ...record,
+            estado: 'NO PROCESADA',
+            errores: {
+               claveFecha: 'Sin clave o fecha',
             },
          });
-
-         if (contract) {
-            const anulada = await prismaClient.contrato.update({
+      } else if (!moment(record['FECHA EMISIÓN ANULACIÓN'], 'DD/MM/YYYY', true).isValid()) {
+         conError++;
+         details.push({
+            ...record,
+            estado: 'NO PROCESADA',
+            errores: {
+               fechaemision: 'Fecha no válida',
+            },
+         });
+      } else {
+         let anulada;
+         if (record['COMPAÑÍA'] == 'UCV' || record['COMPAÑÍA'] == 'UNI') {
+            const contract = await prismaClient.contrato.findFirst({
                where: {
-                  ClaveOperacion: record['CLAVE_OPERACI�N'],
-               },
-               data: {
-                  AnuladoSEfecto: true,
-                  EstadoContrato: 'ANULADA',
+                  CodigoPoliza: record['CLAVE_OPERACIÓN'],
                },
             });
-            actualizados++;
-            const {
-               CompaniaId,
-               ProductoId,
-               CodigoPoliza,
-               MediadorId,
-               ClaveOperacion,
-               TipoOperacion,
-               CCC,
-               CodigoSolicitud,
-               updatedAt,
-               TipoConciliacionId,
-               ...rest
-            } = anulada;
-            await createContractHistory({
-               ...rest,
-               Operacion: OPERACION_CONTRATO.ANULADO,
-               EstadoContrato: ESTADO_CONTRATO.ANULADA,
+
+            if (contract) {
+               anulada = await prismaClient.contrato.update({
+                  where: {
+                     ContratoId: contract.ContratoId,
+                     CodigoPoliza: record['CLAVE_OPERACIÓN'],
+                  },
+                  data: {
+                     AnuladoSEfecto: true,
+                     EstadoContrato: 'ANULADA',
+                  },
+               });
+
+               details.push({
+                  ...record,
+                  estado: 'ACTUALIZADO',
+                  errores: {
+                     estado: 'ANULADA',
+                  },
+               });
+               actualizados++;
+               const {
+                  CompaniaId,
+                  ProductoId,
+                  CodigoPoliza,
+                  MediadorId,
+                  ClaveOperacion,
+                  TipoOperacion,
+                  CCC,
+                  CodigoSolicitud,
+                  updatedAt,
+                  TipoConciliacionId,
+                  ...rest
+               } = anulada;
+               await createContractHistory({
+                  ...rest,
+                  Operacion: OPERACION_CONTRATO.ANULADO,
+                  EstadoContrato: ESTADO_CONTRATO.ANULADA,
+               });
+            }
+         } else {
+            const contract = await prismaClient.contrato.findFirst({
+               where: {
+                  ClaveOperacion: record['CLAVE_OPERACIÓN'],
+               },
             });
-         } else noactualizados++;
+            if (contract) {
+               anulada = await prismaClient.contrato.update({
+                  where: {
+                     ClaveOperacion: contract.ClaveOperacion,
+                  },
+                  data: {
+                     AnuladoSEfecto: true,
+                     EstadoContrato: 'ANULADA',
+                  },
+               });
+               details.push({
+                  ...record,
+                  estado: 'ACTUALIZADO',
+                  errores: {
+                     estado: 'ANULADA',
+                  },
+               });
+               actualizados++;
+               const {
+                  CompaniaId,
+                  ProductoId,
+                  CodigoPoliza,
+                  MediadorId,
+                  ClaveOperacion,
+                  TipoOperacion,
+                  CCC,
+                  CodigoSolicitud,
+                  updatedAt,
+                  TipoConciliacionId,
+                  ...rest
+               } = anulada;
+               await createContractHistory({
+                  ...rest,
+                  Operacion: OPERACION_CONTRATO.ANULADO,
+                  EstadoContrato: ESTADO_CONTRATO.ANULADA,
+               });
+            } else noactualizados++;
+         }
       }
       await prismaClient.anuladas.create({
          data: {
-            claveOperacion: record['CLAVE_OPERACI�N'],
-            compannia: record['COMPA��A'],
-            motivoAnulacion: record['MOTIVO ANULACI�N'],
+            claveOperacion: record['CLAVE_OPERACIÓN'],
+            compannia: record['COMPAÑÍA'],
+            motivoAnulacion: record['MOTIVO ANULACIÓN'],
             fechaEfectoAnulacion:
                new Date(moment(record['FECHA EMISIÓN ANULACIÓN'], 'DD/MM/YYYY', true).toISOString()) ?? null,
             fechaEmisionAnulacion:
-               new Date(moment(record['FECHA EFECTO ANULACI�N'], 'DD/MM/YYYY', true).toISOString()) ?? null,
+               new Date(moment(record['FECHA EFECTO ANULACIÓN'], 'DD/MM/YYYY', true).toISOString()) ?? null,
          },
       });
    }
@@ -68,5 +138,6 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
       actualizados,
       noactualizados,
       conError,
+      details,
    };
 };

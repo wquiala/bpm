@@ -67,9 +67,9 @@ const columns = (handleCellClick: any) => {
          download: true,
          formatter(cell: any) {
             const response: any = cell.getData();
-            return `<div class="flex items-center lg:justify-center">
+            return `<button class="flex items-center lg:justify-center">
                             ${response?.Insertados ?? '---'}
-                        </div>`;
+                        </button>`;
          },
          cellClick: (e: any, cell: any) => {
             handleCellClick(cell.getData(), 'INSERTADO');

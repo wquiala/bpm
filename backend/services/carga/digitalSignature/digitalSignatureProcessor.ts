@@ -24,25 +24,16 @@ export const processDigitalSignatureData = async (records: any[], user: { Usuari
       let hasError = false;
       let errors: any[] = [];
 
-      const { hasError: hasErr, errors: err } = await digitalSignatureValidator(record);
+      const { errors: err } = await digitalSignatureValidator(record);
 
-      if (hasErr) {
-         hasError = true;
-         errors = [...err, ...errors];
-      }
-
-      if (hasError) {
+      if (!record['NUM_POLIZA']) {
          details.push({
             ...record,
-            estado: 'NO ACTUALIZADA',
+            estado: 'DESECHADA',
+            errores: err,
          });
-         RegistrosError++;
       } else {
-         const { updated } = await contractUpdater(record, systemUser as Usuario, user);
-         details.push({
-            ...record,
-            estado: 'ACTUALIZADO',
-         });
+         const { updated } = await contractUpdater(record, systemUser as Usuario, user, err, details);
 
          updated ? actualizados++ : noactualizados++;
       }

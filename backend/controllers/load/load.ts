@@ -12,7 +12,7 @@ import { processDigitalSignatureData } from '../../services/carga/digitalSignatu
 import { processTabletData } from '../../services/carga/tablets/tabletProcessor';
 import { TIPO_CARGA } from '@prisma/client';
 import { json } from 'stream/consumers';
-import { Record } from '../../interfaces/contractsInterfaces';
+import { RecordDiaria } from '../../interfaces/contractsInterfaces';
 
 export const getLoadLogs = async (req: Request, res: Response) => {
    const { type } = req.query;
@@ -23,6 +23,9 @@ export const getLoadLogs = async (req: Request, res: Response) => {
                  Tipo: type as TIPO_CARGA,
               }
             : {}),
+      },
+      orderBy: {
+         createdAt: 'desc', // Ordena por la columna createdAt en orden descendente
       },
    });
 
@@ -38,57 +41,15 @@ export const importData = async (req: Request, res: Response) => {
       throw new BadRequestsException('Type is required', ErrorCode.BAD_REQUEST_EXCEPTION);
    }
 
-   let data: any[] = [];
+   let records: any[] = [];
    if (req.file.mimetype === 'text/csv' || req.file.mimetype === 'text/plain') {
-      data = await parseCsv(req.file);
+      records = await parseCsv(req.file);
    } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-      data = await parseExcel(req.file);
+      records = await parseExcel(req.file);
    } else {
       throw new Error('Unsupported file format');
    }
-   const records: Record[] = data.map((d) => {
-      return {
-         compania: d['COMPAÑÍA'],
-         producto: d['PRODUCTO'],
-         mediador: d['MEDIADOR'],
-         operador: d['OPERADOR'],
 
-         ccc: d['CCC'],
-         codigoSolicitud: d['CODIGO SOLICITUD'],
-         polizaContrato: d['POLIZA_CONTRATO'],
-
-         tipoOperacion: d['TIPO DE OPERACIÓN'],
-
-         anulaSE: d['ANULADO SIN EFECTO'],
-
-         dniAsegurado: d['ID_ASEGURADO'],
-         nombreAsegurado: d['NOMBRE ASEGURADO'],
-         fechaNacimiento: d['FECHA DE NACIMIENTO'],
-         deporte: d['DEPORTE'],
-         profesion: d['PROFESION'],
-
-         dniTomador: d['ID_TOMADOR_PARTICIPE'],
-         nombreTomador: d['NOMBRE TOMADOR_PARTICIPE'],
-         fechaValidezDniT: d['FECHA VALIDEZ IDENTIDAD TOMADOR'],
-
-         fechaEfecto: d['FECHA EFECTO'],
-         fechaOperacion: d['FECHA DE OPERACIÓN'],
-
-         csResAfirm: d['CS CON RESPUESTAS AFIRMATIVAS'],
-
-         indicadorPrecon: d['INDICADOR FIRMA DIGITAL PRECON'],
-         tipoEnvioPrecon: d['TIPO DE ENVÍO PRECON'],
-         resultadoPrecon: d['RESULTADO FIRMA DIGITAL PRECON'],
-
-         indicadorCon: d['INDICADOR FIRMA DIGITAL CON'],
-         tipoEnvioC: d['TIPO DE ENVÍO CON'],
-         resultadoCon: d['RESULTADO FIRMA DIGITAL CON'],
-
-         suplemento: d['SUPLEMENTO'],
-         revisar: d['REVISAR'],
-         conciliar: d['CONCILIAR'],
-      };
-   });
    //@ts-ignore
    const user = req.user;
    let processedData = null;
@@ -96,8 +57,7 @@ export const importData = async (req: Request, res: Response) => {
    switch (req.body.type) {
       case 'policy': {
          processedData = await processPolicyData(records, user);
-         /* const { Actualizados, Insertados, TotalRegistros, Desechados, conError, details } = processedData;
-
+         const { Actualizados, Insertados, TotalRegistros, Desechados, conError, details } = processedData;
          const policyLogAction = await prismaClient.logAccion.create({
             data: {
                Accion: 'CARGA',
@@ -117,14 +77,6 @@ export const importData = async (req: Request, res: Response) => {
                Details: JSON.stringify(details),
             },
          });
-
-         res.json({
-            Desechados,
-            Insertados,
-            Actualizados,
-            conError,
-            TotalRegistros,
-         }); */
 
          break;
       }
@@ -191,7 +143,7 @@ export const importData = async (req: Request, res: Response) => {
          break;
       }
       case 'anuladas': {
-         const { actualizados, noactualizados, conError } = await anuladaProcessor(records, user);
+         const { actualizados, noactualizados, conError, details } = await anuladaProcessor(records, user);
          const tabletLogAction = await prismaClient.logAccion.create({
             data: {
                Accion: 'UPDATE_CARGA',
@@ -209,7 +161,7 @@ export const importData = async (req: Request, res: Response) => {
                Actualizados: actualizados,
                ConError: conError,
                TotalRegistros: records.length,
-               Details: `${noactualizados} registros no se encontraron`,
+               Details: JSON.stringify(details),
                LogAccion: {
                   connect: {
                      LogId: tabletLogAction.LogId,

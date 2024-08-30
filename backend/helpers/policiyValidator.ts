@@ -1,14 +1,14 @@
-import { ErroresContrato, Record } from '../interfaces/contractsInterfaces';
+import { RecordDiaria } from '../interfaces/contractsInterfaces';
 import { prismaClient } from '../server';
 import moment from 'moment';
 
-const validateField = (record: Record, field: string, condition: boolean, message: string, errors: any) => {
+const validateField = (record: RecordDiaria, field: string, condition: boolean, message: string, errors: any) => {
    if (condition) {
       errors[field] = message;
    }
 };
 
-const validateRequiredFields = (record: Record, /* errors: any[] */ error: { [key: string]: string }) => {
+const validateRequiredFields = (record: RecordDiaria, error: { [key: string]: string }) => {
    const requiredFields = [
       { field: 'compania', message: 'La compañía no está presente' },
       { field: 'producto', message: 'El producto no está presente' },
@@ -24,11 +24,11 @@ const validateRequiredFields = (record: Record, /* errors: any[] */ error: { [ke
    ];
 
    requiredFields.forEach(({ field, message }) => {
-      validateField(record, field, !record[field as keyof Record], message, error);
+      validateField(record, field, !record[field as keyof RecordDiaria], message, error);
    });
 };
 
-const validateOptionalFields = (record: Record, error: any) => {
+const validateOptionalFields = (record: RecordDiaria, error: any) => {
    const optionalFields = [
       {
          field: 'anulaSE',
@@ -50,14 +50,14 @@ const validateOptionalFields = (record: Record, error: any) => {
    ];
 
    optionalFields.forEach(({ field, values, message }) => {
-      const value: any = record[field as keyof Record];
+      const value: any = record[field as keyof RecordDiaria];
       if (value && !values.includes(value)) {
          validateField(record, field, true, message, error);
       }
    });
 };
 
-const validateDates = (record: Record, error: any) => {
+const validateDates = (record: RecordDiaria, error: any) => {
    const dateFields = [
       { field: 'fechaOperacion', message: 'FECHA DE OPERACIÓN fecha no válida' },
       { field: 'fechaEfecto', message: 'FECHA EFECTO fecha no válida' },
@@ -66,8 +66,8 @@ const validateDates = (record: Record, error: any) => {
    ];
 
    dateFields.forEach(({ field, message }) => {
-      const value: any = record[field as keyof Record];
-      if (value && record[field as keyof Record] !== '') {
+      const value: any = record[field as keyof RecordDiaria];
+      if (value && record[field as keyof RecordDiaria] !== '') {
          const dateValue = moment(value, 'DD/MM/YYYY', true);
          if (!dateValue.isValid()) {
             error[field] = message;
@@ -76,7 +76,7 @@ const validateDates = (record: Record, error: any) => {
    });
 };
 
-export const validateCompany = async (record: Record, errors: any[]) => {
+export const validateCompany = async (record: RecordDiaria, errors: any[]) => {
    if (record.compania) {
       let companyCode = record.compania;
 
@@ -107,7 +107,7 @@ const validateBranch = async (record: any, errors: any[]) => {
    }
 };
 
-const validateMediator = async (record: Record, errors: any[]) => {
+const validateMediator = async (record: RecordDiaria, errors: any[]) => {
    if (record.mediador) {
       const mediator = await prismaClient.mediador.findFirst({
          where: { Codigo: `${record.mediador}` },
@@ -118,20 +118,14 @@ const validateMediator = async (record: Record, errors: any[]) => {
    }
 };
 
-export const policyValidator = async (record: Record) => {
-   /*       const errors: any[] = [];
-    */ let hasError = false;
+export const policyValidator = async (record: RecordDiaria) => {
+   let hasError = false;
    const error: { [key: string]: string } = {};
    validateRequiredFields(record, error);
 
    validateOptionalFields(record, error);
 
    validateDates(record, error);
-
-   // Note: not awaiting validateDates, as it's synchronous now
-   /*  await validateCompany(record, errors);
-      await validateBranch(record, errors);
-      await validateMediator(record, errors); */
 
    return {
       error,

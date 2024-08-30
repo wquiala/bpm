@@ -1,12 +1,10 @@
-import { FirmaDigital } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import moment from 'moment';
 
-export const digitalSignature = async (records: any, actualizado: boolean) => {
-   console.log(records);
+export const digitalSignature = async (records: any, actualizado: boolean, err: { [key: string]: string }) => {
    return await prismaClient.firmaDigital.create({
       data: {
-         AnnoMes: records['A�O/MES'],
+         AnnoMes: records['AÑO/MES'],
          NumPoliza: records['NUM_POLIZA'],
          CodigoPolizaTc: records['CODIGO_POLIZA_TC'],
          EstadoPoliza: records['ESTADO_POLIZA'],
@@ -22,7 +20,7 @@ export const digitalSignature = async (records: any, actualizado: boolean) => {
          DNITomador: records['DNI_TOMADOR'],
          MovilTomador: Number(records['MOVIL_TOMADOR']),
          NombreTomador: records['TOMADOR'],
-         Actualiazado: actualizado,
+         Actualizado: actualizado,
       },
    });
 };

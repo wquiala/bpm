@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { errorHandler } from '../error-handler';
-import { getLoadLogs, importData, /* getLoadLogById */ deleteLoadLog } from '../controllers/load/load';
+import { getLoadLogs, importData, getLoadLogById, deleteLoadLog } from '../controllers/load/load';
 import monitorMiddleware from '../middlewares/monitor';
 import authMiddleware from '../middlewares/auth';
 import multer from 'multer';
@@ -20,7 +20,6 @@ const loadRoutes: Router = Router();
 loadRoutes.get('/', [authMiddleware, monitorMiddleware], errorHandler(getLoadLogs));
 loadRoutes.post('/', [authMiddleware, monitorMiddleware, upload.single('file')], errorHandler(importData));
 loadRoutes.delete('/:id', [authMiddleware, monitorMiddleware], errorHandler(deleteLoadLog));
-/* loadRoutes.get('/:id', [authMiddleware, monitorMiddleware], errorHandler(getLoadLogById))
- */
+loadRoutes.get('/:id', [authMiddleware, monitorMiddleware], errorHandler(getLoadLogById));
 
 export default loadRoutes;
