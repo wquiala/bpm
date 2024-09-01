@@ -1,8 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from './store';
 import RubickSideMenu from '@/themes/Rubick/SideMenu';
-import RubickSimpleMenu from '@/themes/Rubick/SimpleMenu';
-import RubickTopMenu from '@/themes/Rubick/TopMenu';
 
 export const themes = [
    {
@@ -10,7 +8,7 @@ export const themes = [
       layout: 'side-menu',
       component: RubickSideMenu,
    },
-   {
+   /* {
       name: 'rubick',
       layout: 'simple-menu',
       component: RubickSimpleMenu,
@@ -19,7 +17,7 @@ export const themes = [
       name: 'rubick',
       layout: 'top-menu',
       component: RubickTopMenu,
-   },
+   }, */
 ] as const;
 
 export type Themes = (typeof themes)[number];

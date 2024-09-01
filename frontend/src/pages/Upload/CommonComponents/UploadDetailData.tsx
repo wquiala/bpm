@@ -45,44 +45,14 @@ const UploadDetailData = ({ show, setShow, selectedRow, select }: Props) => {
       { label: 'Revisar', key: 'revisar' },
       { label: 'Estado', key: 'estado' },
    ];
-   console.log(mostrar);
-   /* compania?: string;
-   producto?: string;
-   fechaOperacion?: string;
-   tipoOperacion?: string;
-   ccc: string;
-   codigoSolicitud: string;
-   polizaContrato: string | undefined;
-   fechaEfecto?: Date;
-   anulaSE?: string | boolean;
-   suplemento?: string;
-   dniAsegurado?: string;
-   nombreAsegurado?: string;
-   fechaNacimiento?: string;
-   csResAfirm?: string;
-   profesion?: string;
-   deporte?: string;
-   dniTomador?: string;
-   fechaValidezDniT?: string;
-   nombreTomador?: string;
-   mediador?: string;
-   operador?: string;
-   indicadorPrecon?: string;
-   tipoEnvioPrecon?: string;
-   resultadoPrecon?: string;
-   indicadorCon?: string;
-   tipoEnvioC?: string;
-   resultadoCon?: string;
-   revisar?: string;
-   conciliar?: string;
-   estado: string; */
+
    const data: any[] = mostrar.map((m) => ({
       erroes: JSON.stringify(m.err),
       ...m,
    }));
    const handleDownload = () => {
       // Convertir los datos JSON a CSV
-      const csv = Papa.unparse(data);
+      const csv = Papa.unparse(data, { delimiter: ';' });
 
       // Crear un Blob con el contenido CSV
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

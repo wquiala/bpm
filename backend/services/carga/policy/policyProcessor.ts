@@ -126,7 +126,7 @@ export const processPolicyData = async (data: any[], user: { UsuarioId: any }) =
             });
          }
          if (insert) Insertados++;
-         if (insert == false) Actualizados++;
+         if (!insert) Actualizados++;
       }
    }
 

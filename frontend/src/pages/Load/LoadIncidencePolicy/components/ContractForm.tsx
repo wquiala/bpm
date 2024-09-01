@@ -147,54 +147,64 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
          const contractDocuments = selectedContract?.DocumentoContrato;
 
          function createIncidence(incidence: any, document: any) {
+            console.log('Incidencia y documento' + incidence, document);
             const isIncidenceUnresolved =
-               document.IncidenciaDocumento.find((inci: any) => inci.TipoIncidenciaId === incidence.TipoIncidenciaId)
+               document.IncidenciaDocumento.find((inci: any) => inci.IncidenciaId === incidence.IncidenciaId)
                   ?.Resuelta === false;
             return {
-               id: incidence.TipoIncidenciaId,
+               id: incidence.IncidenciaId,
                name: incidence.Nombre,
                checked: isIncidenceUnresolved,
             };
          }
 
          for (const contractDocument of contractDocuments) {
-            const isPresent = contractDocument.EstadoDoc === 'PRESENT' || contractDocument.EstadoDoc === 'CORRECT';
+            const isPresent = contractDocument.EstadoDoc === 'PRESENT' || contractDocument.EstadoDoc === 'CORRECTO';
             const isConciliar = selectedContract.Conciliar === true;
+
             const present = isPresent || isConciliar;
 
-            const incidences = contractDocument.MaestroDocumentos.FamiliaDocumento.MaestroIncidencias.map(
-               (incidence: any) => createIncidence(incidence, contractDocument),
-            );
-
+            /*   const incidences = contractDocument.IncidenciaDocumento.map((incidence: any) => {
+               return createIncidence(incidence, contractDocument.DocId);
+            }); */
+            console.log(contractDocument.MaestroDocumentos.MaestroIncidencias);
             docList.push({
                id: contractDocument.DocumentoId,
                docTypeId: contractDocument.TipoDocId,
                present: present,
                name: contractDocument.MaestroDocumentos.Nombre,
-               incidences: incidences,
+               /*                incidences: incidences,
+                */
             });
          }
 
          reset({
-            /* CCC: selectedContract?.CCC,
+            AnuladoSEfecto: selectedContract.AnuladoSEfecto ? true : false,
+            Conciliar: selectedContract.Conciliar,
+            ResultadoFDCON: selectedContract.ResultadoFDCON,
+            EstadoContrato: selectedContract.EstadoContrato,
+            ClaveOperacion: selectedContract.ClaveOperacion,
+            CCC: selectedContract?.CCC,
             CodigoSolicitud: selectedContract?.CodigoSolicitud,
             CodigoPoliza: selectedContract?.CodigoPoliza,
-            FechaOperacion: moment(selectedContract?.FechaAltaSolicitud).format('YYYY-MM-DD'),
-            ProductoId: selectedContract?.RamoId,
-            ProductoNombre: selectedContract?.Ramo.Codigo,
-            Baja: false,
+            FechaOperacion: moment(selectedContract?.FechaOperacion).format('YYYY-MM-DD'),
+            ProductoId: selectedContract?.ProductoId,
+            ProductoNombre: `${selectedContract?.Producto.Codigo} - ${selectedContract?.Producto.Descripcion}`,
+            CompaniaId: selectedContract.CompaniaId,
+            CompanniaNombre: selectedContract.Compania.Nombre,
+            MediadorId: selectedContract.MediadorId,
+            MediadorNombre: selectedContract.Mediador.Nombre,
             DNITomador: selectedContract?.DNITomador,
             NombreTomador: selectedContract?.NombreTomador,
             DNIAsegurado: selectedContract?.DNIAsegurado,
             NombreAsegurado: selectedContract?.NombreAsegurado,
-            ProfesionAsegurado: selectedContract?.ProfesionAsegurado,
-            DeporteAsegurado: selectedContract?.DeporteAsegurado,
-            FechaNacimientoAsegurado: selectedContract?.FechaNacimientoAsegurado
-               ? moment(selectedContract?.FechaNacimientoAsegurado).format('YYYY-MM-DD')
-               : '',
-            NoDigitalizar: false,
-            observations: [],
-            documents: docList, */
+            ResultadoFDPRECON: selectedContract.ResultadoFDPRECON,
+            FechaValidezDNITomador: selectedContract.Compañía,
+            FechaGrabacion: selectedContract.FechaGrabacion,
+
+            DetalleObservacion: [],
+            documents: docList,
+            NotaInterna: selectedContract.NotaIntena,
          });
       };
 
@@ -239,13 +249,13 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
 
          <div className="flex flex-col sm:flex-row justify-center items-center my-2 gap-3">
             <Button variant="secondary" onClick={() => navigate('/')}>
-               {t('goBack')}
+               Volver
             </Button>
             <Button variant="danger" onClick={() => setSelectedContract(null)}>
-               {t('clearForm')}
+               Limpiar formulario{' '}
             </Button>
             <Button variant="primary" disabled={!isValid} type="submit">
-               {t('save')}
+               Guardar
             </Button>
          </div>
       </form>

@@ -24,7 +24,7 @@ export const getIncidenceDocuments = async (req: Request, res: Response) => {
       where: {
          ...(documentId
             ? {
-                 DocumentoId: parseInt(documentId as string),
+                 DocumentoContratoId: parseInt(documentId as string),
               }
             : {}),
       },
@@ -49,7 +49,7 @@ export const createIncidenceDocument = async (req: Request, res: Response) => {
    try {
       await prismaClient.documentoContrato.findFirstOrThrow({
          where: {
-            DocumentoId: validatedData.DocumentoId,
+            DocumentoId: validatedData.DocumentoContratoId,
          },
       });
    } catch (error) {
@@ -59,7 +59,7 @@ export const createIncidenceDocument = async (req: Request, res: Response) => {
    try {
       await prismaClient.maestroIncidencias.findFirstOrThrow({
          where: {
-            IncidenciaId: validatedData.TipoIncidenciaId,
+            IncidenciaId: validatedData.IncidenciaDocId,
          },
       });
    } catch (error) {
@@ -77,26 +77,20 @@ export const createIncidenceDocument = async (req: Request, res: Response) => {
             },
             DocumentoContrato: {
                connect: {
-                  DocumentoId: validatedData.DocumentoId,
+                  DocumentoId: validatedData.DocumentoContratoId,
                },
             },
-            Contrato: { connect: { ContratoId: validatedData.ContratoId } },
-            MaestroIncidencias: {
-               connect: {
-                  IncidenciaId: validatedData.TipoIncidenciaId,
-               },
-            },
+
             ...(validatedData.Resuelta !== null && validatedData.Resuelta !== undefined
                ? {
                     Resuelta: validatedData.Resuelta,
                  }
                : {}),
-            ...(validatedData.NumReclamaciones
+            /*   ...(validatedData.NumReclamaciones
                ? {
                     NumReclamaciones: validatedData.NumReclamaciones,
                  }
-               : {}),
-            MaestroDocumento: { connect: { DocumentoId: validatedData.DocumentoId } },
+               : {}), */
          },
       });
 
@@ -120,13 +114,14 @@ export const updateIncidenceDocument = async (req: Request, res: Response) => {
    try {
       await prismaClient.incidenciaDocumento.findFirstOrThrow({
          where: {
-            IncidenciaId: parseInt(req.params.id),
+            IncidenciaDocId: parseInt(req.params.id),
          },
       });
    } catch (error) {
       throw new NotFoundException('Incidence document not found', ErrorCode.NOT_FOUND_EXCEPTION);
    }
 
+   console.log(req.body);
    const validatedData = createIncidenciaDocumentoSchema.parse(req.body);
 
    // Validations
@@ -144,7 +139,7 @@ export const updateIncidenceDocument = async (req: Request, res: Response) => {
    try {
       await prismaClient.documentoContrato.findFirstOrThrow({
          where: {
-            DocumentoId: validatedData.DocumentoId,
+            DocumentoId: validatedData.DocumentoContratoId,
          },
       });
    } catch (error) {
@@ -155,7 +150,7 @@ export const updateIncidenceDocument = async (req: Request, res: Response) => {
    try {
       await prismaClient.maestroIncidencias.findFirstOrThrow({
          where: {
-            IncidenciaId: validatedData.TipoIncidenciaId,
+            IncidenciaId: validatedData.IncidenciaDocId,
          },
       });
    } catch (error) {
@@ -177,36 +172,32 @@ export const updateIncidenceDocument = async (req: Request, res: Response) => {
             },
             DocumentoContrato: {
                connect: {
-                  DocumentoId: validatedData.DocumentoId,
+                  DocumentoId: validatedData.DocumentoContratoId,
                },
             },
-            MaestroIncidencias: {
-               connect: {
-                  IncidenciaId: validatedData.TipoIncidenciaId,
-               },
-            },
+
             ...(validatedData.Resuelta !== null && validatedData.Resuelta !== undefined
                ? {
                     Resuelta: validatedData.Resuelta,
                  }
                : {}),
-            ...(validatedData.NumReclamaciones
+            /*  ...(validatedData.NumReclamaciones
                ? {
                     NumReclamaciones: validatedData.NumReclamaciones,
                  }
-               : {}),
+               : {}), */
          },
       });
 
       //Update contract last modification date
-      await prismaClient.contrato.update({
+      /*   await prismaClient.contrato.update({
          where: {
             ContratoId: validatedData.ContratoId,
          },
          data: {
             updatedAt: new Date(),
          },
-      });
+      }); */
 
       res.json(updatedIncidenceDocument);
    } catch (error) {
@@ -218,7 +209,7 @@ export const getIncidenceDocumentById = async (req: Request, res: Response) => {
    try {
       const incidenceDocument = await prismaClient.incidenciaDocumento.findFirstOrThrow({
          where: {
-            IncidenciaId: parseInt(req.params.id),
+            IncidenciaDocId: parseInt(req.params.id),
          },
       });
 
@@ -232,7 +223,7 @@ export const deleteIncidenceDocument = async (req: Request, res: Response) => {
    try {
       await prismaClient.incidenciaDocumento.findFirstOrThrow({
          where: {
-            IncidenciaId: parseInt(req.params.id),
+            IncidenciaDocId: parseInt(req.params.id),
          },
       });
    } catch (error) {

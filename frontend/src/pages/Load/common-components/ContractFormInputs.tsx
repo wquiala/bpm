@@ -6,7 +6,6 @@ type Props = {
 };
 
 const ContractFormInputs = ({ control }: Props) => {
-   const AD = control._defaultValues.AnuladoSEfecto;
    return (
       <div className="box p-4 m-4 mb-2">
          {/* Primera Fila */}
@@ -17,23 +16,14 @@ const ContractFormInputs = ({ control }: Props) => {
             <div className="w-full sm:w-1/2">
                <InputField control={control} name="EstadoContrato" type="text" label="Estado" disabled />
             </div>
-            <div className="w-full sm:w-1/2">
-               <InputField control={control} name="ResultadoFDCON" type="text" label="Resultado Firma Con" disabled />
-            </div>
-            <div className="w-full sm:w-1/2">
-               <InputField
+
+            <div className="w-full sm:w-1/2 self-center ">
+               <CheckBoxField
                   control={control}
-                  name="ResultadoFDPRECON"
-                  type="text"
-                  label="Resultado Firma PRE CON"
-                  disabled
+                  name="AnuladoSEfecto"
+                  label={control._defaultValues.AnuladoSEfecto == true ? 'Contrato anulado' : 'Anular contrato'}
+                  disabled={control._defaultValues.AnuladoSEfecto == true || control._defaultValues.FechaGrabacion}
                />
-            </div>
-            <div className="w-full sm:w-1/2">
-               <CheckBoxField control={control} name="Conciliar" label="Conciliar" disabled />
-            </div>
-            <div className="w-full sm:w-1/2">
-               <CheckBoxField control={control} name="AnuladoSEfecto" label="Anulado sin efecto" disabled />
             </div>
          </div>
          {/* Segunda Fila */}
@@ -62,38 +52,11 @@ const ContractFormInputs = ({ control }: Props) => {
             <div className="w-full sm:w-1/2">
                <InputField control={control} name="ProductoNombre" type="text" label="Producto" disabled />
             </div>
-            <div className="w-full sm:w-1/2">
-               <InputField control={control} name="MediadorNombre" type="text" label="Mediador" disabled />
-            </div>
-            <div className="w-full sm:w-1/2">
-               <InputField control={control} name="CompanniaNombre" type="text" label="Compañía" disabled />
-            </div>
-         </div>
-
-         <div className="flex flex-col sm:flex-row gap-0  sm:gap-4">
-            <div className="w-full sm:w-1/2">
+            {/* <div className="w-full sm:w-1/2">
                <InputField control={control} name="DNITomador" type="text" label="DNI del tomador" disabled />
-            </div>
-            <div className="w-full sm:w-1/2">
-               <InputField control={control} name="NombreTomador" type="text" label="Nombre del tomador" disabled />
-            </div>
-            <div className="w-full sm:w-1/2">
-               <InputField
-                  control={control}
-                  name="FechaValidezDNITomador"
-                  type="text"
-                  label="Fecha de validez del DNI de tomador"
-                  disabled
-               />
-            </div>
-         </div>
-
-         <div className="flex flex-col sm:flex-row gap-0  sm:gap-4">
+            </div> */}
             <div className="w-full sm:w-1/2">
                <InputField control={control} name="DNIAsegurado" type="text" label="InsuranceDNI" disabled />
-            </div>
-            <div className="w-full sm:w-1/2">
-               <InputField control={control} name="NombreAsegurado" type="text" label="InsuranceName" disabled />
             </div>
          </div>
       </div>

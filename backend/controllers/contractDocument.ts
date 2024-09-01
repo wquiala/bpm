@@ -128,36 +128,40 @@ export const updateContractDocument = async (req: Request, res: Response) => {
                   ContratoId: validatedData.ContratoId,
                },
             },
-            MaestroDocumentos: {
+            /*  MaestroDocumentos: {
                connect: {
                   DocumentoId: validatedData.DocId,
                },
-            },
+            }, */
             ...(validatedData.Estado
                ? {
                     EstadoDoc: validatedData.Estado,
                  }
                : {}),
+
+            FechaConciliacion: new Date(),
          },
       });
 
       //Check if the documentContract is correct
-      const hasActiveIncidences = await prismaClient.incidenciaDocumento.findFirst({
+      /*    const hasActiveIncidences = await prismaClient.incidenciaDocumento.findFirst({
          where: {
-            DocumentoId: updatedContractDocument.DocumentoId,
+            DocumentoContratoId: updatedContractDocument.DocumentoId,
             Resuelta: false,
          },
-      });
+      }); */
 
-      if (!hasActiveIncidences) {
+      /* if (!hasActiveIncidences) {
          await prismaClient.documentoContrato.update({
             where: {
                DocumentoId: updatedContractDocument.DocumentoId,
             },
             data: {
                EstadoDoc:
-                  validatedData.Estado === 'NOT_PRESENT' ? validatedData.Estado : ContractDocumentStatusesEnum.CORRECT,
-               FechaConciliacion: validatedData.Estado === 'NOT_PRESENT' ? null : new Date(),
+                  validatedData.Estado === ContractDocumentStatusesEnum.PENDING
+                     ? validatedData.Estado
+                     : ContractDocumentStatusesEnum.CORRECT,
+               FechaConciliacion: validatedData.Estado === ContractDocumentStatusesEnum.PENDING ? null : new Date(),
             },
          });
       } else {
@@ -170,14 +174,12 @@ export const updateContractDocument = async (req: Request, res: Response) => {
             },
          });
       }
-
+ */
       //Update contract last modification date or conciliation date depending if all are document conciliated
       const hasNoConciliatedDocuments = await prismaClient.documentoContrato.findFirst({
          where: {
             ContratoId: validatedData.ContratoId,
-            EstadoDoc: {
-               not: ContractDocumentStatusesEnum.CORRECT,
-            },
+            FechaConciliacion: null,
          },
       });
 
@@ -192,27 +194,14 @@ export const updateContractDocument = async (req: Request, res: Response) => {
             ContratoId: validatedData.ContratoId,
          },
          data: {
-            updatedAt: new Date(),
-            ...(!hasNoConciliatedDocuments
-               ? {
-                    FechaConciliacion: new Date(),
-                 }
-               : {
-                    FechaConciliacion: null,
-                 }),
-            ...(!hasNoConciliatedDocuments && manualConciliation
-               ? {
-                    TipoConciliacion: {
-                       connect: {
-                          tipoConciliacionId: manualConciliation.tipoConciliacionId,
-                       },
-                    },
-                 }
-               : {
-                    TipoConciliacion: {
-                       disconnect: true,
-                    },
-                 }),
+            ...(hasNoConciliatedDocuments &&
+               manualConciliation && {
+                  TipoConciliacion: {
+                     connect: {
+                        tipoConciliacionId: manualConciliation.tipoConciliacionId,
+                     },
+                  },
+               }),
          },
       });
 

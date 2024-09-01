@@ -142,17 +142,12 @@ const Table = forwardRef(
                                                               ? "<a class='delete-action flex items-center text-danger'><i data-lucide='trash-2' class='w-4 h-4 mr-1'></i>Delete</a>"
                                                               : ''
                                                         }
-                                                        ${
-                                                           onClickDetail
-                                                              ? "<a class='detail-action flex items-center text-primary ml-3'><i data-lucide='eye' class='w-4 h-4 mr-1'></i>Detail</a>"
-                                                              : ''
-                                                        }
+                                                       
                                                     </div>`);
 
                              // Adding event listeners for edit and delete actions
                              const editLink = a.querySelector('.edit-action');
                              const deleteLink = a.querySelector('.delete-action');
-                             const detailLink = a.querySelector('.detail-action');
 
                              if (editLink && deleteLink) {
                                 editLink.addEventListener('click', function () {
@@ -164,11 +159,6 @@ const Table = forwardRef(
                                 });
                              }
 
-                             if (detailLink) {
-                                detailLink.addEventListener('click', function () {
-                                   if (onClickDetail) onClickDetail(response);
-                                });
-                             }
                              return a;
                           },
                        }

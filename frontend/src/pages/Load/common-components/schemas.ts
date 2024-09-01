@@ -52,6 +52,8 @@ export const defaultValues = {
    Conciliar: true,
    ResultadoFDCON: '',
    ResultadoFDPRECON: '',
+   NotaInterna: '',
+   FechaGrabacion: null,
 
    /* Suplemento: '',
 
@@ -86,8 +88,7 @@ export const schema = (t: any) =>
       NombreTomador: yup.string(),
       DNIAsegurado: yup.string(),
       NombreAsegurado: yup.string(),
-      /*       NoDigitalizar: yup.boolean(),
-       */ DetalleObservacion: yup
+      DetalleObservacion: yup
          .array()
          .of(yup.object().shape({ observation: yup.string().required(t('errors.required') ?? '') })),
       documents: yup.array(),
@@ -95,4 +96,6 @@ export const schema = (t: any) =>
       Conciliar: yup.boolean(),
       ResultadoFDCON: yup.string(),
       ResultadoFDPRECON: yup.string(),
+      NotaInterna: yup.string().optional(),
+      FechaGrabacion: yup.string().nullable(),
    });

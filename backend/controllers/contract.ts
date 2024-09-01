@@ -54,7 +54,12 @@ export const getContracts = async (req: Request, res: Response) => {
          DocumentoContrato: {
             include: {
                MaestroDocumentos: {},
-               IncidenciaDocumento: true,
+               IncidenciaDocumento: {
+                  include: {
+                     MaestroIncidencias: true,
+                  },
+               },
+               ProductoDocumento: true,
             },
          },
       },
@@ -131,7 +136,7 @@ export const createContract = async (req: Request, res: Response) => {
    try {
       await prismaClient.producto.findFirstOrThrow({
          where: {
-            ProductoId: validatedData.RamoId,
+            ProductoId: validatedData.ProductoId,
          },
       });
    } catch (error) {
@@ -141,7 +146,7 @@ export const createContract = async (req: Request, res: Response) => {
    try {
       await prismaClient.mediador.findFirstOrThrow({
          where: {
-            MediadorId: validatedData.OficinaId,
+            MediadorId: validatedData.MediadorId,
          },
       });
    } catch (error) {
@@ -149,7 +154,7 @@ export const createContract = async (req: Request, res: Response) => {
    }
 
    try {
-      const { CompaniaId, RamoId, OficinaId, ...dataWithoutConnects } = validatedData;
+      const { CompaniaId, ProductoId, MediadorId, ...dataWithoutConnects } = validatedData;
       const createdContract = await prismaClient.contrato.create({
          data: {
             Usuario: {
@@ -163,14 +168,14 @@ export const createContract = async (req: Request, res: Response) => {
                   CompaniaId: CompaniaId,
                },
             },
-            Ramo: {
+            Producto: {
                connect: {
-                  RamoId: RamoId,
+                  ProductoId: ProductoId,
                },
             },
             CanalMediador: {
                connect: {
-                  MediadorId: OficinaId,
+                  Mediador: MediadorId,
                },
             },
             ...(dataWithoutConnects as any),
@@ -184,8 +189,12 @@ export const createContract = async (req: Request, res: Response) => {
 };
 
 export const updateContract = async (req: Request, res: Response) => {
+   let contrato;
+   let compania;
+   let mediador;
+   let producto;
    try {
-      await prismaClient.contrato.findFirstOrThrow({
+      contrato = await prismaClient.contrato.findFirstOrThrow({
          where: {
             ContratoId: parseInt(req.params.id),
          },
@@ -195,9 +204,9 @@ export const updateContract = async (req: Request, res: Response) => {
    }
 
    const validatedData = updateContratoSchema.parse(req.body);
-
+   console.log(validatedData);
    try {
-      await prismaClient.compania.findFirstOrThrow({
+      compania = await prismaClient.compania.findFirstOrThrow({
          where: {
             CompaniaId: validatedData.CompaniaId,
          },
@@ -207,19 +216,19 @@ export const updateContract = async (req: Request, res: Response) => {
    }
 
    try {
-      await prismaClient.producto.findFirstOrThrow({
+      producto = await prismaClient.producto.findFirstOrThrow({
          where: {
-            ProductoId: validatedData.RamoId,
+            ProductoId: validatedData.ProductoId,
          },
       });
    } catch (error) {
-      throw new NotFoundException('Branch not found', ErrorCode.NOT_FOUND_EXCEPTION);
+      throw new NotFoundException('Product not found', ErrorCode.NOT_FOUND_EXCEPTION);
    }
 
    try {
-      await prismaClient.mediador.findFirstOrThrow({
+      mediador = await prismaClient.mediador.findFirstOrThrow({
          where: {
-            MediadorId: validatedData.OficinaId,
+            MediadorId: validatedData.MediadorId,
          },
       });
    } catch (error) {
@@ -227,35 +236,35 @@ export const updateContract = async (req: Request, res: Response) => {
    }
 
    try {
-      const { CompaniaId, RamoId, OficinaId, ...dataWithoutConnects } = validatedData;
-      const updatedContract = await prismaClient.contrato.update({
+      /*       const { CompaniaId, ProductoId, MediadorId, ...dataWithoutConnects } = validatedData;
+       */ const updatedContract = await prismaClient.contrato.update({
          where: {
             ContratoId: parseInt(req.params.id),
          },
          data: {
-            ...(dataWithoutConnects as any),
-            FechaUltimaModif: new Date(),
-            Usuario: {
+            /*  ...(dataWithoutConnects as any), */
+            /*  Usuario: {
                connect: {
                   //@ts-ignore
                   UsuarioId: parseInt(req.user.UsuarioId),
                },
-            },
-            Compania: {
+            }, */
+            /*   Compania: {
                connect: {
-                  CompaniaId: CompaniaId,
+                  CompaniaId: ,
                },
             },
-            Ramo: {
+            Producto: {
                connect: {
-                  RamoId: RamoId,
+                  ProductoId: ,
                },
             },
-            CanalMediador: {
+            Mediador: {
                connect: {
-                  MediadorId: OficinaId,
+                  MediadorId: ,
                },
-            },
+            }, */
+            ...(validatedData as any),
          },
       });
 

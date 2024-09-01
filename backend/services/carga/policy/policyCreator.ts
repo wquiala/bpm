@@ -227,7 +227,7 @@ export const policyCreator = async (
          upd = true;
       }
       if (!query?.DNITomador && record.dniTomador) {
-         data.DNITomador = record.dniTomador;
+         data.DNITomador = record.dniTomador.padStart(10, '0');
          upd = true;
       }
 
@@ -254,7 +254,7 @@ export const policyCreator = async (
       }
 
       if (!query?.DNIAsegurado && record.dniAsegurado) {
-         data.DNIAsegurado = record.dniAsegurado;
+         data.DNIAsegurado = record.dniAsegurado.padStart(10, '0');
          upd = true;
       }
 
@@ -461,7 +461,7 @@ const createContract = async (
             ? new Date(moment(record.fechaEfecto, 'MM/DD/YYYY', true).toISOString())
             : null,
          AnuladoSEfecto: record.anulaSE === 'S',
-         DNIAsegurado: record.dniAsegurado,
+         DNIAsegurado: record.dniAsegurado?.padStart(10, '0'),
          NombreAsegurado: record.nombreAsegurado,
          FechaNacimientoAsegurado: record.fechaNacimiento
             ? new Date(moment(record.fechaNacimiento, 'MM/DD/YYYY', true).toISOString())
@@ -469,7 +469,7 @@ const createContract = async (
          CSRespAfirmativas: record.csResAfirm == 'S',
          ProfesionAsegurado: record.profesion,
          DeporteAsegurado: record.deporte,
-         DNITomador: record.dniTomador,
+         DNITomador: record.dniTomador?.padStart(10, '0'),
          NombreTomador: record.nombreTomador,
          FechaValidezDNITomador:
             record.fechaValidezDniT && record.fechaValidezDniT !== ''
@@ -545,9 +545,13 @@ const createDocuments = async (createdContract: any, systemUser: Usuario, status
                      UsuarioId: systemUser?.UsuarioId,
                   },
                },
-               EstadoDoc: ContractDocumentStatusesEnum.NOT_PRESENT,
+               EstadoDoc: ContractDocumentStatusesEnum.PENDING,
                FechaConciliacion: new Date(),
-               ProdctoDoc: productoDocumento.ProductoDocId,
+               ProductoDocumento: {
+                  connect: {
+                     ProductoDocId: productoDocumento.ProductoDocId,
+                  },
+               },
             },
          });
       }
@@ -638,8 +642,12 @@ const handleIncidences = async (createdContract: any, systemUser: Usuario) => {
                      UsuarioId: systemUser?.UsuarioId,
                   },
                },
-               EstadoDoc: ContractDocumentStatusesEnum.NOT_PRESENT,
-               ProdctoDoc: productoDocumento.ProductoDocId,
+               EstadoDoc: ContractDocumentStatusesEnum.PENDING,
+               ProductoDocumento: {
+                  connect: {
+                     ProductoDocId: productoDocumento.ProductoDocId,
+                  },
+               },
             },
          });
 

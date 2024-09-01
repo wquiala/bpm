@@ -112,25 +112,8 @@ model MaestroIncidencias {
   FechaBaja           DateTime?
   updatedAt           DateTime              @default(now()) @updatedAt
   MaestroDocumento    MaestroDocumentos?    @relation(fields: [DocAsociadoId], references: [DocumentoId])
-  DocIncidencia       DocIncidencia[]
-  IncidenciaDocumento IncidenciaDocumento[]
   Activo              Boolean
-}
-
-model DocIncidencia {
-  TipoDocIncidenciaId Int                @id
-  DocumentoId         Int
-  IncidenciaId        Int
-  ContratoId          Int?
-  Conciliado          Boolean?
-  MailInterno         Boolean            @default(false)
-  FechaConciliacion   DateTime           @default(now())
-  createdAt           DateTime           @default(now())
-  FechaBaja           DateTime?
-  updatedAt           DateTime           @default(now()) @updatedAt
-  MaestroDocumentos   MaestroDocumentos  @relation(fields: [DocumentoId], references: [DocumentoId])
-  MaestroIncidencias  MaestroIncidencias @relation(fields: [IncidenciaId], references: [IncidenciaId])
-  Activo              Boolean            @default(true)
+  IncidenciaDocumento IncidenciaDocumento[]
 }
 
 model RepositorioPlantillas {
@@ -181,20 +164,18 @@ model ProductoTipoOperacion {
 }
 
 model MaestroDocumentos {
-  DocumentoId           Int                   @id
-  Codigo                String
-  Nombre                String
-  Descripcion           String?
-  Suplemento            Boolean
-  createdAt             DateTime              @default(now())
-  FechaBaja             DateTime?
-  updateAt              DateTime              @default(now()) @updatedAt
-  DocIncidencia         DocIncidencia[]
-  ProductoDocumento     ProductoDocumento[]
-  DocumentoContrato     DocumentoContrato[]
-  MaestroIncidencias    MaestroIncidencias[]
-  IncidenciasDocumentos IncidenciaDocumento[]
-  Activo                Boolean
+  DocumentoId        Int                  @id
+  Codigo             String
+  Nombre             String
+  Descripcion        String?
+  Suplemento         Boolean
+  createdAt          DateTime             @default(now())
+  FechaBaja          DateTime?
+  updateAt           DateTime             @default(now()) @updatedAt
+  ProductoDocumento  ProductoDocumento[]
+  DocumentoContrato  DocumentoContrato[]
+  MaestroIncidencias MaestroIncidencias[]
+  Activo             Boolean
 }
 
 model DocumentoContrato {
@@ -209,6 +190,7 @@ model DocumentoContrato {
   FechaConciliacion   DateTime?
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @default(now()) @updatedAt
+  ProductoDocumento   ProductoDocumento     @relation(fields: [ProdctoDoc], references: [ProductoDocId])
   Contrato            Contrato              @relation(fields: [ContratoId], references: [ContratoId])
   MaestroDocumentos   MaestroDocumentos     @relation(fields: [DocId], references: [DocumentoId])
   Usuario             Usuario               @relation(fields: [UsuarioId], references: [UsuarioId])
@@ -234,6 +216,7 @@ model ProductoDocumento {
   anexoIncidencia       RepositorioPlantillas? @relation("AnexoIncidenciaPlantilla", fields: [AnexoIncidencias], references: [PlantillaId])
   anexoConciliacion     RepositorioPlantillas? @relation("AnexoConciliacionPlantilla", fields: [AnexoConciliacion], references: [PlantillaId])
   caratula              RepositorioPlantillas? @relation("CaratulaPlantilla", fields: [Caratula], references: [PlantillaId])
+  DocumentoContrato     DocumentoContrato[]
 }
 
 model TipoConciliacion {
@@ -255,45 +238,48 @@ model Contrato {
   MediadorId     Int
 
   FechaOperacion           DateTime?
-  TipoOperacion            String                @default("ALTA")
-  CCC                      String                @default("")
-  CodigoSolicitud          String                @default("")
-  CodigoPoliza             String                @default("")
+  TipoOperacion            String               @default("ALTA")
+  CCC                      String               @default("")
+  CodigoSolicitud          String               @default("")
+  CodigoPoliza             String               @default("")
   FechaEfecto              DateTime?
-  AnuladoSEfecto           Boolean?              @default(false)
-  Suplemento               Boolean               @default(false)
-  DNIAsegurado             String                @default("")
-  NombreAsegurado          String                @default("")
+  AnuladoSEfecto           Boolean?             @default(false)
+  Suplemento               Boolean              @default(false)
+  DNIAsegurado             String               @default("")
+  NombreAsegurado          String               @default("")
   FechaNacimientoAsegurado DateTime?
-  CSRespAfirmativas        Boolean               @default(false)
-  ProfesionAsegurado       String                @default("")
-  DeporteAsegurado         String                @default("")
-  DNITomador               String                @default("")
+  CSRespAfirmativas        Boolean              @default(false)
+  ProfesionAsegurado       String               @default("")
+  DeporteAsegurado         String               @default("")
+  DNITomador               String               @default("")
   FechaValidezDNITomador   DateTime?
-  NombreTomador            String                @default("")
-  Operador                 String                @default("")
-  IndicadorFDPRECON        Boolean?              @default(false)
-  TipoEnvioPRECON          String                @default("")
-  ResultadoFDPRECON        String                @default("")
+  NombreTomador            String               @default("")
+  Operador                 String               @default("")
+  IndicadorFDPRECON        Boolean?             @default(false)
+  TipoEnvioPRECON          String               @default("")
+  ResultadoFDPRECON        String               @default("")
   IndicadorFDCON           Boolean?
-  TipoEnvioCON             String                @default("")
-  ResultadoFDCON           String                @default("")
-  Revisar                  Boolean               @default(true)
-  Conciliar                Boolean               @default(true)
+  TipoEnvioCON             String               @default("")
+  ResultadoFDCON           String               @default("")
+  FechaGrabacion           DateTime?
+  Caja                     Int?
+  Lote                     Int?
+  Revisar                  Boolean              @default(true)
+  Conciliar                Boolean              @default(true)
   errores                  Json?
-  createdAt                DateTime              @default(now())
-  updatedAt                DateTime              @default(now()) @updatedAt
-  Compania                 Compania              @relation(fields: [CompaniaId], references: [CompaniaId])
-  Producto                 Producto              @relation(fields: [ProductoId], references: [ProductoId])
-  Mediador                 Mediador              @relation(fields: [MediadorId], references: [MediadorId])
-  TipoConciliacion         TipoConciliacion?     @relation(fields: [TipoConciliacionId], references: [tipoConciliacionId])
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @default(now()) @updatedAt
+  Compania                 Compania             @relation(fields: [CompaniaId], references: [CompaniaId])
+  Producto                 Producto             @relation(fields: [ProductoId], references: [ProductoId])
+  Mediador                 Mediador             @relation(fields: [MediadorId], references: [MediadorId])
+  TipoConciliacion         TipoConciliacion?    @relation(fields: [TipoConciliacionId], references: [tipoConciliacionId])
   TipoConciliacionId       Int?
   DetalleObservacion       DetalleObservacion[]
   DocumentoContrato        DocumentoContrato[]
   Reclamaciones            Reclamaciones[]
-  Activo                   Boolean?              @default(true)
-  IncidenciaDocumento      IncidenciaDocumento[]
+  Activo                   Boolean?             @default(true)
   HistorialContrato        HistorialContrato[]
+  NotaInterna              String?              @db.LongText
 }
 
 model HistorialContrato {
@@ -327,6 +313,10 @@ model HistorialContrato {
   errores                  Json?
   Activo                   Boolean?            @default(true)
   Contrato                 Contrato?           @relation(fields: [ContratoId], references: [ContratoId])
+  FechaGrabacion           DateTime?
+  Caja                     Int?
+  Lote                     Int?
+  NotaInterna              String?             @db.LongText
 }
 
 model NoProcesar {
@@ -440,22 +430,18 @@ model Anuladas {
 }
 
 model IncidenciaDocumento {
-  IncidenciaDocId    Int                  @id @default(autoincrement())
-  DocumentoId        Int
-  DocId              Int
-  IncidenciaId       Int
-  ContratoId         Int
-  UsuarioId          Int
-  createdAt          DateTime?            @default(now())
-  Resuelta           Boolean?             @default(false)
-  NumReclamaciones   Int?                 @default(0)
-  updatedAt          DateTime             @default(now()) @updatedAt
-  DocumentoContrato  DocumentoContrato    @relation(fields: [DocumentoId], references: [DocumentoId])
-  Usuario            Usuario              @relation(fields: [UsuarioId], references: [UsuarioId])
-  MaestroIncidencias MaestroIncidencias   @relation(fields: [IncidenciaId], references: [IncidenciaId])
-  Contrato           Contrato             @relation(fields: [ContratoId], references: [ContratoId])
-  MaestroDocumento   MaestroDocumentos    @relation(fields: [DocId], references: [DocumentoId])
-  DetalleObservacion DetalleObservacion[]
+  IncidenciaDocId     Int                  @id @default(autoincrement())
+  DocumentoContratoId Int
+  Incidencia          Int?
+  UsuarioId           Int
+  createdAt           DateTime?            @default(now())
+  Resuelta            Boolean?             @default(false)
+  NumReclamaciones    Int?                 @default(0)
+  updatedAt           DateTime             @default(now()) @updatedAt
+  DocumentoContrato   DocumentoContrato    @relation(fields: [DocumentoContratoId], references: [DocumentoId])
+  Usuario             Usuario              @relation(fields: [UsuarioId], references: [UsuarioId])
+  MaestroIncidencias  MaestroIncidencias?  @relation(fields: [Incidencia], references: [IncidenciaId])
+  DetalleObservacion  DetalleObservacion[]
 }
 
 model Reclamaciones {
@@ -515,6 +501,7 @@ enum ESTADO_CONTRATO {
   PENDIENTE_INCIDENCIA
   SIN_CONCILIAR
   TRAMITADA
+
   ANULADA
   DESECHADO
 }

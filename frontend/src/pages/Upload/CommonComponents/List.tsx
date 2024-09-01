@@ -105,12 +105,6 @@ const List = ({ tableName, endpoint, uploadType }: Props) => {
                columns={columns(handleCellClick) as ColumnDefinition[]}
                filter={filter}
                setFilter={setFilter}
-               onClickDetail={(row) => {
-                  setSelectedRow(row);
-
-                  setShowDetailModal(true);
-               }}
-               hasActions
             />
 
             <UploadDetailData
