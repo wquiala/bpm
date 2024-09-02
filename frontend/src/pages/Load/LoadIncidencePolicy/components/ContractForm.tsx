@@ -147,7 +147,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
          const contractDocuments = selectedContract?.DocumentoContrato;
 
          function createIncidence(incidence: any, document: any) {
-            console.log('Incidencia y documento' + incidence, document);
             const isIncidenceUnresolved =
                document.IncidenciaDocumento.find((inci: any) => inci.IncidenciaId === incidence.IncidenciaId)
                   ?.Resuelta === false;
@@ -163,18 +162,27 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
             const isConciliar = selectedContract.Conciliar === true;
 
             const present = isPresent || isConciliar;
+            const incidences = contractDocument.MaestroDocumentos.MaestroIncidencias.map((incidence: any) => {
+               /*                createIncidence(incidence.IncidenciaId, contractDocument.DocId);
+                */ return {
+                  IncidenciaId: incidence.IncidenciaId,
+                  DocAsociadoId: incidence.DocAsociadoId,
 
-            /*   const incidences = contractDocument.IncidenciaDocumento.map((incidence: any) => {
-               return createIncidence(incidence, contractDocument.DocId);
-            }); */
-            console.log(contractDocument.MaestroDocumentos.MaestroIncidencias);
+                  Codigo: incidence.Codigo,
+                  Nombre: incidence.Nombre,
+                  checked: contractDocument.IncidenciaDocumento.find(
+                     (inci: any) => inci.Incidencia == incidence.IncidenciaId,
+                  ),
+               };
+               /*                return createIncidence(incidence, contractDocument.DocId);
+                */
+            });
             docList.push({
                id: contractDocument.DocumentoId,
-               docTypeId: contractDocument.TipoDocId,
+               docTypeId: contractDocument.DocId,
                present: present,
                name: contractDocument.MaestroDocumentos.Nombre,
-               /*                incidences: incidences,
-                */
+               incidences: incidences,
             });
          }
 

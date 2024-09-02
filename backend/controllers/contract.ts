@@ -53,7 +53,11 @@ export const getContracts = async (req: Request, res: Response) => {
          },
          DocumentoContrato: {
             include: {
-               MaestroDocumentos: {},
+               MaestroDocumentos: {
+                  include: {
+                     MaestroIncidencias: true,
+                  },
+               },
                IncidenciaDocumento: {
                   include: {
                      MaestroIncidencias: true,

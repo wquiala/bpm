@@ -29,6 +29,13 @@ export const getContractDocuments = async (req: Request, res: Response) => {
               }
             : {}),
       },
+      include: {
+         MaestroDocumentos: {
+            include: {
+               MaestroIncidencias: true,
+            },
+         },
+      },
    });
 
    res.json(contracts);
@@ -216,6 +223,13 @@ export const getContractDocumentById = async (req: Request, res: Response) => {
       const contractDocument = await prismaClient.documentoContrato.findFirstOrThrow({
          where: {
             DocumentoId: parseInt(req.params.id),
+         },
+         include: {
+            MaestroDocumentos: {
+               include: {
+                  MaestroIncidencias: true,
+               },
+            },
          },
       });
 
