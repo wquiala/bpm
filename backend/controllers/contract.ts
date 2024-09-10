@@ -5,6 +5,7 @@ import { ErrorCode } from '../exceptions/root';
 import { InternalException } from '../exceptions/internal-exception';
 import { createContratoSchema, updateContratoSchema } from '../schema/contract';
 import { BadRequestsException } from '../exceptions/bad-requests';
+import { ContractDocumentStatusesEnum } from '../constants/ContractDocumentStatusesEnum';
 
 export const getContracts = async (req: Request, res: Response) => {
    const { company, policy, dni, secuencialDni, ccc, code, requestCode, operationType, reconcile } = req.query;
@@ -66,6 +67,8 @@ export const getContracts = async (req: Request, res: Response) => {
                ProductoDocumento: true,
             },
          },
+         Usuario: true,
+         CajaLote: true,
       },
       where: {
          ...(requestedCompany && requestedCompany.Codigo === 'UCV' && policy
@@ -208,7 +211,7 @@ export const updateContract = async (req: Request, res: Response) => {
    }
 
    const validatedData = updateContratoSchema.parse(req.body);
-   console.log(validatedData);
+
    try {
       compania = await prismaClient.compania.findFirstOrThrow({
          where: {
@@ -268,6 +271,7 @@ export const updateContract = async (req: Request, res: Response) => {
                   MediadorId: ,
                },
             }, */
+
             ...(validatedData as any),
          },
       });
@@ -284,6 +288,9 @@ export const getContractById = async (req: Request, res: Response) => {
       const contract = await prismaClient.contrato.findFirstOrThrow({
          where: {
             ContratoId: parseInt(req.params.id),
+         },
+         include: {
+            Usuario: true,
          },
       });
 

@@ -42,58 +42,65 @@ export const getContractDocuments = async (req: Request, res: Response) => {
 };
 
 export const createContractDocument = async (req: Request, res: Response) => {
-   /* const validatedData = createContratoDocumentoSchema.parse(req.body)
+   const validatedData = createContratoDocumentoSchema.parse(req.body);
 
-    try {
-        await prismaClient.contrato.findFirstOrThrow({
-            where: {
-                ContratoId: validatedData.ContratoId
-            }
-        })
-    } catch (error) {
-        throw new NotFoundException("Contract not found", ErrorCode.NOT_FOUND_EXCEPTION)
-    }
+   try {
+      await prismaClient.contrato.findFirstOrThrow({
+         where: {
+            ContratoId: validatedData.ContratoId,
+         },
+      });
+   } catch (error) {
+      throw new NotFoundException('Contract not found', ErrorCode.NOT_FOUND_EXCEPTION);
+   }
 
-    try {
-        const createdContractDocument = await prismaClient.documentoContrato.create({
-            data: {
-                Usuario: {
-                    connect: {
-                        //@ts-ignore
-                        UsuarioId: parseInt(req.user.UsuarioId)
-                    }
-                },
-                Contrato: {
-                    connect: {
-                        ContratoId: validatedData.ContratoId
-                    }
-                },
-                MaestroDocumentos: {
-                    connect: {
-                        TipoDocumentoId: validatedData.DocId
-                    }
-                },
-                EstadoDoc: ContractDocumentStatusesEnum.PENDING
-            }
-        })
-
-        await prismaClient.contrato.update({
-            where: {
-                ContratoId: validatedData.ContratoId
+   try {
+      const createdContractDocument = await prismaClient.documentoContrato.create({
+         data: {
+            Usuario: {
+               connect: {
+                  //@ts-ignore
+                  UsuarioId: parseInt(req.user.UsuarioId),
+               },
             },
-            data: {
-                FechaUltimaModif: new Date()
-            }
-        })
+            Contrato: {
+               connect: {
+                  ContratoId: validatedData.ContratoId,
+               },
+            },
+            MaestroDocumentos: {
+               connect: {
+                  DocumentoId: validatedData.DocId,
+               },
+            },
 
-        res.json(createdContractDocument);
-    } catch (error) {
-        throw new InternalException("Something went wrong!", error, ErrorCode.INTERNAL_EXCEPTION)
-    } */
+            EstadoDoc: ContractDocumentStatusesEnum.PENDING,
+            ProductoDocumento: {
+               connect: {
+                  ProductoDocId: validatedData.ProductoId,
+               },
+            },
+         },
+      });
+
+      await prismaClient.contrato.update({
+         where: {
+            ContratoId: validatedData.ContratoId,
+         },
+         data: {
+            updatedAt: new Date(),
+         },
+      });
+
+      res.json(createdContractDocument);
+   } catch (error) {
+      throw new InternalException('Something went wrong!', error, ErrorCode.INTERNAL_EXCEPTION);
+   }
 };
 
 export const updateContractDocument = async (req: Request, res: Response) => {
    //Validations
+   
    try {
       await prismaClient.documentoContrato.findFirstOrThrow({
          where: {
@@ -116,30 +123,27 @@ export const updateContractDocument = async (req: Request, res: Response) => {
    } catch (error) {
       throw new NotFoundException('Contract not found', ErrorCode.NOT_FOUND_EXCEPTION);
    }
-
+   const id = req.params.id;
+   console.log(id);
    //Update contract document
    try {
       const updatedContractDocument = await prismaClient.documentoContrato.update({
          where: {
-            DocumentoId: parseInt(req.params.id),
+            DocumentoId: Number(id),
          },
          data: {
             Usuario: {
                connect: {
                   //@ts-ignore
-                  UsuarioId: parseInt(req.user.UsuarioId),
+                  UsuarioId: parseInt(req.user.UsuarioId!),
                },
             },
             Contrato: {
                connect: {
-                  ContratoId: validatedData.ContratoId,
+                  ContratoId: validatedData.ContratoId!,
                },
             },
-            /*  MaestroDocumentos: {
-               connect: {
-                  DocumentoId: validatedData.DocId,
-               },
-            }, */
+
             ...(validatedData.Estado
                ? {
                     EstadoDoc: validatedData.Estado,
@@ -148,69 +152,82 @@ export const updateContractDocument = async (req: Request, res: Response) => {
 
             FechaConciliacion: new Date(),
          },
+         include: {
+            MaestroDocumentos: true,
+         },
       });
 
+      if (updatedContractDocument.MaestroDocumentos.Codigo == 'CP') {
+         const sol = await prismaClient.documentoContrato.findFirst({
+            where: {
+               ContratoId: updatedContractDocument.ContratoId,
+               DocId: 11,
+            },
+         });
+
+         if (sol) {
+            await prismaClient.documentoContrato.update({
+               where: {
+                  DocumentoId: sol?.DocumentoId,
+               },
+               data: {
+                  EstadoDoc: ContractDocumentStatusesEnum.PRESENT_CORRECT,
+                  FechaConciliacion: new Date(),
+                  Usuario: {
+                     connect: {
+                        //@ts-ignore
+                        UsuarioId: parseInt(req.user.UsuarioId),
+                     },
+                  },
+               },
+            });
+         }
+      }
+
+      if (updatedContractDocument.MaestroDocumentos.Codigo == 'SOL') {
+         const cp = await prismaClient.documentoContrato.findFirst({
+            where: {
+               ContratoId: updatedContractDocument.ContratoId,
+               DocId: 4,
+            },
+         });
+
+         if (cp) {
+            await prismaClient.documentoContrato.update({
+               where: {
+                  DocumentoId: cp.DocumentoId,
+               },
+               data: {
+                  EstadoDoc: ContractDocumentStatusesEnum.PRESENT_CORRECT,
+                  FechaConciliacion: new Date(),
+                  Usuario: {
+                     connect: {
+                        //@ts-ignore
+                        UsuarioId: parseInt(req.user.UsuarioId),
+                     },
+                  },
+               },
+            });
+         }
+      }
       //Check if the documentContract is correct
-      /*    const hasActiveIncidences = await prismaClient.incidenciaDocumento.findFirst({
+      const hasActiveIncidences = await prismaClient.incidenciaDocumento.findFirst({
          where: {
             DocumentoContratoId: updatedContractDocument.DocumentoId,
             Resuelta: false,
          },
-      }); */
+      });
 
-      /* if (!hasActiveIncidences) {
-         await prismaClient.documentoContrato.update({
+      if (hasActiveIncidences && validatedData.Estado == 'PRESENTE CORRECTO') {
+         await prismaClient.incidenciaDocumento.updateMany({
             where: {
-               DocumentoId: updatedContractDocument.DocumentoId,
+               DocumentoContratoId: updatedContractDocument.DocumentoId,
             },
             data: {
-               EstadoDoc:
-                  validatedData.Estado === ContractDocumentStatusesEnum.PENDING
-                     ? validatedData.Estado
-                     : ContractDocumentStatusesEnum.CORRECT,
-               FechaConciliacion: validatedData.Estado === ContractDocumentStatusesEnum.PENDING ? null : new Date(),
-            },
-         });
-      } else {
-         await prismaClient.documentoContrato.update({
-            where: {
-               DocumentoId: updatedContractDocument.DocumentoId,
-            },
-            data: {
-               FechaConciliacion: null,
+               Resuelta: true,
             },
          });
       }
- */
-      //Update contract last modification date or conciliation date depending if all are document conciliated
-      const hasNoConciliatedDocuments = await prismaClient.documentoContrato.findFirst({
-         where: {
-            ContratoId: validatedData.ContratoId,
-            FechaConciliacion: null,
-         },
-      });
-
-      const manualConciliation = await prismaClient.tipoConciliacion.findFirst({
-         where: {
-            nombre: 'MANUAL',
-         },
-      });
-
-      await prismaClient.contrato.update({
-         where: {
-            ContratoId: validatedData.ContratoId,
-         },
-         data: {
-            ...(hasNoConciliatedDocuments &&
-               manualConciliation && {
-                  TipoConciliacion: {
-                     connect: {
-                        tipoConciliacionId: manualConciliation.tipoConciliacionId,
-                     },
-                  },
-               }),
-         },
-      });
 
       res.json(updatedContractDocument);
    } catch (error) {
