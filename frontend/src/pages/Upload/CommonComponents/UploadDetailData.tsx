@@ -3,15 +3,18 @@ import ParentModal from '@/custom-components/Modals/ParentModal';
 import { useTranslation } from 'react-i18next';
 import ReactJson from 'react-json-view';
 import Papa from 'papaparse';
+import { reprocesarPolizas } from '@/helpers/FetchData/contracts';
+import { useEffect } from 'react';
 
 type Props = {
    show: boolean;
    selectedRow: any;
    setShow: (show: boolean) => void;
    select: string;
+   onRefresh: () => void;
 };
 
-const UploadDetailData = ({ show, setShow, selectedRow, select }: Props) => {
+const UploadDetailData = ({ show, setShow, selectedRow, select, onRefresh }: Props) => {
    let mostrar: any[] = [];
    let actualizados;
 
@@ -23,8 +26,11 @@ const UploadDetailData = ({ show, setShow, selectedRow, select }: Props) => {
       if (select == 'INCOMPLETO') {
          mostrar = JSON.parse(row).filter((r: any) => r['estado'] == 'INCOMPLETO');
       }
+      if (select == 'INCOMPLETO REVISAR') {
+         mostrar = JSON.parse(row).filter((r: any) => r['estado'] == 'INCOMPLETO REVISAR');
+      }
       if (select == 'DESECHADO') {
-         mostrar = JSON.parse(row).filter((r: any) => r['estado'] == 'DESECHADO');
+         mostrar = JSON.parse(row).filter((r: any) => r['estado'].includes('DESECHADO'));
       }
       if (select == 'ACTUALIZADO') {
          mostrar = JSON.parse(row).filter((r: any) => r['estado'] == 'ACTUALIZADO');
@@ -71,16 +77,32 @@ const UploadDetailData = ({ show, setShow, selectedRow, select }: Props) => {
       document.body.removeChild(link);
    };
 
+   const handleRecargar = async () => {
+      const dataP = mostrar.map((d: any) => {
+         const { errores, estado, ...rest } = d;
+         return rest;
+      });
+
+      await reprocesarPolizas(dataP);
+
+      setShow(false);
+      onRefresh();
+   };
+
+   /*    useEffect(() => {}, [third]);
+    */
    return (
       <ParentModal size="xl" title={`Detalles de la carga: `} show={show} setShow={setShow} hideFooter>
          <div className="flex flex-col gap-2">
             <div className="w-full flex justify-end sticky z-10 top-0 left-0">
                <Button variant="primary" className="mr-2 h-5 w-32  " onClick={handleDownload}>
-                  {/*  <CSVLink data={data} headers={header} filename="data.csv">
-                     Descargar CSV
-                  </CSVLink> */}
                   Descargar CSV
                </Button>
+               {select == 'INCOMPLETO REVISAR' && (
+                  <Button variant="primary" className="mr-2 h-5 w-32  " onClick={handleRecargar}>
+                     Re-Cargar
+                  </Button>
+               )}
             </div>
             <div className="flex w-full justify-center items-center">
                {mostrar ? <ReactJson src={mostrar} /> : null}

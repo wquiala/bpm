@@ -1,141 +1,150 @@
-import { Request, Response } from "express";
-import { prismaClient } from "../server";
-import { NotFoundException } from "../exceptions/not-found";
-import { ErrorCode } from "../exceptions/root";
-import { CompanyCreateSchema, CompanyUpdateSchema } from "../schema/company";
+import { Request, Response } from 'express';
+import { prismaClient } from '../server';
+import { NotFoundException } from '../exceptions/not-found';
+import { ErrorCode } from '../exceptions/root';
+import { CompanyCreateSchema, CompanyUpdateSchema } from '../schema/company';
 
 export const getCompanies = async (req: Request, res: Response) => {
-    const companies = await prismaClient.compania.findMany({})
+   const companies = await prismaClient.compania.findMany({});
 
-    res.json(companies)
-}
+   res.json(companies);
+};
 
 export const getCompaniesSimplified = async (req: Request, res: Response) => {
-    const companies = await prismaClient.compania.findMany({
-        select: {
-            CompaniaId: true,
-            Nombre: true,
-            Codigo: true
-        }
-    })
+   const companies = await prismaClient.compania.findMany({
+      select: {
+         CompaniaId: true,
+         Nombre: true,
+         Codigo: true,
+         Mediador: true,
+         Producto: {
+            include: {
+               ProductoTipoOperacion: {
+                  include: {
+                     ProductoDocumento: {
+                        include: { MaestroDocumento: true },
+                     },
+                  },
+               },
+            },
+         },
+      },
+   });
 
-    res.json(companies)
-}
+   res.json(companies);
+};
 
 export const createCompany = async (req: Request, res: Response) => {
+   const validatedData = CompanyCreateSchema.parse(req.body);
 
-    const validatedData = CompanyCreateSchema.parse(req.body)
+   if (validatedData.Codigo) {
+      const code = await prismaClient.compania.findFirst({
+         where: {
+            Codigo: validatedData.Codigo,
+         },
+      });
 
-    if (validatedData.Codigo) {
-        const code = await prismaClient.compania.findFirst({
-            where: {
-                Codigo: validatedData.Codigo
-            }
-        })
+      if (code) {
+         throw new NotFoundException('Code already in use', ErrorCode.COMPANY_CODE_ALREADY_IN_USE);
+      }
+   }
 
-        if (code) {
-            throw new NotFoundException("Code already in use", ErrorCode.COMPANY_CODE_ALREADY_IN_USE)
-        }
-    }
+   if (validatedData.Descripcion) {
+      const description = await prismaClient.compania.findFirst({
+         where: {
+            Descripcion: validatedData.Descripcion,
+         },
+      });
 
-    if (validatedData.Descripcion) {
-        const description = await prismaClient.compania.findFirst({
-            where: {
-                Descripcion: validatedData.Descripcion
-            }
-        })
+      if (description) {
+         throw new NotFoundException('Description already in use', ErrorCode.COMPANY_DESCRIPTION_ALREADY_IN_USE);
+      }
+   }
 
-        if (description) {
-            throw new NotFoundException("Description already in use", ErrorCode.COMPANY_DESCRIPTION_ALREADY_IN_USE)
-        }
-    }
+   const company = await prismaClient.compania.create({
+      data: validatedData as any,
+   });
 
-    const company = await prismaClient.compania.create({
-        data: validatedData as any
-    })
-
-    res.json(company);
-}
+   res.json(company);
+};
 
 export const updateCompany = async (req: Request, res: Response) => {
+   try {
+      await prismaClient.compania.findFirstOrThrow({
+         where: {
+            CompaniaId: parseInt(req.params.id),
+         },
+      });
+   } catch (error) {
+      throw new NotFoundException('Company not found', ErrorCode.COMPANY_NOT_FOUND);
+   }
 
-    try {
-        await prismaClient.compania.findFirstOrThrow({
-            where: {
-                CompaniaId: parseInt(req.params.id)
-            }
-        })
-    } catch (error) {
-        throw new NotFoundException("Company not found", ErrorCode.COMPANY_NOT_FOUND)
-    }
+   const validatedData = CompanyUpdateSchema.parse(req.body);
 
-    const validatedData = CompanyUpdateSchema.parse(req.body)
+   if (validatedData.Codigo) {
+      const code = await prismaClient.compania.findFirst({
+         where: {
+            Codigo: validatedData.Codigo,
+         },
+      });
 
-    if (validatedData.Codigo) {
-        const code = await prismaClient.compania.findFirst({
-            where: {
-                Codigo: validatedData.Codigo
-            }
-        })
+      if (code && code.CompaniaId !== parseInt(req.params.id)) {
+         throw new NotFoundException('Code already in use', ErrorCode.COMPANY_CODE_ALREADY_IN_USE);
+      }
+   }
 
-        if (code && code.CompaniaId !== parseInt(req.params.id)) {
-            throw new NotFoundException("Code already in use", ErrorCode.COMPANY_CODE_ALREADY_IN_USE)
-        }
-    }
+   if (validatedData.Descripcion) {
+      const description = await prismaClient.compania.findFirst({
+         where: {
+            Descripcion: validatedData.Descripcion,
+         },
+      });
 
-    if (validatedData.Descripcion) {
-        const description = await prismaClient.compania.findFirst({
-            where: {
-                Descripcion: validatedData.Descripcion
-            }
-        })
+      if (description) {
+         throw new NotFoundException('Description already in use', ErrorCode.COMPANY_DESCRIPTION_ALREADY_IN_USE);
+      }
+   }
 
-        if (description) {
-            throw new NotFoundException("Description already in use", ErrorCode.COMPANY_DESCRIPTION_ALREADY_IN_USE)
-        }
-    }
+   const updatedCompany = await prismaClient.compania.update({
+      where: {
+         CompaniaId: parseInt(req.params.id),
+      },
+      data: { ...(validatedData as any), FechaUltimaModif: new Date() },
+   });
 
-    const updatedCompany = await prismaClient.compania.update({
-        where: {
-            CompaniaId: parseInt(req.params.id)
-        },
-        data: { ...validatedData as any, FechaUltimaModif: new Date() }
-    })
-
-    res.json(updatedCompany)
-}
+   res.json(updatedCompany);
+};
 
 export const getCompanyById = async (req: Request, res: Response) => {
-    try {
-        const company = await prismaClient.compania.findFirstOrThrow({
-            where: {
-                CompaniaId: parseInt(req.params.id)
-            }
-        })
+   try {
+      const company = await prismaClient.compania.findFirstOrThrow({
+         where: {
+            CompaniaId: parseInt(req.params.id),
+         },
+      });
 
-        res.json(company);
-    } catch (error) {
-        throw new NotFoundException("Compañía not found", ErrorCode.COMPANY_NOT_FOUND);
-    }
-}
+      res.json(company);
+   } catch (error) {
+      throw new NotFoundException('Compañía not found', ErrorCode.COMPANY_NOT_FOUND);
+   }
+};
 
 export const deleteCompany = async (req: Request, res: Response) => {
+   try {
+      await prismaClient.compania.findFirstOrThrow({
+         where: {
+            CompaniaId: parseInt(req.params.id),
+         },
+      });
+   } catch (error) {
+      throw new NotFoundException('Compañía not found', ErrorCode.COMPANY_NOT_FOUND);
+   }
 
-    try {
-        await prismaClient.compania.findFirstOrThrow({
-            where: {
-                CompaniaId: parseInt(req.params.id)
-            }
-        })
-    } catch (error) {
-        throw new NotFoundException("Compañía not found", ErrorCode.COMPANY_NOT_FOUND)
-    }
+   await prismaClient.compania.delete({
+      where: {
+         CompaniaId: parseInt(req.params.id),
+      },
+   });
 
-    await prismaClient.compania.delete({
-        where: {
-            CompaniaId: parseInt(req.params.id)
-        }
-    })
-
-    res.json({ message: "deleted" });
-}
+   res.json({ message: 'deleted' });
+};

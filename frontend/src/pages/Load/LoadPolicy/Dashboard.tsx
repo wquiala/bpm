@@ -56,7 +56,6 @@ function Main() {
       const params = {
          company: company.CompaniaId,
          ...data,
-         prueba: 'esto es una prueba de la data',
       };
 
       await getContracts(params);

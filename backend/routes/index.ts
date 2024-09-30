@@ -11,6 +11,9 @@ import contractDocumentRoutes from './contractDocument';
 import incidenceDocumentRoutes from './incidenceDocument';
 import familyDocumentRoutes from './familyDocument';
 import TypeConciliationRoutes from './typeConciliation';
+import cajaLoteRoutes from './cajaLotes';
+import comunicationsRouter from './comunications';
+import digitalSignatureRouter from './digitalSignature';
 
 const rootRouter: Router = Router();
 
@@ -19,6 +22,8 @@ rootRouter.use('/users', userRoutes);
 rootRouter.use('/load', loadRoutes);
 
 rootRouter.use('/companies', companyRoutes);
+rootRouter.use('/caja-lote', cajaLoteRoutes);
+
 rootRouter.use('/mediators', mediatorRoutes);
 rootRouter.use('/branches', branchRoutes);
 rootRouter.use('/contracts', contractRoutes);
@@ -27,5 +32,7 @@ rootRouter.use('/contract-documents', contractDocumentRoutes);
 rootRouter.use('/incidence-documents', incidenceDocumentRoutes);
 rootRouter.use('/family-documents', familyDocumentRoutes);
 rootRouter.use('/type-conciliations', TypeConciliationRoutes);
+rootRouter.use('/comunications', comunicationsRouter);
+rootRouter.use('/digital-signature', digitalSignatureRouter);
 
 export default rootRouter;

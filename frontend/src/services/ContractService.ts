@@ -5,7 +5,6 @@ const baseUrl = '/contracts';
 export default {
    getContracts(params: any) {
       return api.get(`${baseUrl}`, params);
-      console.log(params);
    },
    getContractById(id: string) {
       return api.get(`${baseUrl}/${id}`);
@@ -18,5 +17,9 @@ export default {
    },
    deleteContract(id: any) {
       return api.delete(`${baseUrl}/${id}`);
+   },
+
+   getIncompletos() {
+      return api.get(`${baseUrl}/incompletos`);
    },
 };

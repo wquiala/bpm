@@ -2,39 +2,36 @@ import { z } from 'zod';
 
 // Zod schema for creating a Contrato
 export const createContratoSchema = z.object({
+   ClaveOperacion: z.string(),
+
+   EstadoContrato: z.string(),
    CompaniaId: z.number(),
    ProductoId: z.number(),
    MediadorId: z.number(),
-   AnuladoSE: z.boolean(),
-   CSRespAfirm: z.boolean(),
-   FechaNacimientoAsegurado: z.string().datetime().optional(),
+   AnuladoSE: z.boolean().optional(),
+   /*    CSRespAfirm: z.boolean(),
+    */ FechaNacimientoAsegurado: z.string().datetime().optional().nullable(),
    Revisar: z.boolean(),
    Conciliar: z.boolean(),
    /*    NoDigitalizar: z.boolean(),
     */ // Optional fields
-   TipoConciliacionId: z.number().optional(),
-   Activo: z.boolean().optional(),
-   FechaOperacion: z.string().datetime().optional(),
-   FechaEfecto: z.string().datetime().optional(),
+   TipoConciliacionId: z.number().optional().nullable(),
+   FechaOperacion: z.string().datetime().optional().nullable(),
+   FechaEfecto: z.string().datetime().optional().nullable(),
    CCC: z.string().optional(),
    CodigoSolicitud: z.string().optional(),
    CodigoPoliza: z.string().optional(),
    DNITomador: z.string().optional(),
    NombreTomador: z.string().optional(),
-   FechaDNITomador: z.string().datetime().optional(),
+   FechaDNITomador: z.string().datetime().optional().nullable(),
    DNIAsegurado: z.string().optional(),
    NombreAsegurado: z.string().optional(),
    ProfesionAsegurado: z.string().optional(),
    DeporteAsegurado: z.string().optional(),
-   IndicadorFDPRECON: z.boolean().optional(),
-   TipoEnvioFDPRECON: z.string().optional(),
-   ResultadoFDPRECON: z.string().optional(),
-   IndicadorFDCON: z.boolean().optional(),
-   TipoEnvioFDCON: z.string().optional(),
-   ResultadoFDCON: z.string().optional(),
-   Suplemento: z.boolean().optional(),
    FechaConciliacion: z.string().datetime().optional(),
    FechaUltimaModif: z.string().datetime().optional(),
+   NumeroReclamaciones: z.number().optional(),
+   FechaProximaReclamacion: z.string().datetime().optional(),
 });
 
 // Zod schema for updating a Contrato
@@ -49,7 +46,7 @@ export const updateContratoSchema = z.object({
    /*    NoDigitalizar: z.boolean().optional(),
     */ // Optional fields
    MediadorId: z.number().optional(),
-   TipoConciliacionId: z.number().optional(),
+   TipoConciliacionId: z.number().optional().nullable(),
    Activo: z.boolean().optional(),
    FechaOperacion: z.string().datetime().optional(),
    FechaEfecto: z.string().datetime().optional(),
@@ -73,7 +70,9 @@ export const updateContratoSchema = z.object({
    FechaConciliacion: z.string().datetime().optional(),
    FechaGrabacion: z.string().optional(),
    EstadoContrato: z.string().optional(),
-   Caja: z.number().optional(),
-   Lote: z.number().optional(),
+
    NotaInterna: z.string().optional(),
+   updatedAt: z.string().optional(),
+   FechaProximaReclamacion: z.string().optional(),
+   NumeroReclamaciones: z.number().optional(),
 });

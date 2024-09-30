@@ -6,21 +6,21 @@ export interface Contrato {
    Mediador?: number;
    EstadoContrato?: ESTADO_CONTRATO | null;
    ClaveOperacion?: string;
-   FechaOperacion?: Date;
+   FechaOperacion?: string | null;
    CCC?: string | null;
    CodigoSolicitud?: string | null;
    CodigoPoliza?: string | null;
-   FechaEfecto?: Date | null;
+   FechaEfecto?: string | null;
    AnuladoSEfecto?: boolean;
    DNIAsegurado?: string;
    NombreAsegurado?: string;
-   FechaNacimientoAsegurado?: Date | null;
+   FechaNacimientoAsegurado?: string | null;
    CSRespAfirmativas?: boolean;
    ProfesionAsegurado?: string;
    DeporteAsegurado?: string;
    DNITomador?: string;
    NombreTomador?: string;
-   FechaValidezDNITomador?: Date | null;
+   FechaValidezDNITomador?: string | null;
    Operador?: string | null;
    IndicadorFDPRECON?: boolean;
    TipoEnvioPRECON?: string;
@@ -69,18 +69,18 @@ export interface ContractUpdate {
    CompaniaId?: number;
    ProductoId?: number;
    ClaveOperacion?: string;
-   FechaOperacion?: Date | null;
+   FechaOperacion?: string | null | Date;
    CodigoPoliza?: string;
-   FechaEfecto?: Date | null;
+   FechaEfecto?: string | null | Date;
    AnuladoSEfecto?: boolean;
    DNIAsegurado?: string;
    NombreAsegurado?: string;
-   FechaNacimientoAsegurado?: Date | null;
+   FechaNacimientoAsegurado?: string | null | Date;
    CSRespAfirmativas?: boolean | null;
    ProfesionAsegurado?: string;
    DeporteAsegurado?: string;
    DNITomador?: string;
-   FechaValidezDNITomador?: Date | null;
+   FechaValidezDNITomador?: string | null | Date;
    NombreTomador?: string;
    MediadorId?: number;
    Operador?: string;
@@ -92,6 +92,10 @@ export interface ContractUpdate {
    ResultadoFDCON?: string;
    Revisar?: boolean;
    Conciliar?: boolean;
+   NumeroReclamaciones?: number;
+   FechaProximaReclamacion?: string | null | Date;
+   FechaReclamacion?: string | null | Date;
+
    errores?: string;
 }
 
@@ -142,35 +146,39 @@ export interface ErroresContrato {
 }
 
 export interface RecordDiaria {
-   compania?: string;
-   producto?: string;
-   fechaOperacion?: string;
-   tipoOperacion?: string;
-   ccc: string;
-   codigoSolicitud: string;
-   polizaContrato: string | undefined;
-   fechaEfecto?: Date;
-   anulaSE?: string | boolean;
-   suplemento?: string;
-   dniAsegurado?: string;
-   nombreAsegurado?: string;
-   fechaNacimiento?: string;
-   csResAfirm?: string;
-   profesion?: string;
-   deporte?: string;
-   dniTomador?: string;
-   fechaValidezDniT?: string;
-   nombreTomador?: string;
-   mediador?: string;
-   operador?: string;
-   indicadorPrecon?: string;
-   tipoEnvioPrecon?: string;
-   resultadoPrecon?: string;
-   indicadorCon?: string;
-   tipoEnvioC?: string;
-   resultadoCon?: string;
-   revisar?: string;
-   conciliar?: string;
+   Compania?: string;
+   Producto?: string;
+   FechaOperacion?: string | null;
+   TipoOperacion?: string;
+   CCC: string;
+   CodigoSolicitud: string;
+   CodigoPoliza: string | undefined;
+   FechaEfecto?: string | null;
+   AnuladoSEfecto?: string | null;
+   Suplemento?: string;
+   DNIAsegurado?: string;
+   NombreAsegurado?: string;
+   FechaNacimientoAsegurado?: string | null;
+   CSRespAfirmativas?: string;
+   ProfesionAsegurado?: string;
+   DeporteAsegurado?: string;
+   DNITomador?: string;
+   FechaValidezDNITomador?: string | null;
+   NombreTomador?: string;
+   Mediador?: string;
+   Operador?: string;
+   IndicadorFDPRECON?: string;
+   TipoEnvioPRECON?: string;
+   ResultadoFDPRECON?: string;
+   IndicadorFDCON?: string;
+   TipoEnvioCON?: string;
+   ResultadoFDCON?: string;
+   Revisar?: string;
+   Conciliar?: string;
+}
+
+export interface NoProcesarInterface extends RecordDiaria {
+   MotivoDesechado: string;
 }
 
 export interface TabletaRecord {

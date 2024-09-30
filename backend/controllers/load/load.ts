@@ -33,7 +33,7 @@ export const getLoadLogs = async (req: Request, res: Response) => {
 };
 
 export const importData = async (req: Request, res: Response) => {
-   if (!req.file) {
+   if (!req.file && req.body.type != 'reload') {
       throw new BadRequestsException('File is required', ErrorCode.BAD_REQUEST_EXCEPTION);
    }
 
@@ -42,13 +42,14 @@ export const importData = async (req: Request, res: Response) => {
    }
 
    let records: any[] = [];
-   if (req.file.mimetype === 'text/csv' || req.file.mimetype === 'text/plain') {
-      records = await parseCsv(req.file);
-   } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-      records = await parseExcel(req.file);
-   } else {
-      throw new Error('Unsupported file format');
-   }
+   if (req.file)
+      if (req.file.mimetype === 'text/csv' || req.file.mimetype === 'text/plain') {
+         records = await parseCsv(req.file);
+      } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+         records = await parseExcel(req.file);
+      } else {
+         throw new Error('Unsupported file format');
+      }
 
    //@ts-ignore
    const user = req.user;
@@ -56,8 +57,51 @@ export const importData = async (req: Request, res: Response) => {
    let result = null;
    switch (req.body.type) {
       case 'policy': {
-         processedData = await processPolicyData(records, user);
-         const { Actualizados, Insertados, TotalRegistros, Desechados, conError, details } = processedData;
+         const contracts: RecordDiaria[] = records.map((d) => {
+            return {
+               Compania: d['COMPAÑÍA'],
+               Producto: d['PRODUCTO'],
+               Mediador: d['MEDIADOR'],
+               Operador: d['OPERADOR'],
+
+               CCC: d['CCC'],
+               CodigoSolicitud: d['CODIGO SOLICITUD'],
+               CodigoPoliza: d['POLIZA_CONTRATO'],
+
+               TipoOperacion: d['TIPO DE OPERACIÓN'],
+
+               AnuladoSEfecto: d['ANULADO SIN EFECTO'],
+
+               DNIAsegurado: d['ID_ASEGURADO'],
+               NombreAsegurado: d['NOMBRE ASEGURADO'],
+               FechaNacimientoAsegurado: d['FECHA DE NACIMIENTO'],
+               DeporteAsegurado: d['DEPORTE'],
+               ProfesionAsegurado: d['PROFESION'],
+
+               DNITomador: d['ID_TOMADOR_PARTICIPE'],
+               NombreTomador: d['NOMBRE TOMADOR_PARTICIPE'],
+               FechaValidezDNITomador: d['FECHA VALIDEZ IDENTIDAD TOMADOR'],
+
+               FechaEfecto: d['FECHA EFECTO'],
+               FechaOperacion: d['FECHA DE OPERACIÓN'],
+
+               CSRespAfirmativas: d['CS CON RESPUESTAS AFIRMATIVAS'],
+
+               IndicadorFDPRECON: d['INDICADOR FIRMA DIGITAL PRECON'],
+               TipoEnvioPRECON: d['TIPO DE ENVÍO PRECON'],
+               ResultadoFDPRECON: d['RESULTADO FIRMA DIGITAL PRECON'],
+
+               IndicadorFDCON: d['INDICADOR FIRMA DIGITAL CON'],
+               TipoEnvioCON: d['TIPO DE ENVÍO CON'],
+               ResultadoFDCON: d['RESULTADO FIRMA DIGITAL CON'],
+
+               Suplemento: d['SUPLEMENTO'],
+               Revisar: d['REVISAR'],
+               Conciliar: d['CONCILIAR'],
+            };
+         });
+         processedData = await processPolicyData(contracts, user);
+         const { Actualizados, Insertados, TotalRegistros, Desechados, conError, details, revisarCont } = processedData;
          const policyLogAction = await prismaClient.logAccion.create({
             data: {
                Accion: 'CARGA',
@@ -68,6 +112,7 @@ export const importData = async (req: Request, res: Response) => {
          result = await prismaClient.logCarga.create({
             data: {
                TotalRegistros,
+               revisarCont,
                Actualizados,
                Insertados,
                ConError: conError,
@@ -138,6 +183,66 @@ export const importData = async (req: Request, res: Response) => {
                      LogId: tabletLogAction.LogId,
                   },
                },
+            },
+         });
+         break;
+      }
+
+      case 'reload': {
+         console.log(req.body);
+         processedData = await processPolicyData(req.body.data, user);
+         const { Actualizados, Insertados, TotalRegistros, Desechados, conError, details, revisarCont } = processedData;
+         const policyLogAction = await prismaClient.logAccion.create({
+            data: {
+               Accion: 'RELOAD',
+               Usuario: { connect: { UsuarioId: user.UsuarioId } },
+            },
+         });
+
+         result = await prismaClient.logCarga.create({
+            data: {
+               TotalRegistros,
+               revisarCont,
+               Actualizados,
+               Insertados,
+               ConError: conError,
+               Desechados,
+               Tipo: 'POLIZA',
+               LogAccion: { connect: { LogId: policyLogAction.LogId } },
+               Details: JSON.stringify(details),
+            },
+         });
+
+         break;
+      }
+      case 'digitalSignature': {
+         const { RegistrosError, actualizados, noactualizados, totalRegistros, details } =
+            await processDigitalSignatureData(records, user);
+
+         const digitalSignatureLogAction = await prismaClient.logAccion.create({
+            data: {
+               Accion: 'UPDATE_CARGA',
+
+               Usuario: {
+                  connect: {
+                     UsuarioId: user.UsuarioId,
+                  },
+               },
+            },
+         });
+
+         result = await prismaClient.logCarga.create({
+            data: {
+               Tipo: 'DIGITAL',
+               LogAccion: {
+                  connect: {
+                     LogId: digitalSignatureLogAction.LogId,
+                  },
+               },
+               Actualizados: actualizados,
+               ConError: RegistrosError,
+               TotalRegistros: totalRegistros,
+               Details: JSON.stringify(details),
             },
          });
          break;

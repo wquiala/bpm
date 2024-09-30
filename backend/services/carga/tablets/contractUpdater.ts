@@ -1,4 +1,4 @@
-import { OPERACION_CONTRATO, Usuario } from '@prisma/client';
+import { ESTADO_CONTRATO, OPERACION_CONTRATO, Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import { ContractDocumentStatusesEnum } from '../../../constants/ContractDocumentStatusesEnum';
 import { tabletsCreator } from './tabletsCreator';
@@ -79,11 +79,11 @@ const updateContractStatus = async (
          ResultadoFDCON: record['SITUACION_FIRMA'],
          EstadoContrato: 'TRAMITADA',
          Conciliar: false,
-         /*  Usuario: {
-                        connect: {
-                              UsuarioId: systemUser?.UsuarioId,
-                        },
-                  }, */
+         Usuario: {
+            connect: {
+               UsuarioId: systemUser?.UsuarioId,
+            },
+         },
       },
    });
 };
@@ -113,12 +113,12 @@ const checkAndUpdateContractStatus = async (contract: any, conciliationType: any
          CCC,
          Activo,
          ClaveOperacion,
-         EstadoContrato,
          CodigoPoliza,
          MediadorId,
          TipoOperacion,
          updatedAt,
          TipoConciliacionId,
+         UsuarioId,
          ...data
       } = updated;
       const dataH: ContractHistoryData = data;
@@ -126,8 +126,7 @@ const checkAndUpdateContractStatus = async (contract: any, conciliationType: any
       await createContractHistory({
          ...data,
          Operacion: OPERACION_CONTRATO.ACTUALIZADO,
-         /*          EstadoContrato: ESTADO_CONTRATO.PENDIENTE_INCIDENCIA,
-          */
+         EstadoContrato: ESTADO_CONTRATO.TRAMITADA,
       });
    }
 };
@@ -142,23 +141,32 @@ export const contractUpdater = async (
    let conError = 0;
    let hasError;
    let updated;
+   //Revisar hay detalles que tener en cuentas
    if (
       record['CODIGO_INTERNO_FORMULARIO'] === 'SOL' ||
       record['CODIGO_INTERNO_FORMULARIO'] === 'SEPA' ||
       record['CODIGO_INTERNO_FORMULARIO'] === 'CP' ||
       record['CODIGO_INTERNO_FORMULARIO'] === 'CS' ||
-      (record['CODIGO_INTERNO_FORMULARIO'] === 'PDFD' && record['DESC_OPERACION'] === 'Alta') ||
+      (record['CODIGO_INTERNO_FORMULARIO'] == 'PDFD' && record['DESC_OPERACION'] == 'Alta') ||
       (record['CODIGO_INTERNO_FORMULARIO'] === 'PDFD' && record['DESC_OPERACION'] === 'Solicitud') ||
-      (record['CODIGO_INTERNO_FORMULARIO'] === 'PDFD' && record['*cuestio*']) ||
-      (record['CODIGO_INTERNO_FORMULARIO'] === 'PDUR' && record['Alta']) ||
-      (record['CODIGO_INTERNO_FORMULARIO'] === 'PDUR' && record['Solicitud']) ||
-      (record['CODIGO_INTERNO_FORMULARIO'] === 'PDUR' && record['*cuestio*']) ||
+      (record['CODIGO_INTERNO_FORMULARIO'] === 'PDFD' && record['DESC_OPERACION'] == 'Alta - Cuestionario de salud') ||
       record['FECHA_FIRMA'] ||
       record['CONCILIAR'] === '1'
    ) {
       const contract = await fetchContract(record['CCC']);
-      const codigoForm = record['CODIGO_INTERNO_FORMULARIO'];
-
+      let codigoForm = record['CODIGO_INTERNO_FORMULARIO'];
+      if (
+         (record['CODIGO_INTERNO_FORMULARIO'] == 'PDFD' && record['DESC_OPERACION'] == 'Alta') ||
+         (record['CODIGO_INTERNO_FORMULARIO'] == 'PDFD' && record['DESC_OPERACION'] == 'Solicitud')
+      ) {
+         codigoForm = 'CP';
+      }
+      if (
+         record['CODIGO_INTERNO_FORMULARIO'] === 'PDFD' &&
+         record['DESC_OPERACION'] == 'Alta - Cuestionario de salud'
+      ) {
+         codigoForm = 'CS';
+      }
       const conciliationType = await fetchConciliationType('Por Fichero Tableta (CCC)');
       await tabletsCreator(record, true, err);
       let a = 0;
@@ -214,28 +222,7 @@ export const contractUpdater = async (
                         },
                      });
                   }
-                  if (codigoForm == 'CS') {
-                     const cp = await prismaClient.documentoContrato.findFirst({
-                        where: {
-                           ContratoId: contract.ContratoId,
-                           DocId: 4,
-                        },
-                     });
-                     await prismaClient.documentoContrato.update({
-                        where: {
-                           DocumentoId: cp?.DocumentoId,
-                        },
-                        data: {
-                           EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
-                           FechaConciliacion: new Date(),
-                           Usuario: {
-                              connect: {
-                                 UsuarioId: systemUser?.UsuarioId,
-                              },
-                           },
-                        },
-                     });
-                  }
+
                   updated = true;
                   details.push({
                      ...record,
@@ -251,10 +238,9 @@ export const contractUpdater = async (
          const cant = await prismaClient.documentoContrato.findMany({
             where: {
                ContratoId: contract.ContratoId,
-               EstadoDoc: 'CORRECT',
+               EstadoDoc: 'CORRECTO',
             },
          });
-         console.log(contract.DocumentoContrato.length);
          if (cant.length == contract.DocumentoContrato.length) {
             const updated = await checkAndUpdateContractStatus(contract, conciliationType, record, systemUser);
          }

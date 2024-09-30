@@ -1,5 +1,5 @@
 import Button from '@/components/Base/Button';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import TableFilters from './TableFilters';
 import Table from '@/custom-components/Table/Table';
@@ -8,6 +8,7 @@ import { ColumnDefinition } from 'tabulator-tables';
 import UploadDetail from './UploadDetail';
 import UploadFile from './UploadFile';
 import UploadDetailData from './UploadDetailData';
+import IncompletosComponent from './Incompletos';
 
 type Props = {
    tableName: string;
@@ -19,6 +20,8 @@ const List = ({ tableName, endpoint, uploadType }: Props) => {
    const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
    const [showDetailModalData, setShowDetailModalData] = useState<boolean>(false);
    const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
+   const [showIncompletosModal, setShowIncompletosModal] = useState<boolean>(false);
+
    const [selectedField, setSelectedField] = useState<string>('');
 
    const [selectedRow, setSelectedRow] = useState<any>(null);
@@ -98,6 +101,19 @@ const List = ({ tableName, endpoint, uploadType }: Props) => {
                onExportXlsx={onExportXlsx}
                onExportHtml={onExportHtml}
             />
+            {uploadType == 'policy' && (
+               <div className="flex w-full mt-4 sm:w-auto sm:mt-4 justify-end">
+                  <Button
+                     variant="primary"
+                     className="mr-2 shadow-md"
+                     onClick={() => {
+                        setShowIncompletosModal(true);
+                     }}
+                  >
+                     Re-cargar contratos incompletos
+                  </Button>
+               </div>
+            )}
             <Table
                ref={table}
                tableName={tableName}
@@ -112,6 +128,20 @@ const List = ({ tableName, endpoint, uploadType }: Props) => {
                setShow={setShowDetailModalData}
                selectedRow={selectedRow}
                select={selectedField}
+               onRefresh={() => {
+                  //@ts-ignore
+                  table.current?.refetchData();
+               }}
+            />
+            <IncompletosComponent
+               show={showIncompletosModal}
+               setShow={setShowIncompletosModal}
+               selectedRow={selectedRow}
+               select={selectedField}
+               onRefresh={() => {
+                  //@ts-ignore
+                  table.current?.refetchData();
+               }}
             />
 
             <UploadFile

@@ -20,9 +20,13 @@ import UploadAnuladas from '../pages/Upload/Anuladas/AnuladasList';
 
 import LoadPolicy from '../pages/Load/LoadPolicy/Dashboard';
 import LoadIncidencePolicy from '../pages/Load/LoadIncidencePolicy/Dashboard';
+import AltaManual from '../pages/Load/AltaManual/Dashboard';
 
 import Layout from '../themes';
 import Protected from './middlewares/protected';
+import Revisar from '@/pages/Comunications/Revisar/Revisar';
+import ToSend from '@/pages/Comunications/porEnviar/ToSend';
+import Sent from '@/pages/Comunications/Sents/Sent';
 
 function Router() {
    const routes = [
@@ -115,10 +119,35 @@ function Router() {
                ),
             },
             {
-               path: 'upload-tablet',
+               path: 'alta-manual',
                element: (
                   <Protected permissions={['ADMIN', 'MONITOR', 'BASE']}>
-                     <UploadTablet />
+                     <AltaManual />
+                  </Protected>
+               ),
+            },
+            //Comunications
+            {
+               path: 'por-enviar',
+               element: (
+                  <Protected permissions={['ADMIN', 'MONITOR', 'BASE']}>
+                     <ToSend />
+                  </Protected>
+               ),
+            },
+            {
+               path: 'enviadas',
+               element: (
+                  <Protected permissions={['ADMIN', 'MONITOR', 'BASE']}>
+                     <Sent />
+                  </Protected>
+               ),
+            },
+            {
+               path: 'revisar-envio',
+               element: (
+                  <Protected permissions={['ADMIN', 'MONITOR', 'BASE']}>
+                     <Revisar />
                   </Protected>
                ),
             },

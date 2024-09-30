@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { TabletaRecord } from '../../../interfaces/contractsInterfaces';
 import { prismaClient } from '../../../server';
+import { parserDate } from '../../../helpers/time';
 
 export const tabletsCreator = async (record: any, actualizado: boolean, err: { [key: string]: string }) => {
    return await prismaClient.tableta.create({
@@ -13,7 +14,7 @@ export const tabletsCreator = async (record: any, actualizado: boolean, err: { [
          CodigoModalidad: record.CODIGO_MODALIDAD,
          CodigoPoliza: record.CODIGO_POLIZA,
          CodigoSolicitud: record.CODIGO_SOLICITUD,
-         FechaGrabacion: new Date(moment(record.FECHA_GRABACION, 'MM/DD/YYYY', true).toISOString()),
+         FechaGrabacion: new Date(),
          DNIAsegurado: record.NUM_IDENTIFICACION_ASE,
          NombreAsegurado: record.NOMBRE_ASE,
          NumIdentificacionTo: record.NUM_IDENTIFICACION_TO,
@@ -23,14 +24,14 @@ export const tabletsCreator = async (record: any, actualizado: boolean, err: { [
          CodigoSubmediador: record.CODIGO_SUBMEDIADOR,
          NombreSubMediador: record.NOMBRE_SUBMEDIADOR,
          CCC: record.CCC,
-         FechaOperacion: new Date(moment(record.FECHA_OPERACION, 'MM/DD/YYYY', true).toISOString()),
-         FechaActualizacion: new Date(moment(record.FECHA_ACTUALIZACION, 'MM/DD/YYYY', true).toISOString()),
+         FechaOperacion: new Date(),
+         FechaActualizacion: new Date(),
          DescOperacion: record.DESC_OPERACION,
          TipoRegistro: record.TIPO_REGISTRO,
          CodigoInternoFormulario: record.CODIGO_INTERNO_FORMULARIO,
          DescFormulario: record.DESC_FORMULARIO,
          TipoFirma: record.TIPO_FIRMA,
-         FechaFirma: new Date(moment(record.FECHA_FIRMA, 'MM/DD/YYYY', true).toISOString()),
+         FechaFirma: new Date(),
          SituacionFirma: record.SITUACION_FIRMA,
          CanalMediador: record.CANAL_MEDIADOR,
          CanalRecepcionFirma: record.CANAL_RECEPCION_FIRMA,
@@ -40,8 +41,8 @@ export const tabletsCreator = async (record: any, actualizado: boolean, err: { [
          Conciliar: record['CONCILIAR'] === '1',
          FormularioPrincipal: record['FORMULARIO_PRINCIPAL'] === '1',
          Observaciones: record.OBSERVACIONES,
-         FechaGeneracion: new Date(moment(record.FECHA_GENERACION, 'MM/DD/YYYY', true).toISOString()),
-         FechaCarga: new Date(moment(record.FECHA_CARGA, 'MM/DD/YYYY', true).toISOString()),
+         FechaGeneracion: new Date(),
+         FechaCarga: new Date(),
          Actualiazado: actualizado,
          errores: err,
       },

@@ -14,13 +14,11 @@ export const contractUpdater = async (
 ) => {
    let updated;
 
-   if (
-      record['RESULTADO'].includes('acept')
-      /*  record['RESULTADO'] === 'Todos los usuarios del grupo han aceptado el proceso' */
-   ) {
+   if (record['RESULTADO'].includes('acept')) {
       const contract = await prismaClient.contrato.findFirst({
          where: {
             CodigoPoliza: record['NUM_POLIZA'],
+            NOT: { EstadoContrato: 'TRAMITADA' },
          },
          include: {
             DocumentoContrato: {
@@ -39,7 +37,6 @@ export const contractUpdater = async (
       });
 
       if (contract && conciliationType) {
-         await digitalSignature(record, true, err);
          updated = true;
          for (const documentoContrato of contract.DocumentoContrato) {
             for (const documentIncidence of documentoContrato.IncidenciaDocumento) {
@@ -87,28 +84,22 @@ export const contractUpdater = async (
                ResultadoFDCON: record['RESULTADO'],
                EstadoContrato: 'TRAMITADA',
                Conciliar: false,
-               /*   Usuario: {
-                                    connect: {
-                                          UsuarioId: systemUser?.UsuarioId,
-         ado:                            },
-                              }, */
+               Revisar: false,
+               Usuario: {
+                  connect: {
+                     UsuarioId: systemUser?.UsuarioId,
+                  },
+               },
             },
          });
 
          const {
-            CompaniaId,
-            ProductoId,
-            CodigoSolicitud,
-            Suplemento,
-            CCC,
             Activo,
-            ClaveOperacion,
-            EstadoContrato,
-            CodigoPoliza,
-            MediadorId,
+
             TipoOperacion,
             updatedAt,
             TipoConciliacionId,
+            UsuarioId,
             ...data
          } = contratoUpdated;
          const dataH: ContractHistoryData = data;
@@ -116,14 +107,15 @@ export const contractUpdater = async (
          await createContractHistory({
             ...data,
             Operacion: OPERACION_CONTRATO.ACTUALIZADO,
-            /*          EstadoContrato: ESTADO_CONTRATO.PENDIENTE_INCIDENCIA,
-             */
          });
          details.push({
             ...record,
             estado: 'ACTUALIZADO',
             errores: err,
          });
+
+         //Aqui tengo que ponerlo como actualizado en true en el history
+         await digitalSignature(record, true, err);
       } else {
          await digitalSignature(record, false, err);
          updated = false;

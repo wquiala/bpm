@@ -46,9 +46,7 @@ const columns = (handleCellClick: any) => {
 
          formatter(cell: any) {
             const response: any = cell.getData();
-            const handleClick = () => {
-               console.log('prueba');
-            };
+            const handleClick = () => {};
             return `<div class="flex items-center lg:justify-center" >
                             ${response?.TotalRegistros ?? '---'}
                         </div>`;
@@ -95,7 +93,7 @@ const columns = (handleCellClick: any) => {
             handleCellClick(cell.getData(), 'ACTUALIZADO');
          },
       },
-      {
+      /*  {
          title: 'Incompletos',
          minWidth: 100,
          field: 'ConError',
@@ -113,6 +111,26 @@ const columns = (handleCellClick: any) => {
          },
          cellClick: (e: any, cell: any) => {
             handleCellClick(cell.getData(), 'INCOMPLETO');
+         },
+      }, */
+      {
+         title: 'Por cargar',
+         minWidth: 100,
+         field: 'ConError',
+         hozAlign: 'center',
+         headerHozAlign: 'center',
+         vertAlign: 'middle',
+         visible: true,
+         print: true,
+         download: true,
+         formatter(cell: any) {
+            const response: any = cell.getData();
+            return `<div class="flex items-center lg:justify-center">
+                            ${response?.revisarCont ?? '---'}
+                        </div>`;
+         },
+         cellClick: (e: any, cell: any) => {
+            handleCellClick(cell.getData(), 'INCOMPLETO REVISAR');
          },
       },
       {

@@ -4,11 +4,13 @@ import { z } from 'zod';
 export const createContratoDocumentoSchema = z.object({
    ContratoId: z.number(),
    DocId: z.number(),
+   EstadoDoc: z.string().optional(),
+   ProductoId: z.number(),
 });
 
 // Zod schema for updating a ContratoDocumento
 export const updateContratoDocumentoSchema = z.object({
    ContratoId: z.number(),
    /*  DocId: z.number(), */
-   Estado: z.string().optional(),
+   EstadoDoc: z.string().optional(),
 });

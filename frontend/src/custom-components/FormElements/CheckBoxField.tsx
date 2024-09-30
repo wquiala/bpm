@@ -8,9 +8,17 @@ type Props = {
    labelEnabled?: boolean;
    label?: string;
    disabled?: boolean;
+   onChange?: (value: boolean) => void;
 };
 
-const CheckBoxField = ({ control, name, labelEnabled = true, label, disabled = false }: Props) => {
+const CheckBoxField = ({
+   control,
+   name,
+   labelEnabled = true,
+   label,
+   disabled = false,
+   onChange: customOnChange,
+}: Props) => {
    const { t } = useTranslation();
 
    return (
@@ -26,7 +34,10 @@ const CheckBoxField = ({ control, name, labelEnabled = true, label, disabled = f
                      name={name}
                      value={value}
                      checked={value}
-                     onChange={onChange}
+                     onChange={(e) => {
+                        onChange(e.target.checked); // Llamamos a la función onChange de react-hook-form
+                        if (customOnChange) customOnChange(e.target.checked); // Llamamos al onChange personalizado si está definido
+                     }}
                      onBlur={onBlur}
                      className="mr-2 border"
                   />

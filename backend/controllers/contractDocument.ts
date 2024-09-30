@@ -5,6 +5,11 @@ import { ErrorCode } from '../exceptions/root';
 import { InternalException } from '../exceptions/internal-exception';
 import { createContratoDocumentoSchema, updateContratoDocumentoSchema } from '../schema/contractDocument';
 import { ContractDocumentStatusesEnum } from '../constants/ContractDocumentStatusesEnum';
+import { createContractHistory } from '../services/carga/policy/policyCreator';
+import { ContractHistoryData, OPERACION_CONTRATO } from '../interfaces/contractsInterfaces';
+import { createIncidenceDocumentHistory } from './incidenceDocument';
+import { updateContract } from './contract';
+import { updateContractService } from '../services/contracts/contractService';
 
 export const getContractDocuments = async (req: Request, res: Response) => {
    const { contratoId } = req.query;
@@ -83,7 +88,11 @@ export const createContractDocument = async (req: Request, res: Response) => {
          },
       });
 
-      await prismaClient.contrato.update({
+      const { ContratoId, ...dataD } = createdContractDocument;
+
+      await createContractDocumentHistory(dataD);
+
+      const updated = await prismaClient.contrato.update({
          where: {
             ContratoId: validatedData.ContratoId,
          },
@@ -91,6 +100,26 @@ export const createContractDocument = async (req: Request, res: Response) => {
             updatedAt: new Date(),
          },
       });
+
+      const {
+         CompaniaId,
+         ProductoId,
+         CodigoSolicitud,
+         Suplemento,
+         CCC,
+         Activo,
+         ClaveOperacion,
+         CodigoPoliza,
+         MediadorId,
+         TipoOperacion,
+         updatedAt,
+         TipoConciliacionId,
+         UsuarioId,
+         ...data
+      } = updated;
+      const dataH: ContractHistoryData = data;
+
+      await createContractHistory(dataH, OPERACION_CONTRATO.ACTUALIZADO);
 
       res.json(createdContractDocument);
    } catch (error) {
@@ -100,7 +129,7 @@ export const createContractDocument = async (req: Request, res: Response) => {
 
 export const updateContractDocument = async (req: Request, res: Response) => {
    //Validations
-   
+
    try {
       await prismaClient.documentoContrato.findFirstOrThrow({
          where: {
@@ -112,6 +141,7 @@ export const updateContractDocument = async (req: Request, res: Response) => {
    }
 
    const validatedData = updateContratoDocumentoSchema.parse(req.body);
+   console.log(validatedData);
 
    //Validations
    try {
@@ -124,7 +154,6 @@ export const updateContractDocument = async (req: Request, res: Response) => {
       throw new NotFoundException('Contract not found', ErrorCode.NOT_FOUND_EXCEPTION);
    }
    const id = req.params.id;
-   console.log(id);
    //Update contract document
    try {
       const updatedContractDocument = await prismaClient.documentoContrato.update({
@@ -144,9 +173,9 @@ export const updateContractDocument = async (req: Request, res: Response) => {
                },
             },
 
-            ...(validatedData.Estado
+            ...(validatedData.EstadoDoc
                ? {
-                    EstadoDoc: validatedData.Estado,
+                    EstadoDoc: validatedData.EstadoDoc,
                  }
                : {}),
 
@@ -154,8 +183,13 @@ export const updateContractDocument = async (req: Request, res: Response) => {
          },
          include: {
             MaestroDocumentos: true,
+            IncidenciaDocumento: true,
          },
       });
+
+      const { ContratoId, MaestroDocumentos, IncidenciaDocumento, ...dataD } = updatedContractDocument;
+
+      await createContractDocumentHistory(dataD);
 
       if (updatedContractDocument.MaestroDocumentos.Codigo == 'CP') {
          const sol = await prismaClient.documentoContrato.findFirst({
@@ -166,12 +200,12 @@ export const updateContractDocument = async (req: Request, res: Response) => {
          });
 
          if (sol) {
-            await prismaClient.documentoContrato.update({
+            const updatedSol = await prismaClient.documentoContrato.update({
                where: {
                   DocumentoId: sol?.DocumentoId,
                },
                data: {
-                  EstadoDoc: ContractDocumentStatusesEnum.PRESENT_CORRECT,
+                  EstadoDoc: validatedData.EstadoDoc,
                   FechaConciliacion: new Date(),
                   Usuario: {
                      connect: {
@@ -181,6 +215,10 @@ export const updateContractDocument = async (req: Request, res: Response) => {
                   },
                },
             });
+
+            const { ContratoId, ...dataD } = updatedSol;
+
+            await createContractDocumentHistory(dataD);
          }
       }
 
@@ -193,12 +231,12 @@ export const updateContractDocument = async (req: Request, res: Response) => {
          });
 
          if (cp) {
-            await prismaClient.documentoContrato.update({
+            const updatedCP = await prismaClient.documentoContrato.update({
                where: {
                   DocumentoId: cp.DocumentoId,
                },
                data: {
-                  EstadoDoc: ContractDocumentStatusesEnum.PRESENT_CORRECT,
+                  EstadoDoc: validatedData.EstadoDoc,
                   FechaConciliacion: new Date(),
                   Usuario: {
                      connect: {
@@ -208,6 +246,10 @@ export const updateContractDocument = async (req: Request, res: Response) => {
                   },
                },
             });
+
+            const { ContratoId, ...dataD } = updatedCP;
+
+            await createContractDocumentHistory(dataD);
          }
       }
       //Check if the documentContract is correct
@@ -218,7 +260,7 @@ export const updateContractDocument = async (req: Request, res: Response) => {
          },
       });
 
-      if (hasActiveIncidences && validatedData.Estado == 'PRESENTE CORRECTO') {
+      if (hasActiveIncidences && validatedData.EstadoDoc == 'PRESENTE CORRECTO') {
          await prismaClient.incidenciaDocumento.updateMany({
             where: {
                DocumentoContratoId: updatedContractDocument.DocumentoId,
@@ -227,6 +269,42 @@ export const updateContractDocument = async (req: Request, res: Response) => {
                Resuelta: true,
             },
          });
+
+         const updatedInci = await prismaClient.incidenciaDocumento.findMany({
+            where: {
+               DocumentoContratoId: updatedContractDocument.DocumentoId,
+            },
+         });
+
+         for (const inci of updatedInci) {
+            const { DocumentoContratoId, Incidencia, ...data } = inci;
+            await createIncidenceDocumentHistory(data);
+
+            //Aqui falta preguntar si ya la entrada de la incidencia existe
+         }
+      }
+
+      const checkDocuments = await prismaClient.documentoContrato.findMany({
+         where: {
+            ContratoId: updatedContractDocument.ContratoId,
+         },
+      });
+
+      const correctsOrEmail = checkDocuments.filter(
+         (doc: any) =>
+            doc.EstadoDoc == ContractDocumentStatusesEnum.PRESENT_CORRECT ||
+            doc.EstadoDoc == ContractDocumentStatusesEnum.POR_EMAIL,
+      );
+
+      if (correctsOrEmail.length == checkDocuments.length) {
+         console.log('Comprobando');
+         const dataToSend = {
+            EstadoContrato: 'TRAMITADA',
+            Conciliar: false,
+            FechaGrabacion: new Date(),
+            Revisar: false,
+         };
+         await updateContractService(updatedContractDocument.ContratoId, dataToSend);
       }
 
       res.json(updatedContractDocument);
@@ -247,6 +325,7 @@ export const getContractDocumentById = async (req: Request, res: Response) => {
                   MaestroIncidencias: true,
                },
             },
+            IncidenciaDocumento: true,
          },
       });
 
@@ -274,4 +353,12 @@ export const deleteContractDocument = async (req: Request, res: Response) => {
    });
 
    res.json({ message: 'deleted' });
+};
+
+export const createContractDocumentHistory = async (data: any) => {
+   return await prismaClient.documentoContratoHistory.create({
+      data: {
+         ...data,
+      },
+   });
 };

@@ -84,7 +84,7 @@ const InputField = ({
                            {
                               'border-danger': error,
                            },
-                           `block items-center px-4 py-2 ${showIcon && 'pl-12'}`,
+                           `block items-center px-4 py-2 ${showIcon && 'pl-12'} z-0`,
                         ])}
                      />
 
