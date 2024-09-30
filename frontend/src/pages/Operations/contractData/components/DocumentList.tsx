@@ -1,77 +1,109 @@
-import Alert from '@/components/Base/Alert'
-import { Disclosure } from '@/components/Base/Headless'
-import Lucide from '@/components/Base/Lucide'
-import CheckBoxField from '@/custom-components/FormElements/CheckBoxField'
-import InputField from '@/custom-components/FormElements/InputField'
-import { useFieldArray } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
-import IncidenceList from './IncidenceList'
+import Alert from '@/components/Base/Alert';
+import { Disclosure } from '@/components/Base/Headless';
+import Lucide from '@/components/Base/Lucide';
+import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
+import InputField from '@/custom-components/FormElements/InputField';
+import { useFieldArray } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import Table from '@/custom-components/Table/Table';
+import { ColumnDefinition } from 'tabulator-tables';
+import { DataTable } from '../../../../components/ui/dataDocumentsTable';
+import { columnsDocuments, Document } from '../../IncidencesDocuments/columnsDocuments';
+import { Documents } from '../main';
+import { columnsIncidences, Incidence } from '../../IncidencesDocuments/columnsIncidences';
+import moment from 'moment';
+import { strict } from 'assert';
+import Button from '@/components/Base/Button';
+import { useState } from 'react';
+import { HistoryDocuments } from '../../IncidencesDocuments/historyDocuments';
+import { HistoryIncidences } from '../../IncidencesDocuments/historyIncidences';
 
 type Props = {
-    control: any,
-    selectedContract: any
-}
+   control: any;
+   selectedContract: any;
+   setSelectedContract: any;
+};
 
-const DocumentList = ({ control, selectedContract }: Props) => {
-    const { t } = useTranslation()
+const DocumentList = ({ control, selectedContract, setSelectedContract }: Props) => {
+   const { t } = useTranslation();
+   const [showHistoryDocuments, setShowHistoryDocuments] = useState<boolean>(false);
+   const [showHistoryincidences, setShowHistoryIncidences] = useState<boolean>(false);
 
-    const { fields } = useFieldArray({
-        control,
-        name: "documents"
-    });
+   const { fields } = useFieldArray({
+      control,
+      name: 'documents',
+   });
 
-    return (
-        <div className="box p-4 m-4 mb-0">
-            <Disclosure defaultOpen>
-                {({ open }) => (
-                    <>
-                        <Disclosure.Button className="py-0">
-                            {open ? t('hideDocumentList') : t('showDocumentList')}
-                        </Disclosure.Button>
-                        <Disclosure.Panel className="leading-relaxed text-slate-600 dark:text-slate-500">
-                            <div className="pt-0 p-2 m-2 mb-2">
-                                {fields && fields.length > 0 ? (
-                                    <div className="flex flex-col gap-3">
-                                        {fields.map((item, index) => (
-                                            <div key={item.id}>
-                                                <div key={item.id} className='flex gap-2 items-center'>
-                                                    <div>
-                                                        <CheckBoxField
-                                                            disabled
-                                                            control={control}
-                                                            name={`documents.${index}.present`}
-                                                        />
-                                                    </div>
-                                                    <div className="w-full">
-                                                        <InputField
-                                                            disabled
-                                                            control={control}
-                                                            name={`documents.${index}.name`}
-                                                        />
-                                                    </div>
+   const dataDocuments: Document[] = fields.map((doc: any) => {
+      return {
+         Familia_Documento: doc.Codigo,
+         Fase: doc.Fase,
+         Grupo_Documento: doc.Nombre,
+         Estado: doc.Estado,
+         Fecha_estado: doc.FechaEstado ? new Date(doc.FechaEstado).toLocaleString() : 'Sin fecha',
+         FechaUltimaRecepcion: doc.FechaUltimaRecepcion
+            ? new Date(doc.FechaUltimaRecepcion).toLocaleString()
+            : 'Sin fecha',
+         FechaUltimaReclamacion: selectedContract.FechaReclamacion
+            ? new Date(selectedContract.FechaReclamacion).toLocaleString()
+            : 'Sin fecha',
+         FechaProximaReclamacion: selectedContract.FechaProximaReclamacion
+            ? new Date(selectedContract.FechaProximaReclamacion).toLocaleString()
+            : 'Sin fecha',
+      };
+   });
 
-                                                </div>
-                                                <div className="w-full ml-2">
-                                                    <IncidenceList control={control} index={index} selectedContract={selectedContract} />
-                                                </div>
-                                            </div>
+   const incidencesList: any[] = [];
 
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <Alert variant="soft-secondary" className="flex items-center my-4 justify-center">
-                                        <Lucide icon="AlertOctagon" className="w-6 h-6 mr-2" />{" "}
-                                        {t("noDocumentsFound")}
-                                    </Alert>
-                                )}
+   fields.map((doc: any) => {
+      doc.incidences.map((inci: any) => {
+         if (!inci.Resuelta)
+            incidencesList.push({
+               Familia_Documento: doc.Codigo,
+               Incidencia: inci.MaestroIncidencias.Nombre,
+               Comentarios: inci.Nota,
+               Estado_Incidencia: inci.Resuelta == true ? 'Resuelta' : 'No resuelta',
+               Fecha_estado: new Date(inci.updatedAt).toLocaleString(),
+               FechaAltaIncidencia: new Date(inci.createdAt).toLocaleString(),
+               FechaUltimaReclamacion: new Date(selectedContract.FechaReclamacion).toLocaleString(),
+               FechaProximaReclamacion: new Date(selectedContract.FechaProximaReclamacion).toLocaleString(),
+            });
+      });
+   });
 
-                            </div>
-                        </Disclosure.Panel>
-                    </>
-                )}
-            </Disclosure>
-        </div >
-    )
-}
+   const handleHistoryDocuments = () => {
+      setShowHistoryDocuments(true);
+   };
 
-export default DocumentList
+   const handleHistoryIncidences = () => {
+      setShowHistoryIncidences(true);
+   };
+
+   return (
+      <div className="box p-4 m-4 mb-0">
+         <div>
+            <h1 className="flex font-bold text-xl justify-start text-blue-900">Documentos</h1>
+            <DataTable columns={columnsDocuments} data={dataDocuments} />
+         </div>
+         <div>
+            <h1 className="flex font-bold text-xl justify-start text-blue-900">Incidencias</h1>
+            <DataTable columns={columnsIncidences} data={incidencesList} />
+         </div>
+         <div className="flex flex-col sm:flex-row justify-end items-end mr-5 my-2 gap-3">
+            <Button variant="primary" onClick={handleHistoryDocuments}>
+               Histórico - Documentos
+            </Button>
+            <Button variant="primary" onClick={handleHistoryIncidences}>
+               Histórico - Incidencias
+            </Button>
+            <Button variant="danger" onClick={() => setSelectedContract(null)}>
+               Cerrar
+            </Button>
+         </div>
+         <HistoryDocuments show={showHistoryDocuments} setShow={setShowHistoryDocuments} control={control} />{' '}
+         <HistoryIncidences show={showHistoryincidences} setShow={setShowHistoryIncidences} control={control} />
+      </div>
+   );
+};
+
+export default DocumentList;

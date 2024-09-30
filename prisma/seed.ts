@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import rolSeeder from './seeders/rolSeeder';
-import adminUserSeeder from './seeders/adminUserSeeder';
-import systemUserSeeder from './seeders/systemUserSeeder';
-import baseUsersSeeder from './seeders/baseUsersSeeder';
+import rolSeeder from '../prisma/seeders/rolSeeder';
+import adminUserSeeder from '../prisma/seeders/adminUserSeeder';
+import systemUserSeeder from '../prisma/seeders/systemUserSeeder';
+import baseUsersSeeder from '../prisma/seeders/baseUsersSeeder';
 const prisma = new PrismaClient();
 async function main() {
    await rolSeeder();

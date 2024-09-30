@@ -44,7 +44,7 @@ function Main() {
    setDarkModeClass();
 
    const themes: Array<Themes['name']> = ['rubick'];
-   const layouts: Array<Themes['layout']> = ['side-menu', 'simple-menu', 'top-menu'];
+   const layouts: Array<Themes['layout']> = ['side-menu'];
    const colorSchemes: Array<ColorSchemes> = ['default', 'theme-1', 'theme-2', 'theme-3', 'theme-4'];
 
    const themeImages = import.meta.glob<{

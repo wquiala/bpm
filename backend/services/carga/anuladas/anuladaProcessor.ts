@@ -3,6 +3,7 @@ import promise from '../../../../frontend/src/utils/promise';
 import { prismaClient } from '../../../server';
 import { ESTADO_CONTRATO, OPERACION_CONTRATO } from '@prisma/client';
 import { createContractHistory, fetchContrato } from '../policy/policyCreator';
+import { parserDate } from '../../../helpers/time';
 
 export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) => {
    let conError = 0;
@@ -34,7 +35,14 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
          if (record['COMPAÑÍA'] == 'UCV' || record['COMPAÑÍA'] == 'UNI') {
             const contract = await prismaClient.contrato.findFirst({
                where: {
-                  CodigoPoliza: record['CLAVE_OPERACIÓN'],
+                  OR: [
+                     {
+                        CodigoPoliza: record['CLAVE_OPERACIÓN'],
+                     },
+                     {
+                        CodigoSolicitud: record['CLAVE_OPERACIÓN'],
+                     },
+                  ],
                },
             });
 
@@ -64,11 +72,14 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
                   CodigoPoliza,
                   MediadorId,
                   ClaveOperacion,
+                  Activo,
                   TipoOperacion,
+                  Suplemento,
                   CCC,
                   CodigoSolicitud,
                   updatedAt,
                   TipoConciliacionId,
+                  UsuarioId,
                   ...rest
                } = anulada;
                await createContractHistory({
@@ -91,6 +102,8 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
                   data: {
                      AnuladoSEfecto: true,
                      EstadoContrato: 'ANULADA',
+                     Conciliar: false,
+                     Revisar: false,
                   },
                });
                details.push({
@@ -104,16 +117,21 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
                const {
                   CompaniaId,
                   ProductoId,
-                  CodigoPoliza,
-                  MediadorId,
+                  CodigoSolicitud,
+                  Suplemento,
+                  CCC,
+                  Activo,
                   ClaveOperacion,
                   TipoOperacion,
-                  CCC,
-                  CodigoSolicitud,
+
+                  CodigoPoliza,
+                  MediadorId,
                   updatedAt,
                   TipoConciliacionId,
+                  UsuarioId,
                   ...rest
                } = anulada;
+               console.log(rest);
                await createContractHistory({
                   ...rest,
                   Operacion: OPERACION_CONTRATO.ANULADO,
@@ -127,10 +145,8 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
             claveOperacion: record['CLAVE_OPERACIÓN'],
             compannia: record['COMPAÑÍA'],
             motivoAnulacion: record['MOTIVO ANULACIÓN'],
-            fechaEfectoAnulacion:
-               new Date(moment(record['FECHA EMISIÓN ANULACIÓN'], 'DD/MM/YYYY', true).toISOString()) ?? null,
-            fechaEmisionAnulacion:
-               new Date(moment(record['FECHA EFECTO ANULACIÓN'], 'DD/MM/YYYY', true).toISOString()) ?? null,
+            fechaEfectoAnulacion: parserDate(record['FECHA EMISIÓN ANULACIÓN']) ?? null,
+            fechaEmisionAnulacion: parserDate(record['FECHA EFECTO ANULACIÓN']) ?? null,
          },
       });
    }

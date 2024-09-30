@@ -10,17 +10,15 @@ const validateField = (record: RecordDiaria, field: string, condition: boolean, 
 
 const validateRequiredFields = (record: RecordDiaria, error: { [key: string]: string }) => {
    const requiredFields = [
-      { field: 'compania', message: 'La compañía no está presente' },
-      { field: 'producto', message: 'El producto no está presente' },
-      { field: 'fechaOperacion', message: 'La fecha de operación no está presente' },
-      { field: 'fechaEfecto', message: 'La fecha de efecto no está presente' },
-      { field: 'dniAsegurado', message: 'El DNI del asegurado no está presente' },
-      { field: 'nombreAsegurado', message: 'El nombre del asegurado no esta presente' },
-      { field: 'fechaNacimiento', message: 'La fecha de nacimiento del asegurado no está presente' },
-      { field: 'dniTomador', message: 'El id del tomador no está presente' },
-      { field: 'nombreTomador', message: 'El nombre del tomador no está presente' },
-      { field: 'mediador', message: 'El mediador no está presente' },
-      { field: 'operador', message: 'El operador no está presente' },
+      { field: 'Compania', message: 'La compañía no está presente' },
+      { field: 'Producto', message: 'El producto no está presente' },
+      { field: 'FechaOperacion', message: 'La fecha de operación no está presente' },
+      { field: 'DNIAsegurado', message: 'El DNI del asegurado no está presente' },
+      { field: 'NombreAsegurado', message: 'El nombre del asegurado no esta presente' },
+      { field: 'DNITomador', message: 'El DNI del tomador no está presente' },
+      { field: 'NombreTomador', message: 'El nombre del tomador no está presente' },
+      { field: 'Mediador', message: 'El mediador no está presente' },
+      { field: 'Operador', message: 'El operador no está presente' },
    ];
 
    requiredFields.forEach(({ field, message }) => {
@@ -77,12 +75,12 @@ const validateDates = (record: RecordDiaria, error: any) => {
 };
 
 export const validateCompany = async (record: RecordDiaria, errors: any[]) => {
-   if (record.compania) {
-      let companyCode = record.compania;
+   if (record.Compania) {
+      let companyCode = record.Compania;
 
-      if (record.compania == 'UCV') {
+      if (record.Compania == 'UCV') {
          companyCode = 'UNI';
-      } else if (record.compania == 'AVP') {
+      } else if (record.Compania == 'AVP') {
          companyCode = 'SLS';
       }
 
@@ -102,15 +100,15 @@ const validateBranch = async (record: any, errors: any[]) => {
          where: { Codigo: `${record['PRODUCTO']}` },
       });
       if (!branch) {
-         errors.push('Ramo no encontrado');
+         errors.push('Producto no encontrado');
       }
    }
 };
 
 const validateMediator = async (record: RecordDiaria, errors: any[]) => {
-   if (record.mediador) {
+   if (record.Mediador) {
       const mediator = await prismaClient.mediador.findFirst({
-         where: { Codigo: `${record.mediador}` },
+         where: { Codigo: `${record.Mediador}` },
       });
       if (!mediator) {
          errors.push('Mediador no encontrado');

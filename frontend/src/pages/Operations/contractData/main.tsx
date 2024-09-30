@@ -11,12 +11,26 @@ import ContractHeaderInputs from './components/ContractHeaderInputs';
 import { Tab } from '@/components/Base/Headless';
 import ContractAdiniotalDataInputs from './components/ContractAdiniotalDataInputs';
 import DocumentList from './components/DocumentList';
+import Button from '@/components/Base/Button';
+import ReclamationList from './Reclamations/reclamationList';
+import DigitalSignatureList from './DigitalSignature/digitalSignatureList';
 
 type Props = {
    selectedContract: any;
    setSelectedContract: (contract: any) => void;
 };
 
+export interface Documents {
+   Codigo: string;
+   Nombre: string;
+   Estado: string;
+   FechaEstado: string;
+   Fase: string;
+   FechaUltimaRecepcion: string;
+   FechaUltimaReclamacion: string;
+   FechaProximaReclamacion: string;
+   incidences: any[];
+}
 const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
    const { t } = useTranslation();
    const navigate = useNavigate();
@@ -36,7 +50,7 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
 
    useEffect(() => {
       const resetFormFiels = async () => {
-         const docList = [];
+         const docList: any[] = [];
          const contractDocuments = selectedContract?.DocumentoContrato;
 
          function createIncidence(incidence: any, document: any) {
@@ -49,6 +63,22 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
                checked: isIncidenceUnresolved,
             };
          }
+
+         selectedContract.DocumentoContrato.map((doc: any) => {
+            docList.push({
+               Codigo: doc.MaestroDocumentos.Codigo,
+               Nombre: doc.MaestroDocumentos.Nombre,
+               Estado: doc.EstadoDoc,
+               FechaEstado: doc.updatedAt,
+               Fase: doc.ProductoDocumento.Fase,
+               FechaUltimaRecepcion: new Date(doc.updatedAt).toLocaleDateString(),
+               FechaUltimaReclamacion: new Date(selectedContract.FechaReclamacion).toLocaleDateString(),
+               FechaProximaReclamacion: new Date(selectedContract.FechaProximaReclamacion).toLocaleDateString(),
+               incidences: doc.IncidenciaDocumento,
+               documentHistory: doc.DocumentoContratoHistory.map((his: any) => his),
+            });
+         });
+
          /* 
          for (const contractDocument of contractDocuments) {
             const isPresent = contractDocument.EstadoDoc === 'PRESENT' || contractDocument.EstadoDoc === 'CORRECT';
@@ -76,25 +106,32 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
             CodigoPoliza: selectedContract?.CodigoPoliza,
             DNIAsegurado: selectedContract?.DNIAsegurado,
             NombreAsegurado: selectedContract?.NombreAsegurado,
-            FechaOperacion: moment(selectedContract?.FechaAltaSolicitud).format('YYYY-MM-DD'),
-            NombreMediador: selectedContract?.CanalMediador?.Codigo ?? null,
+            FechaOperacion: new Date(selectedContract.FechaOperacion).toLocaleDateString(),
+            Mediador: `${selectedContract?.Mediador?.Codigo} - ${selectedContract?.Mediador?.Nombre}` ?? null,
             Revisar: selectedContract?.Revisar,
-            Conciliar: selectedContract.ResultadoFDCON != 'Transacci�n aceptada' || !selectedContract.Conciliar,
+            Conciliar: selectedContract.Conciliar,
 
             ProductoId: selectedContract?.ProductoId,
-            ProductoNombre: selectedContract?.Producto.Codigo,
+            Producto: `${selectedContract?.Producto.Codigo} - ${selectedContract?.Producto.Descripcion}`,
             ProductoDesc: selectedContract?.Producto.Descripcion,
-            FechaEfecto: selectedContract?.FechaEfectoSolicitud
-               ? moment(selectedContract?.FechaEfectoSolicitud).format('YYYY-MM-DD')
-               : '',
+            FechaEfecto: selectedContract.FechaEfecto
+               ? new Date(selectedContract.FechaEfecto).toLocaleDateString()
+               : 'Sin fecha informada',
             IndicadorFDCON: selectedContract?.IndicadorFDCON,
             IndicadorFDPRECON: selectedContract?.IndicadorFDPRECON,
+            TipoEnvioPRECON: selectedContract.TipoEnvioPRECON,
+            TipoEnvioCON: selectedContract.TipoEnvioCON,
+            ResultadoPRECON: selectedContract.ResultadoFDPRECON,
+            ResultadoCON: selectedContract.ResultadoFDCON,
 
-            TipoOperacion: selectedContract?.Producto[0]?.RamoTipoOperacion?.TipoOperacion ?? null,
+            TipoOperacion: selectedContract?.TipoOperacion ?? null,
+
             Suplemento: selectedContract?.Suplemento,
-            AnuladoSE: selectedContract?.AnuladoSE,
-            CanalMediador: selectedContract?.CanalMediador?.Canal ?? null,
-            TipoConciliacion: selectedContract?.TipoConciliacion?.Nombre ?? null,
+            AnuladoSE: selectedContract?.AnuladoSEfecto,
+            CanalMediador: selectedContract?.Mediador?.Nombre ?? null,
+            TipoConciliacion: selectedContract?.TipoConciliacion?.nombre ?? null,
+
+            Operador: selectedContract?.Operador,
 
             EdadAsegurado: moment().diff(
                moment(selectedContract?.FechaNacimientoAsegurado).format('YYYY-MM-DD'),
@@ -102,26 +139,24 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
             ),
             DeporteAsegurado: selectedContract?.DeporteAsegurado,
             FechaNacimientoAsegurado: selectedContract?.FechaNacimientoAsegurado
-               ? moment(selectedContract?.FechaNacimientoAsegurado).format('YYYY-MM-DD')
+               ? new Date(selectedContract?.FechaNacimientoAsegurado).toLocaleDateString()
                : '',
 
             ProfesionAsegurado: selectedContract?.ProfesionAsegurado,
-            CSRespAfirm: selectedContract?.CSRespAfirm,
+            CSRespAfirm: selectedContract?.CSRespAfirmativas,
 
             NombreTomador: selectedContract?.NombreTomador,
             DNITomador: selectedContract?.DNITomador,
-            FechaDNITomador: selectedContract?.FechaDNITomador
-               ? moment(selectedContract?.FechaDNITomador).format('YYYY-MM-DD')
-               : '',
+            FechaDNITomador: selectedContract?.FechaValidezDNITomador
+               ? new Date(selectedContract?.FechaValidezDNITomador).toLocaleDateString()
+               : 'Sin fecha informada',
 
             NoDigitalizar: false,
             observations: [],
-            /*             documents: docList,
-             */
+            documents: docList,
          });
       };
       if (selectedContract) {
-         console.log(selectedContract, 'SELECTED contracts ');
          resetFormFiels();
       }
    }, [selectedContract]);
@@ -165,45 +200,29 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
                </Tab.List>
                <Tab.Panels className="mt-5">
                   <Tab.Panel className="leading-relaxed">
-                     <ContractAdiniotalDataInputs control={control} />
+                     <ContractAdiniotalDataInputs control={control} setSelectedContract={setSelectedContract} />
                   </Tab.Panel>
                   <Tab.Panel className="leading-relaxed">
-                     <DocumentList selectedContract={selectedContract} control={control} />
+                     <DocumentList
+                        selectedContract={selectedContract}
+                        setSelectedContract={setSelectedContract}
+                        control={control}
+                     />
                   </Tab.Panel>
                   <Tab.Panel className="leading-relaxed">
-                     <ContractAdiniotalDataInputs control={control} />
+                     <ReclamationList
+                        control={control}
+                        setSelectedContract={setSelectedContract}
+                        selectedContract={selectedContract}
+                     />
                   </Tab.Panel>
                   <Tab.Panel className="leading-relaxed">
-                     <DocumentList selectedContract={selectedContract} control={control} />
+                     <DigitalSignatureList
+                        selectedContract={selectedContract}
+                        setSelectedContract={setSelectedContract}
+                        control={control}
+                     />
                   </Tab.Panel>
-                  {/* <Tab.Panel className="leading-relaxed">
-                            It is a long established fact that a reader will be
-                            distracted by the readable content of a page when
-                            looking at its layout. The point of using Lorem Ipsum
-                            is that it has a more-or-less normal distribution of
-                            letters, as opposed to using 'Content here, content
-                            here', making it look like readable English. Many
-                            desktop publishing packages and web page editors now
-                            use Lorem Ipsum as their default model text, and a
-                            search for 'lorem ipsum' will uncover many web sites
-                            still in their infancy. Various versions have evolved
-                            over the years, sometimes by accident, sometimes on
-                            purpose (injected humour and the like).
-                        </Tab.Panel>
-                        <Tab.Panel className="leading-relaxed">
-                            It is a long established fact that a reader will be
-                            distracted by the readable content of a page when
-                            looking at its layout. The point of using Lorem Ipsum
-                            is that it has a more-or-less normal distribution of
-                            letters, as opposed to using 'Content here, content
-                            here', making it look like readable English. Many
-                            desktop publishing packages and web page editors now
-                            use Lorem Ipsum as their default model text, and a
-                            search for 'lorem ipsum' will uncover many web sites
-                            still in their infancy. Various versions have evolved
-                            over the years, sometimes by accident, sometimes on
-                            purpose (injected humour and the like).
-                        </Tab.Panel> */}
                </Tab.Panels>
             </Tab.Group>
          </div>

@@ -64,14 +64,14 @@ export const createContractObservation = async (req: Request, res: Response) => 
          },
       });
 
-      await prismaClient.contrato.update({
+      /* await prismaClient.contrato.update({
          where: {
             ContratoId: validatedData.ContratoId,
          },
          data: {
             updatedAt: new Date(),
          },
-      });
+      }); */
 
       res.json(createdContractObservation);
    } catch (error) {

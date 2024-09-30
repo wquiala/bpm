@@ -20,7 +20,6 @@ function Main() {
 
    const [filteredContracts, setFilteredContracts] = useState<any[]>([]);
    const [selectedContract, setSelectedContract] = useState<any>(null);
-   console.log(filteredContracts);
 
    const [selectContractModal, setSelectContractModal] = useState<boolean>(false);
 
@@ -80,7 +79,6 @@ function Main() {
       }
 
       setSelectedContract(null);
-      console.log(toSend);
 
       await getContracts(toSend);
    };

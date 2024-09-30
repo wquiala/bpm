@@ -28,7 +28,6 @@ export const menuSlice = createSlice({
    reducers: {
       setSideMenu: (state) => {
          const userData = _.get(storage.get(), 'userData');
-         console.log(userData);
          const role = userData.Rol.Nombre ?? 'BASE';
          if (role && role === 'ADMIN') {
             state.menu = ADMIN_NAVIGATION;

@@ -1,3 +1,4 @@
+import { parserDate } from '../../../helpers/time';
 import { prismaClient } from '../../../server';
 import moment from 'moment';
 
@@ -11,8 +12,8 @@ export const digitalSignature = async (records: any, actualizado: boolean, err: 
          TIPO_ENVIO: records['TIPO_ENVIO'],
          Estado: records['ESTADO'],
          Resultado: records['RESULTADO'],
-         FechaInicio: new Date(moment(records['FECHA_INICIO'], 'MM/DD/YYYY', true).toISOString()),
-         FechaCierre: new Date(moment(records['FECHA_CIERRE'], 'MM/DD/YYYY', true).toISOString()),
+         FechaInicio: new Date(),
+         FechaCierre: new Date(),
          Mediador: records['MEDIADOR'],
          DNIAsegurado: records['DNI_ASEGURADO'],
          NombreAsegurado: records['ASEGURADO'],

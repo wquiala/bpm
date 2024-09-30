@@ -1,11 +1,13 @@
-import { Usuario } from '@prisma/client';
+import { Incompletas, Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import { policyValidator } from '../../../helpers/policiyValidator';
-import { createContractHistory, fetchClave, fetchContrato, NoProcesar, policyCreator } from './policyCreator';
+import { createContractHistory, fetchClave, fetchContrato, policyCreator } from './policyCreator';
 import { ContractHistoryData, RecordDiaria } from '../../../interfaces/contractsInterfaces';
 import moment from 'moment';
+import { createDesechados } from '../../contracts/contractService';
+import { incompletas } from './incompletas';
 
-export const processPolicyData = async (data: any[], user: { UsuarioId: any }) => {
+export const processPolicyData = async (data: RecordDiaria[], user: { UsuarioId: any }) => {
    let details: any[] = [];
    let Insertados: number = 0;
    let Desechados: number = 0;
@@ -13,50 +15,7 @@ export const processPolicyData = async (data: any[], user: { UsuarioId: any }) =
    let TotalRegistros: number = data.length;
 
    let conError: number = 0;
-
-   const records: RecordDiaria[] = data.map((d) => {
-      return {
-         compania: d['COMPAÑÍA'],
-         producto: d['PRODUCTO'],
-         mediador: d['MEDIADOR'],
-         operador: d['OPERADOR'],
-
-         ccc: d['CCC'],
-         codigoSolicitud: d['CODIGO SOLICITUD'],
-         polizaContrato: d['POLIZA_CONTRATO'],
-
-         tipoOperacion: d['TIPO DE OPERACIÓN'],
-
-         anulaSE: d['ANULADO SIN EFECTO'],
-
-         dniAsegurado: d['ID_ASEGURADO'],
-         nombreAsegurado: d['NOMBRE ASEGURADO'],
-         fechaNacimiento: d['FECHA DE NACIMIENTO'],
-         deporte: d['DEPORTE'],
-         profesion: d['PROFESION'],
-
-         dniTomador: d['ID_TOMADOR_PARTICIPE'],
-         nombreTomador: d['NOMBRE TOMADOR_PARTICIPE'],
-         fechaValidezDniT: d['FECHA VALIDEZ IDENTIDAD TOMADOR'],
-
-         fechaEfecto: d['FECHA EFECTO'],
-         fechaOperacion: d['FECHA DE OPERACIÓN'],
-
-         csResAfirm: d['CS CON RESPUESTAS AFIRMATIVAS'],
-
-         indicadorPrecon: d['INDICADOR FIRMA DIGITAL PRECON'],
-         tipoEnvioPrecon: d['TIPO DE ENVÍO PRECON'],
-         resultadoPrecon: d['RESULTADO FIRMA DIGITAL PRECON'],
-
-         indicadorCon: d['INDICADOR FIRMA DIGITAL CON'],
-         tipoEnvioC: d['TIPO DE ENVÍO CON'],
-         resultadoCon: d['RESULTADO FIRMA DIGITAL CON'],
-
-         suplemento: d['SUPLEMENTO'],
-         revisar: d['REVISAR'],
-         conciliar: d['CONCILIAR'],
-      };
-   });
+   let revisarCont = 0;
 
    const systemUser = await prismaClient.usuario.findFirst({
       where: {
@@ -64,58 +23,75 @@ export const processPolicyData = async (data: any[], user: { UsuarioId: any }) =
          Nombre: 'Sistema',
       },
    });
-   for await (let record of records) {
+   for await (let record of data) {
       let errors: any[] = [];
       let errorMsg;
 
       const { error: err } = await policyValidator(record);
 
-      if (
-         (record.compania == 'UCV' && !record.ccc) ||
-         (record.compania != 'UCV' && !record.codigoSolicitud && record.compania != 'UCV' && !record.polizaContrato)
-      ) {
-         Desechados++;
-         const data: any = {
-            Operacion: 'DESECHADO',
-            FechaEfecto: new Date(moment(record.fechaEfecto, 'MM/DD/YYYY', true).toISOString()),
-            FechaOperacion: new Date(moment(record.fechaOperacion, 'MM/DD/YYYY', true).toISOString()),
-            AnuladoSEfecto: record.anulaSE === 'S',
-            DNIAsegurado: record.dniAsegurado,
-            NombreAsegurado: record.nombreAsegurado,
-            FechaNacimientoAsegurado: record.fechaNacimiento
-               ? new Date(moment(record.fechaNacimiento, 'MM/DD/YYYY', true).toISOString())
-               : null,
-            CSRespAfirmativas: record.csResAfirm == 'S',
-            ProfesionAsegurado: record.profesion,
-            DeporteAsegurado: record.deporte,
-            DNITomador: record.dniTomador,
-            FechaValidezDNITomador:
-               record.fechaValidezDniT && record.fechaValidezDniT !== ''
-                  ? new Date(moment(record.fechaValidezDniT, 'MM/DD/YYYY', true).toISOString())
-                  : null,
-            NombreTomador: record.nombreTomador,
-            Operador: record.operador,
-            IndicadorFDPRECON: record.indicadorPrecon === 'SI',
-            TipoEnvioPRECON: record.tipoEnvioPrecon,
-            ResultadoFDPRECON: record.resultadoPrecon,
-            IndicadorFDCON: record.indicadorCon === 'SI',
-            TipoEnvioCON: record.tipoEnvioC,
-            ResultadoFDCON: record.resultadoCon,
-            Revisar: record.revisar === 'SI',
-            Conciliar: record.conciliar === 'SI',
-            errores: err,
-         };
-
-         await NoProcesar(data);
-         details.push({
-            ...record,
-            estado: 'DESECHADO',
-            errores: err,
+      if (!record.CodigoPoliza && !record.CodigoSolicitud && !record.CCC) {
+         const incompletos = await prismaClient.incompletas.findMany();
+         const withOut = incompletos.map((i: Incompletas) => {
+            const { incompletaId, errores, createdAt, ...rest } = i;
+            return rest;
          });
 
-         await createContractHistory(data);
+         const isIn = withOut.find(
+            (w: any) => record.CodigoPoliza == w.CodigoPoliza && record.CodigoSolicitud == w.CodigoSolicitud,
+         );
+         if (!isIn) {
+            await incompletas({ ...record, errores: err });
+            revisarCont++;
+            details.push({
+               ...record,
+               estado: 'INCOMPLETO REVISAR',
+               errores: err,
+            });
+            /*  const data: any = {
+               MotivoDesechado: 'SIN CLAVE',
+   
+               FechaEfecto: record.FechaEfecto,
+               FechaOperacion: record.FechaOperacion,
+               AnuladoSEfecto: record.AnuladoSEfecto,
+               DNIAsegurado: record.DNIAsegurado,
+               NombreAsegurado: record.NombreAsegurado,
+               FechaNacimientoAsegurado: record.FechaNacimientoAsegurado,
+   
+               CSRespAfirmativas: record.CSRespAfirmativas,
+               ProfesionAsegurado: record.ProfesionAsegurado,
+               DeporteAsegurado: record.DeporteAsegurado,
+               DNITomador: record.DNITomador,
+               FechaValidezDNITomador: record.FechaValidezDNITomador,
+               NombreTomador: record.NombreTomador,
+               Operador: record.Operador,
+               IndicadorFDPRECON: record.IndicadorFDPRECON,
+               TipoEnvioPRECON: record.TipoEnvioPRECON,
+               ResultadoFDPRECON: record.ResultadoFDPRECON,
+               IndicadorFDCON: record.IndicadorFDCON,
+               TipoEnvioCON: record.TipoEnvioCON,
+               ResultadoFDCON: record.ResultadoFDCON,
+               Revisar: record.Revisar,
+               Conciliar: record.Conciliar,
+            };
+   
+            await createDesechados(data);
+            details.push({
+               ...record,
+               estado: 'DESECHADO SIN CLAVE',
+               errores: err,
+            }); */
+
+            // await createContractHistory(data);
+         }
       } else {
-         const { hasError: hasErr, insert } = await policyCreator(record, systemUser as Usuario, user, err, details);
+         const {
+            hasError: hasErr,
+            insert,
+            Desechados: des,
+            revisar,
+         } = await policyCreator(record, systemUser as Usuario, user, err, details);
+         Desechados += des;
+         if (revisar) revisarCont++;
 
          if (hasErr) {
             conError++;
@@ -137,5 +113,6 @@ export const processPolicyData = async (data: any[], user: { UsuarioId: any }) =
       Desechados,
       TotalRegistros,
       details,
+      revisarCont,
    };
 };

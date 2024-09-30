@@ -16,7 +16,7 @@ function Main() {
    const [, setAlert] = useContext(AlertContext);
    const [, setLoading] = useContext(LoadingContext);
 
-   const { company } = useAppSelector((state) => state.settings);
+   const { company, caja, lote } = useAppSelector((state) => state.settings);
 
    const [filteredContracts, setFilteredContracts] = useState<any[]>([]);
    const [selectedContract, setSelectedContract] = useState<any>(null);
@@ -56,7 +56,6 @@ function Main() {
       const params = {
          company: company.CompaniaId,
          ...data,
-         prueba: 'esto es una prueba de la data',
       };
 
       await getContracts(params);
@@ -80,7 +79,7 @@ function Main() {
                <ContractForm selectedContract={selectedContract} setSelectedContract={setSelectedContract} />
             ) : (
                <Alert variant="soft-secondary" className="flex items-center my-4 justify-center">
-                  <Lucide icon="AlertOctagon" className="w-6 h-6 mr-2" /> {t('noPolicyLoaded')}
+                  <Lucide icon="AlertOctagon" className="w-6 h-6 mr-2" /> No se ha cargado ninguna póliza
                </Alert>
             )}
          </div>

@@ -5,6 +5,7 @@ import monitorMiddleware from '../middlewares/monitor';
 import authMiddleware from '../middlewares/auth';
 import multer from 'multer';
 import path from 'path';
+import { reprocesar } from '../controllers/contract';
 
 const storage = multer.diskStorage({
    destination: 'uploads/',
@@ -19,6 +20,8 @@ const loadRoutes: Router = Router();
 
 loadRoutes.get('/', [authMiddleware, monitorMiddleware], errorHandler(getLoadLogs));
 loadRoutes.post('/', [authMiddleware, monitorMiddleware, upload.single('file')], errorHandler(importData));
+loadRoutes.post('/reprocesar', [authMiddleware, monitorMiddleware], errorHandler(importData));
+
 loadRoutes.delete('/:id', [authMiddleware, monitorMiddleware], errorHandler(deleteLoadLog));
 loadRoutes.get('/:id', [authMiddleware, monitorMiddleware], errorHandler(getLoadLogById));
 

@@ -5,6 +5,11 @@ import { ErrorCode } from '../exceptions/root';
 import { InternalException } from '../exceptions/internal-exception';
 import { createContratoSchema, updateContratoSchema } from '../schema/contract';
 import { BadRequestsException } from '../exceptions/bad-requests';
+import { ContractDocumentStatusesEnum } from '../constants/ContractDocumentStatusesEnum';
+import { ESTADO_CONTRATO, Usuario } from '@prisma/client';
+import { ContractHistoryData, OPERACION_CONTRATO } from '../interfaces/contractsInterfaces';
+import { createContractHistory } from '../services/carga/policy/policyCreator';
+import { processPolicyData } from '../services/carga/policy/policyProcessor';
 
 export const getContracts = async (req: Request, res: Response) => {
    const { company, policy, dni, secuencialDni, ccc, code, requestCode, operationType, reconcile } = req.query;
@@ -51,12 +56,29 @@ export const getContracts = async (req: Request, res: Response) => {
                FechaObs: 'desc',
             },
          },
+         TipoConciliacion: true,
          DocumentoContrato: {
             include: {
-               MaestroDocumentos: {},
-               IncidenciaDocumento: true,
+               MaestroDocumentos: {
+                  include: {
+                     MaestroIncidencias: true,
+                  },
+               },
+               DocumentoContratoHistory: true,
+
+               IncidenciaDocumento: {
+                  include: {
+                     MaestroIncidencias: true,
+                     IncidenciaDocumentoHistory: true,
+                  },
+               },
+               ProductoDocumento: true,
             },
          },
+         Usuario: true,
+         CajaLote: true,
+         Comunicacion: true,
+         HistorialContrato: true,
       },
       where: {
          ...(requestedCompany && requestedCompany.Codigo === 'UCV' && policy
@@ -131,7 +153,7 @@ export const createContract = async (req: Request, res: Response) => {
    try {
       await prismaClient.producto.findFirstOrThrow({
          where: {
-            ProductoId: validatedData.RamoId,
+            ProductoId: validatedData.ProductoId,
          },
       });
    } catch (error) {
@@ -141,15 +163,27 @@ export const createContract = async (req: Request, res: Response) => {
    try {
       await prismaClient.mediador.findFirstOrThrow({
          where: {
-            MediadorId: validatedData.OficinaId,
+            MediadorId: validatedData.MediadorId,
          },
       });
    } catch (error) {
       throw new NotFoundException('Mediator not found', ErrorCode.NOT_FOUND_EXCEPTION);
    }
+   let user;
+   try {
+      user = await prismaClient.usuario.findFirstOrThrow({
+         where: {
+            //@ts-ignore
+
+            UsuarioId: parseInt(req.user.UsuarioId),
+         },
+      });
+   } catch (error) {
+      throw new NotFoundException('User not found', ErrorCode.NOT_FOUND_EXCEPTION);
+   }
 
    try {
-      const { CompaniaId, RamoId, OficinaId, ...dataWithoutConnects } = validatedData;
+      const { CompaniaId, ProductoId, MediadorId, ...dataWithoutConnects } = validatedData;
       const createdContract = await prismaClient.contrato.create({
          data: {
             Usuario: {
@@ -163,29 +197,138 @@ export const createContract = async (req: Request, res: Response) => {
                   CompaniaId: CompaniaId,
                },
             },
-            Ramo: {
+            Producto: {
                connect: {
-                  RamoId: RamoId,
+                  ProductoId: ProductoId,
                },
             },
-            CanalMediador: {
+            Mediador: {
                connect: {
-                  MediadorId: OficinaId,
+                  MediadorId: MediadorId,
                },
             },
             ...(dataWithoutConnects as any),
          },
+         include: {
+            Producto: {
+               include: {
+                  ProductoTipoOperacion: {
+                     include: {
+                        ProductoDocumento: {
+                           include: {
+                              MaestroDocumento: true,
+                           },
+                        },
+                     },
+                  },
+               },
+            },
+            DocumentoContrato: {
+               include: {
+                  MaestroDocumentos: {
+                     include: {
+                        MaestroIncidencias: true,
+                     },
+                  },
+               },
+            },
+            Comunicacion: true,
+            HistorialContrato: true,
+         },
       });
 
-      res.json(createdContract);
+      const {
+         CompaniaId: comp,
+         ProductoId: prod,
+         CodigoSolicitud,
+         Suplemento,
+         CCC,
+         Activo,
+         ClaveOperacion,
+         EstadoContrato,
+         CodigoPoliza,
+         MediadorId: media,
+         TipoOperacion,
+         updatedAt,
+         Producto,
+         TipoConciliacionId,
+         UsuarioId,
+         ...data
+      } = createdContract;
+      const dataH: ContractHistoryData = data;
+
+      await createContractHistory(dataH, OPERACION_CONTRATO.INSERTADO, ESTADO_CONTRATO.PENDIENTE);
+
+      //Creamos los d(ocumentos asociados al contrato como pendientes
+      await createDocuments(createdContract, user);
+
+      const fullContract = await prismaClient.contrato.findFirst({
+         where: {
+            ContratoId: createdContract.ContratoId,
+         },
+         include: {
+            DocumentoContrato: {
+               include: {
+                  MaestroDocumentos: true,
+               },
+            },
+         },
+      });
+      res.json(fullContract);
    } catch (error) {
       throw new InternalException('Something went wrong!', error, ErrorCode.INTERNAL_EXCEPTION);
    }
 };
 
+const createDocuments = async (createdContract: any, systemUser: Usuario) => {
+   for (const productoTipoOperacion of createdContract.Producto.ProductoTipoOperacion) {
+      for (const productoDocumento of productoTipoOperacion.ProductoDocumento) {
+         const createdDocumentContract = await prismaClient.documentoContrato.create({
+            data: {
+               Contrato: {
+                  connect: {
+                     ContratoId: createdContract.ContratoId,
+                  },
+               },
+               MaestroDocumentos: {
+                  connect: {
+                     DocumentoId: productoDocumento.MaestroDocumento.DocumentoId,
+                  },
+               },
+               Usuario: {
+                  connect: {
+                     UsuarioId: systemUser?.UsuarioId,
+                  },
+               },
+               EstadoDoc: ContractDocumentStatusesEnum.PENDING,
+               ProductoDocumento: {
+                  connect: {
+                     ProductoDocId: productoDocumento.ProductoDocId,
+                  },
+               },
+            },
+         });
+
+         /*   await prismaClient.documentoContratoHistory.create({
+            data: {
+               DocumentoContratoId: createdDocumentContract.DocumentoId,
+               DocId: createdDocumentContract.DocId,
+               ProdctoDoc: createdDocumentContract.ProdctoDoc,
+               UsuarioId: createdDocumentContract.UsuarioId,
+               EstadoDoc: ContractDocumentStatusesEnum.PENDING,
+            },
+         }); */
+      }
+   }
+};
+
 export const updateContract = async (req: Request, res: Response) => {
+   let contrato;
+   let compania;
+   let mediador;
+   let producto;
    try {
-      await prismaClient.contrato.findFirstOrThrow({
+      contrato = await prismaClient.contrato.findFirstOrThrow({
          where: {
             ContratoId: parseInt(req.params.id),
          },
@@ -197,7 +340,7 @@ export const updateContract = async (req: Request, res: Response) => {
    const validatedData = updateContratoSchema.parse(req.body);
 
    try {
-      await prismaClient.compania.findFirstOrThrow({
+      compania = await prismaClient.compania.findFirstOrThrow({
          where: {
             CompaniaId: validatedData.CompaniaId,
          },
@@ -207,19 +350,19 @@ export const updateContract = async (req: Request, res: Response) => {
    }
 
    try {
-      await prismaClient.producto.findFirstOrThrow({
+      producto = await prismaClient.producto.findFirstOrThrow({
          where: {
-            ProductoId: validatedData.RamoId,
+            ProductoId: validatedData.ProductoId,
          },
       });
    } catch (error) {
-      throw new NotFoundException('Branch not found', ErrorCode.NOT_FOUND_EXCEPTION);
+      throw new NotFoundException('Product not found', ErrorCode.NOT_FOUND_EXCEPTION);
    }
 
    try {
-      await prismaClient.mediador.findFirstOrThrow({
+      mediador = await prismaClient.mediador.findFirstOrThrow({
          where: {
-            MediadorId: validatedData.OficinaId,
+            MediadorId: validatedData.MediadorId,
          },
       });
    } catch (error) {
@@ -227,37 +370,58 @@ export const updateContract = async (req: Request, res: Response) => {
    }
 
    try {
-      const { CompaniaId, RamoId, OficinaId, ...dataWithoutConnects } = validatedData;
-      const updatedContract = await prismaClient.contrato.update({
+      /*       const { CompaniaId, ProductoId, MediadorId, ...dataWithoutConnects } = validatedData;
+       */ const updatedContract = await prismaClient.contrato.update({
          where: {
             ContratoId: parseInt(req.params.id),
          },
          data: {
-            ...(dataWithoutConnects as any),
-            FechaUltimaModif: new Date(),
-            Usuario: {
+            /*  ...(dataWithoutConnects as any), */
+            /*  Usuario: {
                connect: {
                   //@ts-ignore
                   UsuarioId: parseInt(req.user.UsuarioId),
                },
-            },
-            Compania: {
+            }, */
+            /*   Compania: {
                connect: {
-                  CompaniaId: CompaniaId,
+                  CompaniaId: ,
                },
             },
-            Ramo: {
+            Producto: {
                connect: {
-                  RamoId: RamoId,
+                  ProductoId: ,
                },
             },
-            CanalMediador: {
+            Mediador: {
                connect: {
-                  MediadorId: OficinaId,
+                  MediadorId: ,
                },
-            },
+            }, */
+
+            ...(validatedData as any),
          },
       });
+
+      const {
+         CompaniaId,
+         ProductoId,
+         CodigoSolicitud,
+         Suplemento,
+         CCC,
+         Activo,
+         ClaveOperacion,
+         CodigoPoliza,
+         MediadorId,
+         TipoOperacion,
+         updatedAt,
+         TipoConciliacionId,
+         UsuarioId,
+         ...data
+      } = updatedContract;
+      const dataH: ContractHistoryData = data;
+
+      await createContractHistory(dataH, OPERACION_CONTRATO.ACTUALIZADO);
 
       res.json(updatedContract);
    } catch (error) {
@@ -271,6 +435,21 @@ export const getContractById = async (req: Request, res: Response) => {
       const contract = await prismaClient.contrato.findFirstOrThrow({
          where: {
             ContratoId: parseInt(req.params.id),
+         },
+         include: {
+            Usuario: true,
+            TipoConciliacion: true,
+            DocumentoContrato: {
+               include: {
+                  IncidenciaDocumento: {
+                     include: {
+                        MaestroIncidencias: true,
+                     },
+                  },
+               },
+            },
+            Comunicacion: true,
+            HistorialContrato: true,
          },
       });
 
@@ -298,4 +477,21 @@ export const deleteContract = async (req: Request, res: Response) => {
    });
 
    res.json({ message: 'deleted' });
+};
+
+export const reprocesar = async (req: Request, res: Response) => {
+   //@ts-ignore
+   const insertRows = await processPolicyData(req.body, req.user);
+   res.json(insertRows);
+};
+
+export const Incompletos = async (req: Request, res: Response) => {
+   console.log('Aqui');
+   const incompletos = await prismaClient.incompletas.findMany({
+      where: {
+         Insertada: false,
+      },
+   });
+
+   res.json(incompletos);
 };
