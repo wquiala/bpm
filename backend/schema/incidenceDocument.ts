@@ -27,4 +27,5 @@ export const updateIncidenciaDocumentoSchema = z.object({
    Revisada: z.boolean().optional(),
    Enviar: z.boolean().optional(),
    Reclamada: z.string().optional(),
+   TipoDocumentoincidenciaId: z.number().optional(),
 });

@@ -24,9 +24,9 @@ function Main() {
    const [selectContractModal, setSelectContractModal] = useState<boolean>(false);
 
    const getContracts = async (params: any) => {
+      console.log('Buscando contrato');
       setLoading(true);
       const [error, response, data] = await handlePromise(ContractService.getContracts(params));
-      console.log({ msg: 'cargando data', data });
       setLoading(false);
       if (!response.ok) {
          return setAlert({
@@ -44,6 +44,7 @@ function Main() {
    };
 
    const onFilter = async (data: any) => {
+      console.log(data);
       const toSend = {
          dni: data?.dni ?? null,
          code: data?.code ?? null,

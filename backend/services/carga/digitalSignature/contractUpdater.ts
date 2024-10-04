@@ -3,7 +3,7 @@ import { prismaClient } from '../../../server';
 import { ContractDocumentStatusesEnum } from '../../../constants/ContractDocumentStatusesEnum';
 import { digitalSignature } from './digitalSignatureCreator';
 import { ContractHistoryData } from '../../../interfaces/contractsInterfaces';
-import { createContractHistory } from '../policy/policyCreator';
+import { createContractHistory } from '../../contracts/contractService';
 
 export const contractUpdater = async (
    record: any,
@@ -13,11 +13,12 @@ export const contractUpdater = async (
    details: any[],
 ) => {
    let updated;
+   let insertados;
 
-   if (record['RESULTADO'].includes('acept')) {
+   if (record['RESULTADO'].toLowerCase().includes('acept')) {
       const contract = await prismaClient.contrato.findFirst({
          where: {
-            CodigoPoliza: record['NUM_POLIZA'],
+            OR: [{ CodigoPoliza: record['NUM_POLIZA'] }, { CodigoSolicitud: record['NUM_POLIZA'] }],
             NOT: { EstadoContrato: 'TRAMITADA' },
          },
          include: {
@@ -37,7 +38,6 @@ export const contractUpdater = async (
       });
 
       if (contract && conciliationType) {
-         updated = true;
          for (const documentoContrato of contract.DocumentoContrato) {
             for (const documentIncidence of documentoContrato.IncidenciaDocumento) {
                await prismaClient.incidenciaDocumento.update({
@@ -92,6 +92,7 @@ export const contractUpdater = async (
                },
             },
          });
+         updated = true;
 
          const {
             Activo,
@@ -116,8 +117,11 @@ export const contractUpdater = async (
 
          //Aqui tengo que ponerlo como actualizado en true en el history
          await digitalSignature(record, true, err);
+         insertados = true;
       } else {
          await digitalSignature(record, false, err);
+         insertados = true;
+
          updated = false;
          details.push({
             ...record,
@@ -125,8 +129,77 @@ export const contractUpdater = async (
             errores: err,
          });
       }
+   } else if (record['RESULTADO']) {
+      const contract = await prismaClient.contrato.findFirst({
+         where: {
+            OR: [{ CodigoPoliza: record['NUM_POLIZA'] }, { CodigoSolicitud: record['NUM_POLIZA'] }],
+         },
+         include: {
+            DocumentoContrato: {
+               include: {
+                  IncidenciaDocumento: true,
+                  MaestroDocumentos: true,
+               },
+            },
+         },
+      });
+
+      if (contract) {
+         if (
+            contract.EstadoContrato != 'TRAMITADA' ||
+            (contract.EstadoContrato == 'TRAMITADA' && contract.ResultadoFDCON == '')
+         ) {
+            const contratoUpdated = await prismaClient.contrato.update({
+               where: {
+                  ContratoId: contract.ContratoId,
+               },
+               data: {
+                  ResultadoFDCON: record['RESULTADO'],
+                  TipoEnvioCON: record['TIPO_ENVIO'],
+
+                  Usuario: {
+                     connect: {
+                        UsuarioId: systemUser?.UsuarioId,
+                     },
+                  },
+               },
+            });
+
+            updated = true;
+
+            const {
+               Activo,
+
+               TipoOperacion,
+               updatedAt,
+               TipoConciliacionId,
+               UsuarioId,
+               ...data
+            } = contratoUpdated;
+            const dataH: ContractHistoryData = data;
+
+            await createContractHistory({
+               ...data,
+               Operacion: OPERACION_CONTRATO.ACTUALIZADO,
+            });
+            details.push({
+               ...record,
+               estado: 'ACTUALIZADO',
+               errores: err,
+            });
+
+            //Aqui tengo que ponerlo como actualizado en true en el history
+            await digitalSignature(record, true, err);
+            insertados = true;
+         }
+      } else {
+         await digitalSignature(record, false, err);
+         insertados = true;
+      }
    } else {
       await digitalSignature(record, false, err);
+      insertados = true;
+
       updated = false;
       details.push({
          ...record,
@@ -136,5 +209,6 @@ export const contractUpdater = async (
    }
    return {
       updated,
+      insertados,
    };
 };

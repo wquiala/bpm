@@ -34,18 +34,13 @@ export const HistoryDocuments = ({ show, setShow, control }: Props) => {
          <div className="flex w-full justify-center items-center flex-col">
             {fields.map((doc: any) => {
                const history: DocumentHistory[] = doc.documentHistory.map((f: any) => ({
-                  Familia_Documento: doc.Codigo,
-                  Grupo_Documento: doc.Nombre,
+                  Familia_Documento: doc.Familia,
+                  Documento: doc.Nombre,
+                  Fecha_estado: f.updatedAt ? new Date(f.updatedAt).toLocaleString() : 'Sin fecha',
+
+                  Codigo: doc.Codigo,
                   Estado: f.EstadoDoc,
                   Fase: doc.Fase,
-                  createdAt: new Date(f.createdAt).toLocaleString('es-ES', {
-                     year: 'numeric',
-                     month: 'long',
-                     day: 'numeric',
-                     hour: '2-digit',
-                     minute: '2-digit',
-                     second: '2-digit',
-                  }),
                }));
                return (
                   <div key={doc.id}>

@@ -59,12 +59,12 @@ const SelectPolicyModal = ({ show, setShow, selectedContract, setSelectedContrac
                            <div className="text-slate-500 text-xs mt-0.5  flex gap-1">
                               <p className="font-medium">Fecha Alta:</p>
                               {contract?.FechaOperacion
-                                 ? moment(contract?.FechaOperacion).format('YYYY-MM-DD HH:mm')
+                                 ? new Date(contract.FechaOperacion).toLocaleDateString()
                                  : '---'}
                            </div>
                            <div className="text-slate-500 text-xs mt-0.5  flex gap-1">
                               <p className="font-medium">Fecha Estado:</p>
-                              {contract?.updatedAt ? moment(contract?.updatedAt).format('YYYY-MM-DD HH:mm') : '---'}
+                              {contract?.updatedAt ? new Date(contract.updatedAt).toLocaleDateString() : '---'}
                            </div>
                            <div className="text-slate-500 text-xs mt-0.5  flex gap-1">
                               <p className="font-medium">CCC:</p>
@@ -72,7 +72,7 @@ const SelectPolicyModal = ({ show, setShow, selectedContract, setSelectedContrac
                            </div>
                            <div className="text-slate-500 text-xs mt-0.5  flex gap-1">
                               <p className="font-medium">Anulado sin efecto:</p>
-                              {contract?.AnuladoSE ? 'SI' : 'NO'}
+                              {contract?.AnuladoSEfecto ? 'SI' : 'NO'}
                            </div>
                            <div className="text-slate-500 text-xs mt-0.5  flex gap-1">
                               <p className="font-medium">{t('branch')}:</p>

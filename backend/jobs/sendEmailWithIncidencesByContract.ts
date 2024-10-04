@@ -30,15 +30,13 @@ export const sendEmailWithIncidencesByContract = async () => {
                MaestroDocumentos: true,
                IncidenciaDocumento: {
                   include: {
-                     MaestroIncidencias: true,
+                     TipoDocumentoIncidencia: { include: { MaestroDocumentos: true, MaestroIncidencias: true } },
                   },
                },
             },
          },
       },
    });
-
-   const hoyMedianoche = moment().startOf('day'); // Establece la fecha de hoy a medianoche (ignora la hora)
 
    const contractsTocheck = contracts.filter(
       (contract: Contrato) =>
@@ -49,21 +47,21 @@ export const sendEmailWithIncidencesByContract = async () => {
    );
    for (const contract of contractsTocheck) {
       let hasIncidences = false;
-      const test = contract.DocumentoContrato.map((document: any) =>
+      /*  const test = contract.DocumentoContrato.map((document: any) =>
          document.IncidenciaDocumento.map((incidence: any) => {
             if (incidence.Resuelta == false && incidence.Revisada == true) {
                hasIncidences = true;
             }
          }),
-      );
+      ); */
 
-      const pendings = findPendingDocumentsByContranct(contract.DocumentoContrato);
-      const documents = pendings.map((doc) => {
+      /*       const pendings = findPendingDocumentsByContranct(contract.DocumentoContrato);
+       */ /*  const documents = pendings.map((doc) => {
          return { nombre: doc.MaestroDocumentos.Nombre, reclamations: doc.NumeReclamaciones };
-      });
+      }); */
 
-      if (documents.length > 0 && hasIncidences == false && contract.NumeroReclamaciones < 3) {
-         await sendPolicyWithIncidenceReminder(
+      if (/* documents.length > 0 && */ hasIncidences == false && contract.NumeroReclamaciones < 3) {
+         /*  await sendPolicyWithIncidenceReminder(
             contract.Mediador.Email ?? '',
             '',
             //@ts-ignore
@@ -71,13 +69,13 @@ export const sendEmailWithIncidencesByContract = async () => {
             contract,
             {},
             documents,
-         );
+         ); */
       } else if (hasIncidences && contract.NumeroReclamaciones < 4) {
          // const incidences = await buildDocumentsWithIncidences(contract);
 
          let incidencesToSend: any = [];
 
-         contract.DocumentoContrato.map((doc: any) => {
+         /*  contract.DocumentoContrato.map((doc: any) => {
             if (doc.IncidenciaDocumento.length > 0) {
                doc.IncidenciaDocumento.map((incidence: any) => {
                   if (incidence.Resuelta == false && incidence.Revisada == true) {
@@ -97,7 +95,7 @@ export const sendEmailWithIncidencesByContract = async () => {
                   }
                });
             }
-         });
+         }); */
 
          if (incidencesToSend.length > 0) {
             const incidences = incidencesToSend.reduce((acc: any, incidenciaDoc: any) => {
@@ -110,7 +108,7 @@ export const sendEmailWithIncidencesByContract = async () => {
                return acc;
             }, {} as Record<string, Incidencia[]>);
 
-            await sendPolicyWithIncidenceReminder(
+            /* await sendPolicyWithIncidenceReminder(
                contract.Mediador.Email ?? '',
                '',
                //@ts-ignore
@@ -118,7 +116,7 @@ export const sendEmailWithIncidencesByContract = async () => {
                contract,
                incidences,
                documents.length > 0 ? documents : [],
-            );
+            ); */
          }
       }
    }
@@ -163,7 +161,7 @@ export const buildDocumentsWithIncidences = async (contract: any) => {
    contract.DocumentoContrato.map((doc: any) => {
       if (doc.EstadoDoc == 'PRESENTE CON INCIDENCIA')
          doc.IncidenciaDocumento.map((incidence: any) => {
-            if (incidence.Resuelta == false && incidence.Revisada == true) {
+            if (!incidence.Resuelta && !incidence.Revisada) {
                incidencesToSend.push({
                   DocumentoId: doc.DocumentoId,
                   IncidenciaDocId: incidence.IncidenciaDocId,
@@ -228,27 +226,28 @@ export const sendPolicyWithIncidenceReminder = async (
                
             </div>`;
    let caja = '';
-   Object.keys(documentsWhitIncidencesToSend).length > 0
-      ? Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
-           const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
-           const documento = nombreDocumento;
-           caja = `<div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f5f5f5;">
+
+   if (Object.keys(documentsWhitIncidencesToSend).length > 0) {
+      Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
+         const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
+         const documento = nombreDocumento;
+         caja = `<div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f5f5f5;">
                       <h1><strong>Documento:</strong> ${documento}</h1>`;
 
-           incidencias.forEach((incidencia: any, index: number) => {
-              incitoUpdate.push(incidencia);
-              caja =
-                 caja +
-                 `<p><strong>Incidencia ${index + 1}:</strong></p>
+         incidencias.forEach((incidencia: any, index: number) => {
+            incitoUpdate.push(incidencia);
+            caja =
+               caja +
+               `<p><strong>Incidencia ${index + 1}:</strong></p>
             <p>${incidencia.incidenciaNombre}</p>
              <p><strong>Nota:</strong> ${incidencia.nota}</p>
 
 
           `;
-           });
-           html = html + (`${caja}` + `</div>`);
-        })
-      : 'No hay Incidencias que reclamar';
+         });
+         html = html + (`${caja}` + `</div>`);
+      });
+   } else html = 'No hay Incidencias que reclamar';
    let mailOptions = {
       from: 'kaosolution8@gmail.com',
       to: to,
@@ -287,17 +286,20 @@ export const getInfoEmailAndUpdateDB = async (
    incidences: any,
    documents: any,
 ) => {
+   let tipoComunicacion: string;
+
+   if (Object.keys(incidences).length > 0 && documents.length > 0) {
+      tipoComunicacion = 'DOCUMENTOS_PENDIENTES_INCIDENCIAS';
+   } else if (Object.keys(incidences).length > 0) {
+      tipoComunicacion = 'INCIDENCIAS';
+   } else {
+      tipoComunicacion = 'DOCUMENTOS_PENDIENTES';
+   }
+
    const dataToSend = {
       contratoId: contrato.ContratoId,
-      tipoComunicacion:
-         Object.keys(incidences).length > 0 && documents.length > 0
-            ? 'DOCUMENTOS_PENDIENTES_INCIDENCIAS'
-            : Object.keys(incidences).length > 0
-            ? 'INCIDENCIAS'
-            : 'DOCUMENTOS_PENDIENTES',
-
+      tipoComunicacion,
       data: htmlToText(mailOption.html),
-
       emailDestinatario: mailOption.to,
    };
    const in30Days = moment().add(30, 'days').toDate();

@@ -12,6 +12,9 @@ const ContractHeaderInputs = ({ control }: Props) => {
 
    return (
       <div className="box p-4 m-4 mb-2">
+         <h2 className="flex font-bold text-2xl justify-center text-blue-900">
+            {control._defaultValues.EstadoContrato}
+         </h2>
          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex flex-col gap-0 w-full sm:w-1/3">
                <div className="w-full">

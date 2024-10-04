@@ -52,9 +52,9 @@ const DocumentList = ({ control, watch, setValue, getValues }: Props) => {
                               {fields.map((item: any, index: number) => {
                                  const isCorrect = getValues(`documents.${index}.correct`);
                                  const isNotCorrect = getValues(`documents.${index}.notCorrect`);
+                                 const corr = getValues(`documents.${index}.corr`);
 
-                                 const isCorrectState =
-                                    item.estado === 'CORRECTO' || item.estado === 'PRESENTE CORRECTO';
+                                 const isCorrectState = item.estado === 'PRESENTE CORRECTO';
                                  const isIncidenceState = item.estado === 'PRESENTE CON INCIDENCIA';
 
                                  return (
@@ -65,7 +65,6 @@ const DocumentList = ({ control, watch, setValue, getValues }: Props) => {
                                                 label="Correcto"
                                                 control={control}
                                                 name={`documents.${index}.correct`}
-                                                disabled={isCorrectState}
                                                 onChange={() => {
                                                    if (!isCorrect) {
                                                       setValue(`documents.${index}.notCorrect`, false);
@@ -74,7 +73,16 @@ const DocumentList = ({ control, watch, setValue, getValues }: Props) => {
                                                 }}
                                              />
                                           </div>
-                                          <div className="w-full">
+                                          <div className="w-1/6">
+                                             <InputField
+                                                label="Código"
+                                                control={control}
+                                                name={`documents.${index}.codigo`}
+                                                disabled
+                                             />
+                                          </div>
+
+                                          <div className="w-3/6">
                                              <InputField
                                                 label="Nombre del documento"
                                                 control={control}
@@ -82,7 +90,7 @@ const DocumentList = ({ control, watch, setValue, getValues }: Props) => {
                                                 disabled
                                              />
                                           </div>
-                                          <div className="w-full">
+                                          <div className="w-1/5">
                                              <InputField
                                                 label="Fase"
                                                 control={control}
@@ -90,7 +98,7 @@ const DocumentList = ({ control, watch, setValue, getValues }: Props) => {
                                                 disabled
                                              />
                                           </div>
-                                          <div className="w-full">
+                                          <div className="w-2/6">
                                              <InputField
                                                 label="Estado"
                                                 control={control}
@@ -103,7 +111,7 @@ const DocumentList = ({ control, watch, setValue, getValues }: Props) => {
                                                 label="Incorrecto"
                                                 control={control}
                                                 name={`documents.${index}.notCorrect`}
-                                                disabled={isCorrect || isCorrectState}
+                                                disabled={isCorrect || corr}
                                                 onChange={() => {
                                                    if (!isNotCorrect) {
                                                       setValue(`documents.${index}.correct`, false);

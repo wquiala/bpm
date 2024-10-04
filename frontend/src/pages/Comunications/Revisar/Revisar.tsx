@@ -20,7 +20,10 @@ function Main() {
 
    const { company, caja, lote } = useAppSelector((state) => state.settings);
 
-   const [incidencesDocuments, setIncidencesDocuments] = useState<any[]>([]);
+   const [incidencesDocuments, setIncidencesDocuments] = useState<any>(null);
+   const [incidencesToOBJ, setInciToOBJ] = useState<any>(null);
+
+   const incidenceList: any[] = [];
 
    const onFilter = async (data: any) => {
       if (!company) {
@@ -35,7 +38,6 @@ function Main() {
    useEffect(() => {
       const get = async () => {
          const [error, response, data] = await handlePromise(DocumentIncidenceService.getIncidenceDocuments());
-         console.log(data);
          const incidencesToCheck = data.filter((inci: any) => inci.Resuelta == false && inci.Revisada == false);
          setIncidencesDocuments(incidencesToCheck);
       };
@@ -48,15 +50,23 @@ function Main() {
          <div className="flex flex-col items-center mt-4 intro-y sm:flex-row">
             <h2 className="mr-auto text-lg font-medium">Revisar envios de incidencias</h2>
          </div>
-         <div className="p-3 mt-4 intro-y box">
-            {/*             <PolicyFilters onFilter={onFilter} />
-             */}{' '}
-            <hr />
-            {/* {incidencesDocuments ? ( */}
+         <div>
             <IncidencesDocumentsFormToCheck
                incidencesDocuments={incidencesDocuments}
                setIncidencesDocuments={setIncidencesDocuments}
             />
+            {/* {Object.keys(incidencesToOBJ).length > 0
+               ? Object.keys(incidencesToOBJ).forEach((claveOperacion) => {
+                    const clave = incidencesToOBJ[claveOperacion];
+                    console.log(incidencesToOBJ(claveOperacion));
+
+                    clave.map((c: any) => {
+                       return (
+                         
+                       );
+                    });
+                 })
+               : ''} */}
          </div>
       </>
    );

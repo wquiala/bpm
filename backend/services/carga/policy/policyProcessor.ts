@@ -1,11 +1,9 @@
 import { Incompletas, Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import { policyValidator } from '../../../helpers/policiyValidator';
-import { createContractHistory, fetchClave, fetchContrato, policyCreator } from './policyCreator';
-import { ContractHistoryData, RecordDiaria } from '../../../interfaces/contractsInterfaces';
-import moment from 'moment';
-import { createDesechados } from '../../contracts/contractService';
+import { RecordDiaria } from '../../../interfaces/contractsInterfaces';
 import { incompletas } from './incompletas';
+import { policyCreator } from './policyCreator';
 
 export const processPolicyData = async (data: RecordDiaria[], user: { UsuarioId: any }) => {
    let details: any[] = [];
@@ -47,41 +45,6 @@ export const processPolicyData = async (data: RecordDiaria[], user: { UsuarioId:
                estado: 'INCOMPLETO REVISAR',
                errores: err,
             });
-            /*  const data: any = {
-               MotivoDesechado: 'SIN CLAVE',
-   
-               FechaEfecto: record.FechaEfecto,
-               FechaOperacion: record.FechaOperacion,
-               AnuladoSEfecto: record.AnuladoSEfecto,
-               DNIAsegurado: record.DNIAsegurado,
-               NombreAsegurado: record.NombreAsegurado,
-               FechaNacimientoAsegurado: record.FechaNacimientoAsegurado,
-   
-               CSRespAfirmativas: record.CSRespAfirmativas,
-               ProfesionAsegurado: record.ProfesionAsegurado,
-               DeporteAsegurado: record.DeporteAsegurado,
-               DNITomador: record.DNITomador,
-               FechaValidezDNITomador: record.FechaValidezDNITomador,
-               NombreTomador: record.NombreTomador,
-               Operador: record.Operador,
-               IndicadorFDPRECON: record.IndicadorFDPRECON,
-               TipoEnvioPRECON: record.TipoEnvioPRECON,
-               ResultadoFDPRECON: record.ResultadoFDPRECON,
-               IndicadorFDCON: record.IndicadorFDCON,
-               TipoEnvioCON: record.TipoEnvioCON,
-               ResultadoFDCON: record.ResultadoFDCON,
-               Revisar: record.Revisar,
-               Conciliar: record.Conciliar,
-            };
-   
-            await createDesechados(data);
-            details.push({
-               ...record,
-               estado: 'DESECHADO SIN CLAVE',
-               errores: err,
-            }); */
-
-            // await createContractHistory(data);
          }
       } else {
          const {

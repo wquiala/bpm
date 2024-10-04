@@ -8,8 +8,8 @@ import { BadRequestsException } from '../exceptions/bad-requests';
 import { ContractDocumentStatusesEnum } from '../constants/ContractDocumentStatusesEnum';
 import { ESTADO_CONTRATO, Usuario } from '@prisma/client';
 import { ContractHistoryData, OPERACION_CONTRATO } from '../interfaces/contractsInterfaces';
-import { createContractHistory } from '../services/carga/policy/policyCreator';
 import { processPolicyData } from '../services/carga/policy/policyProcessor';
+import { createContractHistory } from '../services/contracts/contractService';
 
 export const getContracts = async (req: Request, res: Response) => {
    const { company, policy, dni, secuencialDni, ccc, code, requestCode, operationType, reconcile } = req.query;
@@ -61,14 +61,20 @@ export const getContracts = async (req: Request, res: Response) => {
             include: {
                MaestroDocumentos: {
                   include: {
-                     MaestroIncidencias: true,
+                     TipoDocumentoIncidencia: { include: { MaestroDocumentos: true, MaestroIncidencias: true } },
+                     FamiliaDocumento: true,
                   },
                },
                DocumentoContratoHistory: true,
 
                IncidenciaDocumento: {
                   include: {
-                     MaestroIncidencias: true,
+                     TipoDocumentoIncidencia: {
+                        include: {
+                           MaestroDocumentos: true,
+                           MaestroIncidencias: true,
+                        },
+                     },
                      IncidenciaDocumentoHistory: true,
                   },
                },
@@ -227,7 +233,7 @@ export const createContract = async (req: Request, res: Response) => {
                include: {
                   MaestroDocumentos: {
                      include: {
-                        MaestroIncidencias: true,
+                        TipoDocumentoIncidencia: { include: { MaestroDocumentos: true, MaestroIncidencias: true } },
                      },
                   },
                },
@@ -443,7 +449,7 @@ export const getContractById = async (req: Request, res: Response) => {
                include: {
                   IncidenciaDocumento: {
                      include: {
-                        MaestroIncidencias: true,
+                        TipoDocumentoIncidencia: { include: { MaestroDocumentos: true, MaestroIncidencias: true } },
                      },
                   },
                },

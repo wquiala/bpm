@@ -63,12 +63,12 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
       name: 'DetalleObservacion',
    });
 
-   const findIncidences = (incidence: any, contDocOk: any) => {
+   const findIncidences = (incidence: any, id: any) => {
       const contracts = selectedContract.DocumentoContrato;
 
       for (const contract of contracts) {
          const query = contract.IncidenciaDocumento.find(
-            (inci: any) => inci.Incidencia == incidence.IncidenciaId && inci.DocumentoContratoId == contDocOk,
+            (inci: any) => inci.TipoIncidenciaDocumentoId == incidence.IncidenciaId && inci.DocumentoContratoId == id,
          );
          if (query) return query;
       }
@@ -363,42 +363,42 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
 
          for (const contractDocument of contractDocuments) {
             const isCorrect =
-               contractDocument.EstadoDoc === 'CORRECTO' || contractDocument.EstadoDoc === 'PRESENTE CORRECTO';
+               contractDocument.EstadoDoc === 'PRESENTE CORRECTO' || contractDocument.EstadoDoc === 'CORRECTO';
+            const corr = contractDocument.EstadoDoc === 'CORRECTO';
 
             const notCorrect = contractDocument.EstadoDoc === 'PRESENTE CON INCIDENCIA';
 
             const isConciliar = selectedContract.Conciliar === true;
 
-            /*             const present = isPresent || isConciliar;
-             */ const incidences = contractDocument.MaestroDocumentos.MaestroIncidencias.map((incidence: any) => {
-               /*                createIncidence(incidence.IncidenciaId, contractDocument.DocId);
-                */ return {
-                  IncidenciaId: incidence.IncidenciaId,
-                  DocAsociadoId: incidence.DocAsociadoId,
+            const incidences = contractDocument.MaestroDocumentos.TipoDocumentoIncidencia.map((incidence: any) => {
+               return {
+                  IncidenciaId: incidence.TipoDocumentoIncidenciaId,
+                  DocAsociadoId: incidence.MaestroDocumentos.DocumentoId,
 
-                  Codigo: incidence.Codigo,
-                  Nombre: incidence.Nombre,
+                  Codigo: incidence.MaestroIncidencias.Codigo,
+                  Nombre: incidence.MaestroIncidencias.Nombre,
                   estado: contractDocument.EstadoDoc,
 
                   checked: contractDocument.IncidenciaDocumento.find(
-                     (inci: any) => inci.Incidencia == incidence.IncidenciaId && inci.Resuelta == false,
+                     (inci: any) =>
+                        inci.TipoIncidenciaDocumentoId == incidence.TipoDocumentoIncidenciaId && inci.Resuelta == false,
                   ),
                   notas: contractDocument.IncidenciaDocumento.find((i: any) => {
-                     if (i.Incidencia == incidence.IncidenciaId && i.Resuelta == false) return i.Nota;
+                     if (i.TipoIncidenciaDocumentoId == incidence.TipoDocumentoIncidenciaId && i.Resuelta == false)
+                        return i.Nota;
                   }),
-                  /* Comentario: contractDocument.IncidenciaDocumento.map((inci: any) => {
-                     return inci.Nota;
-                  }), */
                };
-               /*                return createIncidence(incidence, contractDocument.DocId);
-                */
             });
             docList.push({
                id: contractDocument.DocumentoId,
+               familia: contractDocument.MaestroDocumentos.FamiliaDocumento.Codigo,
                docTypeId: contractDocument.DocId,
-               correct: isCorrect,
+               correct: false,
                notCorrect: notCorrect,
+               corr: isCorrect,
                name: contractDocument.MaestroDocumentos.Nombre,
+               codigo: contractDocument.MaestroDocumentos.Codigo,
+
                estado: contractDocument.EstadoDoc,
                incidences: incidences,
                fase: contractDocument.ProductoDocumento.Fase,
@@ -446,8 +446,10 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
 
    return (
       <form className="flex flex-col mt-4 box" onSubmit={handleSubmit(onSubmit)}>
-         {selectedContract.FechaGrabacion && (
-            <h1 className="flex font-bold text-2xl justify-center text-blue-900">Contrato grabado</h1>
+         {selectedContract.EstadoContrato == 'TRAMITADA' && (
+            <h2 className="flex font-bold text-2xl justify- text-center text-blue-900">
+               Contrato grabado tramitado, cualquier actualización al contrato dirijase a grabación sin incidencias
+            </h2>
          )}{' '}
          {selectedContract.Revisar == false && (
             <h1 className="flex font-bold text-2xl justify-center text-blue-900">

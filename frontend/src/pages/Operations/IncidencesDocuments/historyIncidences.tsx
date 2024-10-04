@@ -40,7 +40,7 @@ export const HistoryIncidences = ({ show, setShow, control }: Props) => {
                   const history: IncidenceHistory[] = incidences.map((inci: any) => {
                      inci.IncidenciaDocumentoHistory.map((h: any) => {
                         hist.push({
-                           Incidencia: inci.MaestroIncidencias.Nombre,
+                           Incidencia: inci.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                            Comentarios: h.Nota,
                            EstadoIncidencia: h.Resuelta ? 'Resuelta' : 'No resuelta',
                            Fecha_estado: new Date(h.createdAt).toLocaleString(/* 'es-ES', {

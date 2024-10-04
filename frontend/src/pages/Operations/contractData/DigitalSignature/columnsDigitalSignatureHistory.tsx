@@ -6,11 +6,7 @@ import { ColumnDef } from '@tanstack/react-table';
 // You can use a Zod schema here if you want.
 export type DigitalSignatureHistory = {
    FechaAlta: string;
-   /*    FirmaDigital: string;
-    */ IndicadorFirmaPrecon?: string;
-   TipoEnvioPrecon?: string;
-   ResultadoPrecon?: string;
-   IndicadorFirmaCon?: string;
+
    TipoEnvioCon?: string;
    ResultadoCon?: string;
    /*  Revisar?: string;
@@ -26,22 +22,7 @@ export const columnsDigitalSignatureHistory: ColumnDef<DigitalSignatureHistory>[
       accessorKey: 'FirmaDigital',
       header: 'Firma digital',
    }, */
-   {
-      accessorKey: 'IndicadorFirmaPrecon',
-      header: 'Indicador de firma digital PRECON',
-   },
-   {
-      accessorKey: 'TipoEnvioPrecon',
-      header: 'Tipo de envío PRECON',
-   },
-   {
-      accessorKey: 'ResultadoPrecon',
-      header: 'Resultado de firma digital PRECON',
-   },
-   {
-      accessorKey: 'IndicadorFirmaCon',
-      header: 'Indicador de firma digital CON',
-   },
+
    {
       accessorKey: 'TipoEnvioCon',
       header: 'Tipo de envío CON',

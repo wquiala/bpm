@@ -43,10 +43,54 @@ const UploadFile = ({ show, setShow, onRefresh, uploadType }: Props) => {
       const formData = new FormData();
       formData.append('file', form.file);
       formData.append('type', uploadType);
-      console.log(form.file);
-      console.log(uploadType);
 
+      const { name } = form.file;
+      console.log(name);
       setLoading(true);
+
+      if (uploadType == 'policy' && !(name.toLowerCase().includes('diar') || name.toLowerCase().includes('contra'))) {
+         setLoading(false);
+         return setAlert({
+            type: 'error',
+            show: true,
+            text: 'Solo debe cargar ficheros de pólizas',
+         });
+      }
+
+      if (
+         uploadType == 'digitalSignature' &&
+         !(
+            name.toLowerCase().includes('fd') ||
+            name.toLowerCase().includes('dig') ||
+            name.toLowerCase().includes('firm')
+         )
+      ) {
+         setLoading(false);
+         return setAlert({
+            type: 'error',
+            show: true,
+            text: 'Solo debe cargar ficheros de firma digital',
+         });
+      }
+
+      if (uploadType == 'anuladas' && !name.toLowerCase().includes('anul')) {
+         setLoading(false);
+         return setAlert({
+            type: 'error',
+            show: true,
+            text: 'Solo debe cargar ficheros de anuladas',
+         });
+      }
+
+      if (uploadType == 'tablet' && !(name.toLowerCase().includes('tabl') || name.toLowerCase().includes('operat'))) {
+         setLoading(false);
+         return setAlert({
+            type: 'error',
+            show: true,
+            text: 'Solo debe cargar ficheros de tabletas',
+         });
+      }
+
       const [error, response] = await handlePromise(LoadService.uploadFile(formData));
       setLoading(false);
       if (!response.ok) {

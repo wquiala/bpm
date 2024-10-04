@@ -2,14 +2,15 @@ import moment from 'moment';
 import promise from '../../../../frontend/src/utils/promise';
 import { prismaClient } from '../../../server';
 import { ESTADO_CONTRATO, OPERACION_CONTRATO } from '@prisma/client';
-import { createContractHistory, fetchContrato } from '../policy/policyCreator';
 import { parserDate } from '../../../helpers/time';
+import { createContractHistory } from '../../contracts/contractService';
 
 export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) => {
    let conError = 0;
    let actualizados = 0;
    let noactualizados = 0;
    let details: any[] = [];
+   let insertado = 0;
 
    for (let record of records) {
       if (!record['CLAVE_OPERACIÓN'] || !record['FECHA EMISIÓN ANULACIÓN']) {
@@ -32,7 +33,7 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
          });
       } else {
          let anulada;
-         if (record['COMPAÑÍA'] == 'UCV' || record['COMPAÑÍA'] == 'UNI') {
+         /* if (record['COMPAÑÍA'] == 'UCV' || record['COMPAÑÍA'] == 'UNI') {
             const contract = await prismaClient.contrato.findFirst({
                where: {
                   OR: [
@@ -87,58 +88,63 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
                   Operacion: OPERACION_CONTRATO.ANULADO,
                   EstadoContrato: ESTADO_CONTRATO.ANULADA,
                });
-            }
-         } else {
-            const contract = await prismaClient.contrato.findFirst({
+            } */
+
+         const contract = await prismaClient.contrato.findFirst({
+            where: {
+               OR: [
+                  {
+                     CodigoPoliza: record['CLAVE_OPERACIÓN'],
+                  },
+                  {
+                     CodigoSolicitud: record['CLAVE_OPERACIÓN'],
+                  },
+               ],
+            },
+         });
+         if (contract) {
+            anulada = await prismaClient.contrato.update({
                where: {
-                  ClaveOperacion: record['CLAVE_OPERACIÓN'],
+                  ContratoId: contract.ContratoId,
+               },
+               data: {
+                  AnuladoSEfecto: true,
+                  EstadoContrato: 'ANULADA',
+                  Conciliar: false,
                },
             });
-            if (contract) {
-               anulada = await prismaClient.contrato.update({
-                  where: {
-                     ClaveOperacion: contract.ClaveOperacion,
-                  },
-                  data: {
-                     AnuladoSEfecto: true,
-                     EstadoContrato: 'ANULADA',
-                     Conciliar: false,
-                     Revisar: false,
-                  },
-               });
-               details.push({
-                  ...record,
-                  estado: 'ACTUALIZADO',
-                  errores: {
-                     estado: 'ANULADA',
-                  },
-               });
-               actualizados++;
-               const {
-                  CompaniaId,
-                  ProductoId,
-                  CodigoSolicitud,
-                  Suplemento,
-                  CCC,
-                  Activo,
-                  ClaveOperacion,
-                  TipoOperacion,
+            details.push({
+               ...record,
+               estado: 'ACTUALIZADO',
+               errores: {
+                  estado: 'ANULADA',
+               },
+            });
+            actualizados++;
+            const {
+               CompaniaId,
+               ProductoId,
+               CodigoSolicitud,
+               Suplemento,
+               CCC,
+               Activo,
+               ClaveOperacion,
+               TipoOperacion,
 
-                  CodigoPoliza,
-                  MediadorId,
-                  updatedAt,
-                  TipoConciliacionId,
-                  UsuarioId,
-                  ...rest
-               } = anulada;
-               console.log(rest);
-               await createContractHistory({
-                  ...rest,
-                  Operacion: OPERACION_CONTRATO.ANULADO,
-                  EstadoContrato: ESTADO_CONTRATO.ANULADA,
-               });
-            } else noactualizados++;
-         }
+               CodigoPoliza,
+               MediadorId,
+               updatedAt,
+               TipoConciliacionId,
+               UsuarioId,
+               ...rest
+            } = anulada;
+            console.log(rest);
+            await createContractHistory({
+               ...rest,
+               Operacion: OPERACION_CONTRATO.ANULADO,
+               EstadoContrato: ESTADO_CONTRATO.ANULADA,
+            });
+         } else noactualizados++;
       }
       await prismaClient.anuladas.create({
          data: {
@@ -149,11 +155,14 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
             fechaEmisionAnulacion: parserDate(record['FECHA EFECTO ANULACIÓN']) ?? null,
          },
       });
+
+      insertado++;
    }
    return {
       actualizados,
       noactualizados,
       conError,
       details,
+      insertado,
    };
 };

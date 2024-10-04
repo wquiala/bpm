@@ -26,24 +26,6 @@ export const HistoryDigitalSignature = ({ show, setShow, control, selectedContra
    const [, setLoading] = useContext(LoadingContext);
    const [digitalSignature, setDigitalSignature] = useState<DigitalSignatureHistory[]>();
    let historyList: DigitalSignatureHistory[] = [];
-   selectedContract.HistorialContrato.map((hist: any) => {
-      const obj = {
-         FechaAlta: new Date(hist.createdAt).toLocaleDateString(),
-         IndicadorFirmaPrecon: hist.IndicadorFDPRECON ? 'SI' : 'NO',
-         TipoEnvioPrecon: hist.TipoEnvioPRECON,
-         ResultadoPrecon: hist.ResultadoFDPRECON,
-         IndicadorFirmaCon: hist.IndicadorFDCON ? 'SI' : 'NO',
-         TipoEnvioCon: hist.TipoEnvioCON,
-         ResultadoCon: hist.ResultadoFDCON,
-
-         /*  Revisar: hist.Revisar ? 'SI' : 'NO',
-         Conciliar: hist.Conciliar ? 'SI' : 'NO', */
-      };
-
-      if (!historyList.some((d: DigitalSignatureHistory) => (d = obj))) {
-         historyList.push(obj);
-      }
-   });
 
    digitalSignature?.map((d: any) => historyList.push(d));
 
@@ -55,19 +37,14 @@ export const HistoryDigitalSignature = ({ show, setShow, control, selectedContra
             const { data: solicitud } = await getDigitalSignatureByContract(selectedContract.CodigoSolicitud);
 
             solicitud.map((d: any) => {
+               console.log(d);
                const obj = {
-                  IndicadorFirmaPrecon: '',
-                  TipoEnvioPrecon: '',
-                  ResultadoPrecon: '',
-                  FechaAlta: d.FechaInicio,
-                  IndicadorFirmaCon: '',
-                  TipoEnvioCon: d.TIPO_ENVIO,
-                  ResultadoCon: d.Resultado,
+                  FechaAlta: new Date(d.createdAt).toLocaleDateString(),
+                  TipoEnvioCon: d.TIPO_ENVIO != '' ? d.TIPO_ENVIO : 'Sin información en la carga',
+                  ResultadoCon: d.Resultado != '' ? d.Resultado : 'Sin información en la carga',
                };
 
-               if (!digitalList.some((d: DigitalSignatureHistory) => (d = obj))) {
-                  digitalList.push(obj);
-               }
+               digitalList.push(obj);
             });
          }
 
@@ -75,18 +52,14 @@ export const HistoryDigitalSignature = ({ show, setShow, control, selectedContra
             const { data: poliza } = await getDigitalSignatureByContract(selectedContract.CodigoPoliza);
             poliza.map(
                (d: any) => {
-                  const obj = {
-                     IndicadorFirmaPrecon: '',
-                     TipoEnvioPrecon: '',
-                     ResultadoPrecon: '',
-                     FechaAlta: d.FechaInicio,
-                     IndicadorFirmaCon: '',
-                     TipoEnvioCon: d.TIPO_ENVIO,
-                     ResultadoCon: d.Resultado,
+                  console.log(d);
+
+                  const obj: DigitalSignatureHistory = {
+                     FechaAlta: new Date(d.createdAt).toLocaleDateString(),
+                     TipoEnvioCon: d.TIPO_ENVIO != '' ? d.TIPO_ENVIO : 'Sin información en la carga',
+                     ResultadoCon: d.Resultado != '' ? d.Resultado : 'Sin información en la carga',
                   };
-                  if (!digitalList.some((d: DigitalSignatureHistory) => (d = obj))) {
-                     digitalList.push(obj);
-                  }
+                  digitalList.push(obj);
                },
                /* digitalList.push({
                   FechaAlta: d.FechaInicio,

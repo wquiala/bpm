@@ -66,7 +66,7 @@ type Incidencia = {
 };
 
 export const sendEmail = async (req: Request, res: Response) => {
-   const { incidences } = req.body;
+   const incidences = req.body;
 
    // Agrupar por claveOperacion
    const incidencesGroupedByClaveOperacion = incidences.reduce((acc: any, incidencia: Incidencia) => {

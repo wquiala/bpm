@@ -35,7 +35,7 @@ const DigitalSignatureList = ({ control, selectedContract, setSelectedContract }
 
    const data: DigitalSignature[] = [
       {
-         FechaAlta: new Date(selectedContract.createdAt).toLocaleString(),
+         FechaAlta: new Date(selectedContract.createdAt).toLocaleDateString(),
          FirmaDigital: '',
          IndicadorFirmaCon: selectedContract?.IndicadorFDCON ? 'SI' : 'NO',
          IndicadorFirmaPrecon: selectedContract?.IndicadorFDPRECON ? 'SI' : 'NO',
