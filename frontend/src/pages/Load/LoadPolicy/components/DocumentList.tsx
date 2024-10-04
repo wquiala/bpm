@@ -78,10 +78,6 @@ const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
                                           type="button"
                                           variant="primary"
                                           onClick={handleClickD}
-                                          disabled={
-                                             control._defaultValues.EstadoContrato == 'ANULADA' ||
-                                             isPresent == fields.length
-                                          }
                                        >
                                           Marcar todos como recibido y correcto
                                        </Button>
@@ -108,7 +104,6 @@ const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
                                              onChange={() => handleOnchangePresent(index)}
                                              disabled={
                                                 control._defaultValues.documents[index].present == true ||
-                                                control._defaultValues.EstadoContrato == 'ANULADA' ||
                                                 getValues(`documents.${index}.porEmail`)
                                              }
                                           />

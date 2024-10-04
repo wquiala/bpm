@@ -12,6 +12,7 @@ export const processDigitalSignatureData = async (records: any[], user: { Usuari
    let details: any[] = [];
    let RegistrosOk: number = 0;
    let RegistrosError: number = 0;
+   let Insertados = 0;
 
    const systemUser = await prismaClient.usuario.findFirst({
       where: {
@@ -33,9 +34,10 @@ export const processDigitalSignatureData = async (records: any[], user: { Usuari
             errores: err,
          });
       } else {
-         const { updated } = await contractUpdater(record, systemUser as Usuario, user, err, details);
+         const { updated, insertados } = await contractUpdater(record, systemUser as Usuario, user, err, details);
 
          updated ? actualizados++ : noactualizados++;
+         if (insertados) Insertados++;
       }
    }
 
@@ -43,6 +45,7 @@ export const processDigitalSignatureData = async (records: any[], user: { Usuari
       actualizados,
       noactualizados,
       details,
+      Insertados,
       /*       ErrorLogs,
        */ RegistrosError,
       totalRegistros: records.length,

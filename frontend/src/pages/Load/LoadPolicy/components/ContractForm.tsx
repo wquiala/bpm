@@ -81,63 +81,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
       }
 
       //Preguntar si esta tramitado para solo aceptar caja lotes y observaciones y notas internas
-      if (
-         selectedContract.EstadoContrato == 'TRAMITADA' &&
-         selectedContract.FechaGrabacion != null &&
-         pre.length == docList.length
-      ) {
-         if (observations.length != 0) {
-            for (const observation of observations) {
-               const toSend = {
-                  ContratoId: selectedContract.ContratoId,
-                  Contenido: observation.observation,
-               };
-
-               const [error, response] = await handlePromise(
-                  ObservationContractService.createObservationContract(toSend),
-               );
-               if (!response.ok) {
-                  setLoading(false);
-                  return setAlert({
-                     type: 'error',
-                     show: true,
-                     text: error ?? 'Error while adding observation',
-                  });
-               }
-            }
-         }
-         if (data.NotaInterna != '') {
-            const toSendCajaLote = {
-               caja: Number(caja),
-               lote: Number(lote),
-               contratoId: Number(selectedContract.ContratoId),
-               nota: data.NotaInterna,
-               /*             documento:
-                */
-               /*                documento: doc.id,
-                */
-            };
-
-            const [error, response] = await handlePromise(cajaLoteService.createCajaLote(toSendCajaLote));
-            if (!response.ok) {
-               setLoading(false);
-               return setAlert({
-                  type: 'error',
-                  show: true,
-                  text: error ?? 'Error while adding caja y lote',
-               });
-            }
-         }
-
-         setLoading(false);
-         setSelectedContract(null);
-
-         return setAlert({
-            type: 'success',
-            show: true,
-            text: 'Grabación realizada correctamente',
-         });
-      }
       //Create observations
 
       let cont = 0;
@@ -159,10 +102,10 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
       }
 
       for (const doc of docList) {
-         (doc.present || doc.porEmail) && cont++;
-         if (doc.present) {
-            //Update document contracts
-            if (doc.estado != 'PRESENTE CORRECTO' || doc.estado != 'POR EMAIL') {
+         if (doc.present || doc.porEmail) {
+            if (doc.present) {
+               //Update document contracts
+               /*  if (doc.estado != 'PRESENTE CORRECTO' || doc.estado != 'POR EMAIL') { */
                const toSend = {
                   ContratoId: selectedContract.ContratoId,
                   EstadoDoc: 'PRESENTE CORRECTO',
@@ -180,57 +123,63 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                      text: error ?? 'Error while updating document contract',
                   });
                }
+               //}
             }
-         }
 
-         if (doc.porEmail) {
-            if (doc.estado != 'PRESENTE CORRECTO' || doc.estado != 'CORRECTO') {
+            if (doc.porEmail) {
+               if (doc.estado != 'PRESENTE CORRECTO' || doc.estado != 'CORRECTO') {
+                  const toSend = {
+                     ContratoId: selectedContract.ContratoId,
+                     EstadoDoc: 'POR EMAIL',
+                  };
+                  const [error, response] = await handlePromise(
+                     DocumentContractService.updateDocumentContract(doc.id, toSend),
+                  );
+                  if (!response.ok) {
+                     setLoading(false);
+                     return setAlert({
+                        type: 'error',
+                        show: true,
+                        text: error ?? 'Error while updating document contract',
+                     });
+                  }
+               }
+            }
+
+            //Mark incidences as resolved
+
+            /*  for (const incidence of doc.incidences) {
                const toSend = {
                   ContratoId: selectedContract.ContratoId,
-                  EstadoDoc: 'POR EMAIL',
+                  DocumentoId: incidence.DocumentoContratoId,
+                  TipoDocumentoincidenciaId: incidence.TipoDocumentoIncidencia.TipoDocumentoIncidenciaId,
+
+                  Resuelta: true,
+                  Incidencia: incidence.IncidenciaDocId,
                };
-               const [error, response] = await handlePromise(
-                  DocumentContractService.updateDocumentContract(doc.id, toSend),
-               );
-               if (!response.ok) {
-                  setLoading(false);
-                  return setAlert({
-                     type: 'error',
-                     show: true,
-                     text: error ?? 'Error while updating document contract',
-                  });
-               }
-            }
-         }
-         //Mark incidences as resolved
-         for (const incidence of doc.incidences) {
-            const toSend = {
-               ContratoId: selectedContract.ContratoId,
-               DocumentoId: incidence.DocumentoContratoId,
-               Resuelta: true,
-               Incidencia: incidence.IncidenciaDocId,
-            };
 
-            const currentDoc = selectedContract.DocumentoContrato.find(
-               (doc: any) => doc.DocumentoId === toSend.DocumentoId,
-            );
-
-            const existingIncidence = currentDoc?.IncidenciaDocumento.find(
-               (incidence: any) => incidence.IncidenciaDocId === toSend.Incidencia,
-            );
-            if (existingIncidence) {
-               const [error, response] = await handlePromise(
-                  DocumentIncidenceService.updateDocumentIncidence(existingIncidence.IncidenciaDocId, toSend),
+               const currentDoc = selectedContract.DocumentoContrato.find(
+                  (doc: any) => doc.DocumentoId === toSend.DocumentoId,
                );
-               if (!response.ok) {
-                  setLoading(false);
-                  return setAlert({
-                     type: 'error',
-                     show: true,
-                     text: error ?? 'Error while adding incidence document',
-                  });
+
+               const existingIncidence = currentDoc?.IncidenciaDocumento.find(
+                  (incidence: any) => incidence.IncidenciaDocId === toSend.Incidencia,
+               );
+               if (existingIncidence) {
+                  const [error, response] = await handlePromise(
+                     DocumentIncidenceService.updateDocumentIncidence(existingIncidence.IncidenciaDocId, toSend),
+                  );
+                  if (!response.ok) {
+                     setLoading(false);
+                     return setAlert({
+                        type: 'error',
+                        show: true,
+                        text: error ?? 'Error while adding incidence document',
+                     });
+                  }
                }
-            }
+            } */
+            cont++;
          }
       }
 
@@ -242,7 +191,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
 
          AnuladoSEfecto: data.AnuladoSEfecto ? true : false,
          TipoConciliacionId: cont == docList.length ? Number(13) : selectedContract.TipoConciliacionId,
-         Conciliar: cont == docList.length ? false : true,
          updatedAt: new Date(),
       };
 
@@ -301,7 +249,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
             docList.push({
                id: contractDocument.DocumentoId,
                docTypeId: contractDocument.DocId,
-               present: contractDocument.EstadoDoc === 'PRESENTE CORRECTO',
+               present: false,
                name: contractDocument.MaestroDocumentos.Nombre,
                estado: contractDocument.EstadoDoc,
                fase: contractDocument.ProductoDocumento.Fase,

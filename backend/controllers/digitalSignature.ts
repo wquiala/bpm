@@ -3,45 +3,6 @@ import { prismaClient } from '../server';
 import { NotFoundException } from '../exceptions/not-found';
 import { ErrorCode } from '../exceptions/root';
 
-export const getDigitalSignature = async (req: Request, res: Response) => {
-   const mediators = await prismaClient.mediador.findMany({});
-
-   res.json(mediators);
-};
-
-/* export const createDigitalSignature = async (req: Request, res: Response) => {
-   const validatedData = MediadorCreateSchema.parse(req.body);
-
-   const mediator = await prismaClient.mediador.create({
-      data: validatedData as any,
-   });
-
-   res.json(mediator);
-}; */
-
-/* export const updateMediator = async (req: Request, res: Response) => {
-   try {
-      await prismaClient.mediador.findFirstOrThrow({
-         where: {
-            MediadorId: parseInt(req.params.id),
-         },
-      });
-   } catch (error) {
-      throw new NotFoundException('Mediator not found', ErrorCode.NOT_FOUND_EXCEPTION);
-   }
-
-   const validatedData = MediadorUpdateSchema.parse(req.body);
-
-   const updatedMediator = await prismaClient.mediador.update({
-      where: {
-         MediadorId: parseInt(req.params.id),
-      },
-      data: { ...(validatedData as any), FechaUltimaModif: new Date() },
-   });
-
-   res.json(updatedMediator);
-};
- */
 export const getDigitalSignatureByContract = async (req: Request, res: Response) => {
    console.log(req.params.contract);
    try {
@@ -49,6 +10,7 @@ export const getDigitalSignatureByContract = async (req: Request, res: Response)
          where: {
             NumPoliza: req.params.contract,
          },
+         orderBy: { createdAt: 'desc' },
       });
 
       res.json(digitalSignature);

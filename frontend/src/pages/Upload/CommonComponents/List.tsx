@@ -17,7 +17,6 @@ type Props = {
 };
 
 const List = ({ tableName, endpoint, uploadType }: Props) => {
-   const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
    const [showDetailModalData, setShowDetailModalData] = useState<boolean>(false);
    const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
    const [showIncompletosModal, setShowIncompletosModal] = useState<boolean>(false);

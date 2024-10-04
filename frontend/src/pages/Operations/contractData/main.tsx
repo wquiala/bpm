@@ -68,35 +68,18 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
             docList.push({
                Codigo: doc.MaestroDocumentos.Codigo,
                Nombre: doc.MaestroDocumentos.Nombre,
+               Familia: doc.MaestroDocumentos.FamiliaDocumento.Codigo,
+               Grupo: doc.MaestroDocumentos.FamiliaDocumento.Nombre,
                Estado: doc.EstadoDoc,
                FechaEstado: doc.updatedAt,
                Fase: doc.ProductoDocumento.Fase,
-               FechaUltimaRecepcion: new Date(doc.updatedAt).toLocaleDateString(),
-               FechaUltimaReclamacion: new Date(selectedContract.FechaReclamacion).toLocaleDateString(),
-               FechaProximaReclamacion: new Date(selectedContract.FechaProximaReclamacion).toLocaleDateString(),
+               FechaUltimaRecepcion: doc.updatedAt,
+               FechaUltimaReclamacion: selectedContract.FechaReclamacion,
+               FechaProximaReclamacion: selectedContract.FechaProximaReclamacion,
                incidences: doc.IncidenciaDocumento,
                documentHistory: doc.DocumentoContratoHistory.map((his: any) => his),
             });
          });
-
-         /* 
-         for (const contractDocument of contractDocuments) {
-            const isPresent = contractDocument.EstadoDoc === 'PRESENT' || contractDocument.EstadoDoc === 'CORRECT';
-            const isConciliar = selectedContract.Conciliar === true;
-            const present = isPresent || isConciliar;
-
-            const incidences = contractDocument.MaestroDocumentos.FamiliaDocumento.MaestroIncidencias.map(
-               (incidence: any) => createIncidence(incidence, contractDocument),
-            );
-
-            docList.push({
-               id: contractDocument.DocumentoId,
-               docTypeId: contractDocument.TipoDocId,
-               present: present,
-               name: contractDocument.MaestroDocumentos.Nombre,
-               incidences: incidences,
-            });
-         } */
 
          reset({
             ClaveOperacion: selectedContract.ClaveOperacion,

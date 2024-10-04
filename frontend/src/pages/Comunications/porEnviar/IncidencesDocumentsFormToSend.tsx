@@ -31,6 +31,7 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
 
    const [, setAlert] = useContext(AlertContext);
    const [, setLoading] = useContext(LoadingContext);
+   const [claves, setClaves] = useState<any>([]);
 
    const {
       control,
@@ -52,9 +53,16 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
    });
 
    const onSubmit = async (data: any) => {
+      console.log(data);
       setLoading(true);
+      const incidences: any[] = [];
+      for (const inci of data.incidences) {
+         for (const incidence of inci) {
+            incidences.push(incidence);
+         }
+      }
 
-      const { data: da, error, response } = await sendEmail(data);
+      // const { data: da, error, response } = await sendEmail(incidences);
       setLoading(false);
       navigate('/');
    };
@@ -63,136 +71,118 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
    const [enviarTodos, setEnviarTodos] = useState(false);
 
    useEffect(() => {
-      const resetFormFiels = async () => {
-         const incidenceList = [];
-
-         const incidences = incidencesDocuments.reduce((acc: any, incidenceDoc: any) => {
-            const claveOperacion = incidenceDoc.claveOperacion;
-
-            if (!acc[claveOperacion]) {
-               acc[claveOperacion] = [];
-            }
-            acc[claveOperacion].push(incidenceDoc);
-            return acc;
-         }, {} as Record<string, any[]>);
-
-         console.log(incidences);
+      if (incidencesDocuments && incidencesDocuments.length > 0) {
+         const array: any[] = [];
+         const incidenceList: any[] = [];
 
          for (const incidencesDocument of incidencesDocuments) {
             incidenceList.push({
                DocumentoId: incidencesDocument.DocumentoContrato.DocumentoId,
                IncidenciaDocId: incidencesDocument.IncidenciaDocId,
-               codigoDocumento: incidencesDocument.DocumentoContrato.MaestroDocumentos.Codigo,
-               nombreDocumento: incidencesDocument.DocumentoContrato.MaestroDocumentos.Nombre,
-
+               nombreDocumento: incidencesDocument.DocumentoContrato.MaestroDocumentos.Codigo,
                claveOperacion: incidencesDocument.DocumentoContrato.Contrato.ClaveOperacion,
-               incidenciaNombre: incidencesDocument.MaestroIncidencias.Nombre,
+               incidenciaNombre: incidencesDocument.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                mediador: incidencesDocument.DocumentoContrato.Contrato.Mediador.Nombre,
-               anular: false,
+               enviada: incidencesDocument.Enviar,
                emailTo: incidencesDocument.DocumentoContrato.Contrato.Mediador.Email,
-               numeroReclamaciones: 0,
-               nota: incidencesDocument.Nota,
             });
          }
 
-         reset({
-            incidences: incidenceList,
+         const incidencestoObject = incidenceList.reduce((acc: any, incidence: any) => {
+            const clave = incidence.claveOperacion;
+
+            if (!acc[clave]) {
+               acc[clave] = [];
+            }
+            acc[clave].push(incidence);
+            return acc;
+         }, {} as Record<string, any[]>);
+
+         Object.keys(incidencestoObject).forEach((claveOperacion) => {
+            const incidences = incidencestoObject[claveOperacion];
+            array.push(incidences);
          });
-      };
-      if (incidencesDocuments) {
-         resetFormFiels();
+
+         if (JSON.stringify(claves) !== JSON.stringify(array)) {
+            // Evita actualización innecesaria
+            setClaves(array);
+         }
       }
-   }, [incidencesDocuments]);
+   }, [incidencesDocuments, claves]); // Dependencia de incidencesDocuments y claves
+
+   useEffect(() => {
+      if (claves.length > 0) {
+         reset({
+            incidences: claves,
+         });
+      }
+   }, [claves]); // Dependencia solo de claves
 
    const handleTodoRevisado = () => {
-      if (revisarTodos) {
-         fields.map((field, index) => {
-            setValue(`incidences.${index}.revisada`, false);
+      const newRevisarEstado = !revisarTodos; // Invertir el estado actual
+
+      // Actualizar el estado para todos los elementos en el array de arrays
+      claves.forEach((group: any, groupIndex: any) => {
+         group.forEach((item: any, index: any) => {
+            setValue(`incidences.${groupIndex}.${index}.revisada`, newRevisarEstado);
          });
-         setRevisarTodos(false);
-      } else if (!revisarTodos) {
-         fields.map((field, index) => {
-            setValue(`incidences.${index}.revisada`, true);
-         });
-         setRevisarTodos(true);
-      }
+      });
+
+      setRevisarTodos(newRevisarEstado); // Actualizar el estado de la variable
    };
 
-   /* const handleTodoEnviar = () => {
-      if (enviarTodos) {
-         fields.map((field, index) => {
-            setValue(`incidences.${index}.enviada`, false);
-         });
-         setEnviarTodos(false);
-      } else if (!enviarTodos) {
-         fields.map((field, index) => {
-            setValue(`incidences.${index}.enviada`, true);
-         });
-         setEnviarTodos(true);
-      }
-   }; */
    return (
       <form className="flex flex-col mt-4 box" onSubmit={handleSubmit(onSubmit)}>
          <div className="pt-0 p-2 m-2 mb-2">
             <div className="flex flex-col gap-3">
-               {fields.length > 0
-                  ? fields.map((item: any, index: number) => {
+               {Array.isArray(claves) && claves.length > 0
+                  ? claves.map((group: any, groupIndex: number) => {
+                       const clave = group[0].claveOperacion;
                        return (
-                          <div key={item.id}>
-                             <div>{item.claveOperacion}</div>
-                             <div className="flex gap-2 items-center">
-                                <div className="w-1/3">
-                                   <InputField
-                                      label="Contrato"
-                                      control={control}
-                                      name={`incidences.${index}.claveOperacion`}
-                                      disabled
-                                   />
-                                </div>
-                                <div className="w-32">
-                                   <InputField
-                                      label="Doc."
-                                      control={control}
-                                      name={`incidences.${index}.nombreDocumento`}
-                                      disabled
-                                   />
-                                </div>
-                                <div className="w-full">
-                                   <InputField
-                                      label="Incidencia"
-                                      control={control}
-                                      name={`incidences.${index}.incidenciaNombre`}
-                                      disabled
-                                   />
-                                </div>
-                                <div className="w-1/6">
-                                   <InputField
-                                      label="Mediador"
-                                      control={control}
-                                      name={`incidences.${index}.mediador`}
-                                      disabled
-                                   />
-                                </div>
-                                {/* `<div className="w-[350px]">
-                              <CheckBoxField
-                                 label="Anular envío"
-                                 control={control}
-                                 name={`incidences.${index}.anular`}
-                              />
-                           </div>` */}
-                             </div>
+                          <div key={groupIndex}>
+                             <h1>Contrato {clave}</h1>
+                             <br />
+                             {group.map((item: any, index: number) => {
+                                return (
+                                   <div key={item.IncidenciaDocId} className="flex gap-2 items-center">
+                                      <div className="w-32">
+                                         <InputField
+                                            label="Doc."
+                                            control={control}
+                                            name={`incidences.${groupIndex}.${index}.nombreDocumento`}
+                                            disabled
+                                         />
+                                      </div>
+                                      <div className="w-full">
+                                         <InputField
+                                            label="Incidencia"
+                                            control={control}
+                                            name={`incidences.${groupIndex}.${index}.incidenciaNombre`}
+                                            disabled
+                                         />
+                                      </div>
+                                      <div className="w-1/6">
+                                         <InputField
+                                            label="Mediador"
+                                            control={control}
+                                            name={`incidences.${groupIndex}.${index}.mediador`}
+                                            disabled
+                                         />
+                                      </div>
+                                   </div>
+                                );
+                             })}
                           </div>
                        );
                     })
-                  : 'No hay incidencias que enviar'}
+                  : 'No hay incidencias para revisar'}
             </div>
          </div>
          <div className="flex flex-col sm:flex-row justify-center items-center my-2 gap-3">
             <Button variant="secondary" onClick={() => navigate('/')}>
                {t('goBack')}
             </Button>
-
-            {incidencesDocuments.length > 0 && (
+            {Array.isArray(incidencesDocuments) && incidencesDocuments.length > 0 && (
                <Button variant="primary" disabled={!isValid} type="submit">
                   Enviar
                </Button>

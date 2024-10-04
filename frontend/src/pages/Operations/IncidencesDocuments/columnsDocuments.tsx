@@ -6,7 +6,7 @@ import { ColumnDef } from '@tanstack/react-table';
 // You can use a Zod schema here if you want.
 export type Document = {
    Familia_Documento: string;
-   Grupo_Documento: number;
+   Documento: number;
    Estado: string;
    Fase: 'PRECON' | 'CON';
    Fecha_estado: string;
@@ -21,8 +21,8 @@ export const columnsDocuments: ColumnDef<Document>[] = [
       header: 'Familia Documento',
    },
    {
-      accessorKey: 'Grupo_Documento',
-      header: 'Grupo Documento',
+      accessorKey: 'Documento',
+      header: 'Documento',
    },
    {
       accessorKey: 'Estado',

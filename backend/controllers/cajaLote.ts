@@ -3,7 +3,6 @@ import { prismaClient } from '../server';
 import { NotFoundException } from '../exceptions/not-found';
 import { ErrorCode } from '../exceptions/root';
 import { InternalException } from '../exceptions/internal-exception';
-import { createContratoSchema, updateContratoSchema } from '../schema/contract';
 import { BadRequestsException } from '../exceptions/bad-requests';
 import { createCajaLoteSchema } from '../schema/cajaLote';
 

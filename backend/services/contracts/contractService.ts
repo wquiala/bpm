@@ -1,8 +1,8 @@
-import { NoProcesar } from '@prisma/client';
+import { ESTADO_CONTRATO, NoProcesar, OPERACION_CONTRATO } from '@prisma/client';
 import { BadRequestsException } from '../../exceptions/bad-requests';
 import { ErrorCode } from '../../exceptions/root';
 import { prismaClient } from '../../server';
-import { NoProcesarInterface, RecordDiaria } from '../../interfaces/contractsInterfaces';
+import { ContractHistoryData, NoProcesarInterface, RecordDiaria } from '../../interfaces/contractsInterfaces';
 
 export const findContractByClaveOperacion = async (clave: string) => {
    try {
@@ -10,7 +10,19 @@ export const findContractByClaveOperacion = async (clave: string) => {
          where: { ClaveOperacion: clave },
          include: {
             DocumentoContrato: {
-               include: { IncidenciaDocumento: { include: { MaestroIncidencias: true } }, MaestroDocumentos: true },
+               include: {
+                  IncidenciaDocumento: {
+                     include: {
+                        TipoDocumentoIncidencia: {
+                           include: {
+                              MaestroDocumentos: true,
+                              MaestroIncidencias: true,
+                           },
+                        },
+                     },
+                  },
+                  MaestroDocumentos: true,
+               },
             },
             Mediador: true,
          },
@@ -41,10 +53,69 @@ export const updateContractService = async (id: number, data: any) => {
    return false;
 };
 
+export const handlePreLoadConciliation = async (createdContract: any) => {
+   const preLoadConciliation = await prismaClient.tipoConciliacion.findFirst({
+      where: { nombre: 'Carga previa' },
+   });
+
+   if (preLoadConciliation) {
+      const updated = await prismaClient.contrato.update({
+         where: { ContratoId: createdContract.ContratoId },
+         data: {
+            TipoConciliacion: {
+               connect: {
+                  tipoConciliacionId: preLoadConciliation?.tipoConciliacionId,
+               },
+            },
+            EstadoContrato: createdContract.AnuladoSEfecto ? 'ANULADA' : 'TRAMITADA',
+         },
+      });
+
+      const {
+         Activo,
+
+         TipoOperacion,
+         updatedAt,
+         TipoConciliacionId,
+         UsuarioId,
+         ...data
+      } = updated;
+      const dataH: ContractHistoryData = data;
+
+      await createContractHistory(dataH, OPERACION_CONTRATO.ACTUALIZADO);
+   }
+};
+
 export const createDesechados = async (data: any) => {
    return await prismaClient.noProcesar.create({
       data: {
          ...data,
       },
    });
+};
+
+export const createContractHistory = async (
+   data: ContractHistoryData,
+   Operacion?: OPERACION_CONTRATO,
+   EstadoContrato?: ESTADO_CONTRATO,
+) => {
+   const { ContratoId, ...rest } = data;
+
+   return ContratoId
+      ? await prismaClient.historialContrato.create({
+           data: {
+              Contrato: { connect: { ContratoId: ContratoId } },
+              Operacion,
+              EstadoContrato,
+              ...rest,
+           },
+           include: {
+              Contrato: true,
+           },
+        })
+      : await prismaClient.historialContrato.create({
+           data: {
+              ...rest,
+           },
+        });
 };

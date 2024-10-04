@@ -134,21 +134,22 @@ model Mediador {
 }
 
 model MaestroIncidencias {
-  IncidenciaId        Int                   @id
-  DocAsociadoId       Int?
-  Codigo              String
-  Nombre              String                @db.Text
-  createdAt           DateTime              @default(now())
-  FechaBaja           DateTime?
-  updatedAt           DateTime              @default(now()) @updatedAt
-  MaestroDocumento    MaestroDocumentos?    @relation(fields: [DocAsociadoId], references: [DocumentoId])
-  Activo              Boolean
-  IncidenciaDocumento IncidenciaDocumento[]
+  IncidenciaId                 Int                       @id
+  DocAsociadoId                Int?
+  Codigo                       String
+  Nombre                       String                    @db.Text
+  createdAt                    DateTime                  @default(now())
+  FechaBaja                    DateTime?
+  updatedAt                    DateTime                  @default(now()) @updatedAt
+  FamiliaDocumento             FamiliaDocumento?         @relation(fields: [DocAsociadoId], references: [FamiliaId])
+  Activo                       Boolean
+  TipoDocumentoIncidencia      TipoDocumentoIncidencia[]
+  maestroDocumentosDocumentoId Int?
 }
 
 model RepositorioPlantillas {
   PlantillaId                        Int                     @id
-  Documento                          Bytes
+  Documento                          Bytes?
   Nombre                             String
   Activo                             Boolean
   createdAt                          DateTime                @default(now())
@@ -194,18 +195,45 @@ model ProductoTipoOperacion {
 }
 
 model MaestroDocumentos {
-  DocumentoId        Int                  @id
+  DocumentoId             Int                       @id
+  FamiliaId               Int
+  Codigo                  String
+  Nombre                  String
+  Descripcion             String?
+  Suplemento              Boolean
+  createdAt               DateTime                  @default(now())
+  FechaBaja               DateTime?
+  updateAt                DateTime                  @default(now()) @updatedAt
+  FamiliaDocumento        FamiliaDocumento          @relation(fields: [FamiliaId], references: [FamiliaId])
+  ProductoDocumento       ProductoDocumento[]
+  DocumentoContrato       DocumentoContrato[]
+  Activo                  Boolean
+  TipoDocumentoIncidencia TipoDocumentoIncidencia[]
+}
+
+model FamiliaDocumento {
+  FamiliaId          Int                  @id @default(autoincrement())
   Codigo             String
   Nombre             String
-  Descripcion        String?
-  Suplemento         Boolean
+  Activo             Boolean              @default(true)
   createdAt          DateTime             @default(now())
-  FechaBaja          DateTime?
-  updateAt           DateTime             @default(now()) @updatedAt
-  ProductoDocumento  ProductoDocumento[]
-  DocumentoContrato  DocumentoContrato[]
+  updatedAt          DateTime             @default(now()) @updatedAt
+  MaestroDocumentos  MaestroDocumentos[]
   MaestroIncidencias MaestroIncidencias[]
-  Activo             Boolean
+}
+
+model TipoDocumentoIncidencia {
+  TipoDocumentoIncidenciaId Int      @id @default(autoincrement())
+  DocumentoId               Int
+  IncidenciaId              Int
+  MailInterno               String?
+  Activo                    Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @default(now()) @updatedAt
+
+  MaestroIncidencias  MaestroIncidencias    @relation(fields: [IncidenciaId], references: [IncidenciaId])
+  MaestroDocumentos   MaestroDocumentos     @relation(fields: [DocumentoId], references: [DocumentoId])
+  IncidenciaDocumento IncidenciaDocumento[]
 }
 
 model DocumentoContrato {
@@ -541,20 +569,20 @@ model Incompletas {
 model IncidenciaDocumento {
   IncidenciaDocId            Int                          @id @default(autoincrement())
   DocumentoContratoId        Int
+  TipoIncidenciaDocumentoId  Int
   Nota                       String?                      @db.LongText
   Reclamada                  DateTime?
   Revisada                   Boolean                      @default(false)
   Enviar                     Boolean                      @default(false)
-  Incidencia                 Int?
   UsuarioId                  Int
   createdAt                  DateTime?                    @default(now())
   Resuelta                   Boolean?                     @default(false)
   NumReclamaciones           Int                          @default(0)
   FechaUltimaReclamacion     DateTime?
   updatedAt                  DateTime                     @default(now()) @updatedAt
+  TipoDocumentoIncidencia    TipoDocumentoIncidencia      @relation(fields: [TipoIncidenciaDocumentoId], references: [TipoDocumentoIncidenciaId])
   DocumentoContrato          DocumentoContrato            @relation(fields: [DocumentoContratoId], references: [DocumentoId])
   Usuario                    Usuario                      @relation(fields: [UsuarioId], references: [UsuarioId])
-  MaestroIncidencias         MaestroIncidencias?          @relation(fields: [Incidencia], references: [IncidenciaId])
   DetalleObservacion         DetalleObservacion[]
   IncidenciaDocumentoHistory IncidenciaDocumentoHistory[]
 }

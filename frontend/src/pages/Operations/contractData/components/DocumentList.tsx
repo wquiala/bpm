@@ -36,19 +36,21 @@ const DocumentList = ({ control, selectedContract, setSelectedContract }: Props)
 
    const dataDocuments: Document[] = fields.map((doc: any) => {
       return {
-         Familia_Documento: doc.Codigo,
+         Familia_Documento: doc.Familia,
          Fase: doc.Fase,
-         Grupo_Documento: doc.Nombre,
+
+         Codigo: doc.Codigo,
+         Documento: doc.Nombre,
          Estado: doc.Estado,
-         Fecha_estado: doc.FechaEstado ? new Date(doc.FechaEstado).toLocaleString() : 'Sin fecha',
+         Fecha_estado: doc.FechaEstado ? new Date(doc.FechaEstado).toLocaleDateString() : 'Sin fecha',
          FechaUltimaRecepcion: doc.FechaUltimaRecepcion
-            ? new Date(doc.FechaUltimaRecepcion).toLocaleString()
+            ? new Date(doc.FechaUltimaRecepcion).toLocaleDateString()
             : 'Sin fecha',
          FechaUltimaReclamacion: selectedContract.FechaReclamacion
-            ? new Date(selectedContract.FechaReclamacion).toLocaleString()
+            ? new Date(selectedContract.FechaReclamacion).toLocaleDateString()
             : 'Sin fecha',
          FechaProximaReclamacion: selectedContract.FechaProximaReclamacion
-            ? new Date(selectedContract.FechaProximaReclamacion).toLocaleString()
+            ? new Date(selectedContract.FechaProximaReclamacion).toLocaleDateString()
             : 'Sin fecha',
       };
    });
@@ -59,14 +61,18 @@ const DocumentList = ({ control, selectedContract, setSelectedContract }: Props)
       doc.incidences.map((inci: any) => {
          if (!inci.Resuelta)
             incidencesList.push({
-               Familia_Documento: doc.Codigo,
-               Incidencia: inci.MaestroIncidencias.Nombre,
+               Familia_Documento: doc.Familia,
+               Incidencia: inci.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                Comentarios: inci.Nota,
                Estado_Incidencia: inci.Resuelta == true ? 'Resuelta' : 'No resuelta',
-               Fecha_estado: new Date(inci.updatedAt).toLocaleString(),
-               FechaAltaIncidencia: new Date(inci.createdAt).toLocaleString(),
-               FechaUltimaReclamacion: new Date(selectedContract.FechaReclamacion).toLocaleString(),
-               FechaProximaReclamacion: new Date(selectedContract.FechaProximaReclamacion).toLocaleString(),
+               Fecha_estado: inci.updatedAt ? new Date(inci.updatedAt).toLocaleDateString() : 'Sin fecha',
+               FechaAltaIncidencia: new Date(inci.createdAt).toLocaleDateString(),
+               FechaUltimaReclamacion: selectedContract.FechaReclamacion
+                  ? new Date(selectedContract.FechaReclamacion).toLocaleDateString()
+                  : 'Sin fecha',
+               FechaProximaReclamacion: selectedContract.FechaProximaReclamacion
+                  ? new Date(selectedContract.FechaProximaReclamacion).toLocaleDateString()
+                  : 'Sin fecha',
             });
       });
    });

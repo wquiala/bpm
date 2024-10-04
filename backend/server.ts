@@ -15,13 +15,16 @@ import schedule from 'node-schedule';
  */
 const app: Express = express();
 
+
+
+
 // Create a transporter object using the default SMTP transport
 
 // Schedule task to run every minute
-schedule.scheduleJob('0 * * * *', async () => {
+/* schedule.scheduleJob('0 * * * *', async () => {
    console.log('Executing cron jobs');
    await sendEmailWithIncidencesByContract();
-});
+}); */
 
 /* setInterval(async () => {
    await sendEmailWithIncidencesByContract();

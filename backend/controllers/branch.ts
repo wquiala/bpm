@@ -139,7 +139,7 @@ export const getBranchByCode = async (req: Request, res: Response) => {
                      include: {
                         MaestroDocumento: {
                            include: {
-                              MaestroIncidencias: true,
+                              TipoDocumentoIncidencia: true,
                            },
                         },
                      },

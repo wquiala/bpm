@@ -6,20 +6,25 @@ import { ColumnDef } from '@tanstack/react-table';
 // You can use a Zod schema here if you want.
 export type DocumentHistory = {
    Familia_Documento: string;
-   Grupo_Documento: number;
+   Documento: number;
+   Codigo: string;
    Estado: string;
    Fase: 'PRECON' | 'CON';
-   createdAt: string;
+   Fecha_estado: string;
 };
 
 export const columnsDocumentsHistory: ColumnDef<DocumentHistory>[] = [
    {
       accessorKey: 'Familia_Documento',
-      header: 'Familia Documento',
+      header: 'Familia',
    },
    {
-      accessorKey: 'Grupo_Documento',
-      header: 'Grupo Documento',
+      accessorKey: 'Codigo',
+      header: 'Código',
+   },
+   {
+      accessorKey: 'Documento',
+      header: 'Documento',
    },
    {
       accessorKey: 'Estado',
@@ -29,8 +34,9 @@ export const columnsDocumentsHistory: ColumnDef<DocumentHistory>[] = [
       accessorKey: 'Fase',
       header: 'Fase',
    },
+
    {
-      accessorKey: 'createdAt',
+      accessorKey: 'Fecha_estado',
       header: 'Fecha del estado',
    },
 ];

@@ -43,8 +43,8 @@ const validateOptionalFields = (record: RecordDiaria, error: any) => {
          values: ['SI', 'NO'],
          message: "Indicador firma digital CON solo admite los valores 'SI' o 'NO'",
       },
-      { field: 'revisar', values: ['SI', 'NO'], message: "Revizar solo admite los valores 'SI' o 'NO'" },
-      { field: 'conciliar', values: ['SI', 'NO'], message: "Conciliar solo admite los valores 'SI' o 'NO'" },
+      { field: 'Revisar', values: ['SI', 'NO'], message: "Revizar solo admite los valores 'SI' o 'NO'" },
+      { field: 'Conciliar', values: ['SI', 'NO'], message: "Conciliar solo admite los valores 'SI' o 'NO'" },
    ];
 
    optionalFields.forEach(({ field, values, message }) => {
