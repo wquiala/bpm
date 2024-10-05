@@ -7,11 +7,9 @@ import { createContratoDocumentoSchema, updateContratoDocumentoSchema } from '..
 import { ContractDocumentStatusesEnum } from '../constants/ContractDocumentStatusesEnum';
 import { ContractHistoryData, OPERACION_CONTRATO } from '../interfaces/contractsInterfaces';
 import { createIncidenceDocumentHistory } from './incidenceDocument';
-import { updateContract } from './contract';
 import { createContractHistory, updateContractService } from '../services/contracts/contractService';
 import { createContractDocumentHistory } from '../services/contractDocuments/contractDocuments';
 import { findIncidenceHistory } from '../helpers/incidenceDocumentHistory';
-import { findContractDocumentHistory } from '../helpers/documentContract';
 
 export const getContractDocuments = async (req: Request, res: Response) => {
    const { contratoId } = req.query;
@@ -43,6 +41,7 @@ export const getContractDocuments = async (req: Request, res: Response) => {
                FamiliaDocumento: true,
             },
          },
+         TipoConciliacion: true,
       },
    });
 
@@ -105,15 +104,8 @@ export const createContractDocument = async (req: Request, res: Response) => {
       });
 
       const {
-         CompaniaId,
-         ProductoId,
-         CodigoSolicitud,
-         Suplemento,
-         CCC,
          Activo,
-         ClaveOperacion,
-         CodigoPoliza,
-         MediadorId,
+
          TipoOperacion,
          updatedAt,
          TipoConciliacionId,
@@ -157,18 +149,47 @@ export const updateContractDocument = async (req: Request, res: Response) => {
    } catch (error) {
       throw new NotFoundException('Contract not found', ErrorCode.NOT_FOUND_EXCEPTION);
    }
+
+   let cajaLote;
+
+   try {
+      cajaLote = await prismaClient.cajaLote.findFirstOrThrow({
+         where: {
+            CajaLoteId: validatedData.CajaLote,
+         },
+      });
+   } catch (error) {
+      throw new NotFoundException('Caja Lote not found', ErrorCode.NOT_FOUND_EXCEPTION);
+   }
    const id = req.params.id;
    //Update contract document
+   let conciliacion;
    try {
+      conciliacion = await prismaClient.tipoConciliacion.findFirst({
+         where: {
+            nombre: 'MANUAL',
+         },
+      });
+
       const updatedContractDocument = await prismaClient.documentoContrato.update({
          where: {
             DocumentoId: Number(id),
          },
          data: {
+            TipoConciliacion: {
+               connect: {
+                  tipoConciliacionId: conciliacion?.tipoConciliacionId,
+               },
+            },
             Usuario: {
                connect: {
                   //@ts-ignore
-                  UsuarioId: parseInt(req.user.UsuarioId!),
+                  UsuarioId: parseInt(req.user.UsuarioId),
+               },
+            },
+            CajaLote: {
+               connect: {
+                  CajaLoteId: cajaLote.CajaLoteId,
                },
             },
             /* Contrato: {
@@ -200,8 +221,14 @@ export const updateContractDocument = async (req: Request, res: Response) => {
 
       if (!exist) { */
       const { ContratoId, MaestroDocumentos, IncidenciaDocumento, ...dataD } = updatedContractDocument;
-      console.log('Lo metemos en el historico');
-      await createContractDocumentHistory(dataD);
+      //Metemos la caja, la conciliacion y el lote
+      const toSend = {
+         ...dataD,
+         TipoConciliacion: conciliacion?.nombre,
+         Caja: cajaLote.Caja,
+         Lote: cajaLote.Lote,
+      };
+      await createContractDocumentHistory(toSend);
       //}
 
       //Check if the documentContract is correct
@@ -212,7 +239,7 @@ export const updateContractDocument = async (req: Request, res: Response) => {
          },
       });
 
-      if (hasActiveIncidences && validatedData.EstadoDoc == 'PRESENTE CORRECTO') {
+      if (hasActiveIncidences && validatedData.EstadoDoc == ContractDocumentStatusesEnum.PRESENT_CORRECT) {
          await prismaClient.incidenciaDocumento.updateMany({
             where: {
                DocumentoContratoId: updatedContractDocument.DocumentoId,
@@ -285,6 +312,8 @@ export const getContractDocumentById = async (req: Request, res: Response) => {
                },
             },
             IncidenciaDocumento: true,
+            TipoConciliacion: true,
+            CajaLote: true,
          },
       });
 

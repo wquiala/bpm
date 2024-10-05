@@ -7,7 +7,7 @@ import { BadRequestsException } from '../exceptions/bad-requests';
 import { createCajaLoteSchema } from '../schema/cajaLote';
 
 export const getCajaLote = async (req: Request, res: Response) => {
-   const { caja, lote, contratoId } = req.query;
+   const { contratoId } = req.query;
    let contrato = null;
    let documntoContrato;
    if (!contratoId) {
@@ -15,7 +15,7 @@ export const getCajaLote = async (req: Request, res: Response) => {
    }
    if (contratoId) {
       try {
-         contrato = await prismaClient.contrato.findFirstOrThrow({
+         await prismaClient.contrato.findFirstOrThrow({
             where: {
                ContratoId: parseInt(contratoId as string),
             },

@@ -2,8 +2,10 @@ import { OPERACION_CONTRATO, Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import { ContractDocumentStatusesEnum } from '../../../constants/ContractDocumentStatusesEnum';
 import { digitalSignature } from './digitalSignatureCreator';
-import { ContractHistoryData } from '../../../interfaces/contractsInterfaces';
 import { createContractHistory } from '../../contracts/contractService';
+import { findTipoConciliacion } from '../../tipoConciliacion/tipoConciliacion';
+import { TiposConciliacion } from '../../../constants/TiposConciliacion';
+import { createContractDocumentHistory } from '../../contractDocuments/contractDocuments';
 
 export const contractUpdater = async (
    record: any,
@@ -31,11 +33,7 @@ export const contractUpdater = async (
          },
       });
 
-      const conciliationType = await prismaClient.tipoConciliacion.findFirst({
-         where: {
-            nombre: 'Firma digital',
-         },
-      });
+      const conciliationType = await findTipoConciliacion(TiposConciliacion.firma_digital);
 
       if (contract && conciliationType) {
          for (const documentoContrato of contract.DocumentoContrato) {
@@ -54,7 +52,7 @@ export const contractUpdater = async (
                   },
                });
             }
-            await prismaClient.documentoContrato.update({
+            const document = await prismaClient.documentoContrato.update({
                where: {
                   DocumentoId: documentoContrato.DocumentoId,
                },
@@ -66,8 +64,20 @@ export const contractUpdater = async (
                         UsuarioId: systemUser?.UsuarioId,
                      },
                   },
+
+                  TipoConciliacion: {
+                     connect: { tipoConciliacionId: conciliationType.tipoConciliacionId },
+                  },
                },
             });
+
+            const { ContratoId, ...dataD } = document;
+            const toSend = {
+               ...dataD,
+               TipoConciliacion: conciliationType.nombre,
+            };
+
+            await createContractDocumentHistory(toSend);
          }
 
          const contratoUpdated = await prismaClient.contrato.update({
@@ -83,8 +93,7 @@ export const contractUpdater = async (
                FechaEfecto: new Date(),
                ResultadoFDCON: record['RESULTADO'],
                EstadoContrato: 'TRAMITADA',
-               Conciliar: false,
-               Revisar: false,
+
                Usuario: {
                   connect: {
                      UsuarioId: systemUser?.UsuarioId,
@@ -103,7 +112,6 @@ export const contractUpdater = async (
             UsuarioId,
             ...data
          } = contratoUpdated;
-         const dataH: ContractHistoryData = data;
 
          await createContractHistory({
             ...data,
@@ -176,7 +184,6 @@ export const contractUpdater = async (
                UsuarioId,
                ...data
             } = contratoUpdated;
-            const dataH: ContractHistoryData = data;
 
             await createContractHistory({
                ...data,

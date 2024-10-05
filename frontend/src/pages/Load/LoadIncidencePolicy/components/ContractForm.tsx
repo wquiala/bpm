@@ -27,6 +27,7 @@ import ContractService from '@/services/ContractService';
 import cajaLoteService from '@/services/cajaLoteService';
 import { getContractDocumentsbyContract } from '@/helpers/FetchData/contractsDocuments';
 import { getIncidences } from '@/helpers/FetchData/incidencesDocuments';
+import { createCajaLote } from '@/helpers/FetchData/cajaLote';
 
 type Props = {
    selectedContract: any;
@@ -93,6 +94,26 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
          });
       }
 
+      //Metemos primero caja y lote
+
+      const toSendCajaLote = {
+         caja: Number(caja),
+         lote: Number(lote),
+         contratoId: Number(selectedContract.ContratoId),
+         nota: data.NotaInterna,
+      };
+
+      const { data: cajaLote, response, error } = await createCajaLote(toSendCajaLote);
+
+      if (!response.ok) {
+         setLoading(false);
+         return setAlert({
+            type: 'error',
+            show: true,
+            text: error ?? 'Error while adding caja y lote',
+         });
+      }
+
       if (observations.length > 0) {
          for (const observation of observations) {
             const toSend = {
@@ -123,9 +144,10 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                   ContratoId: selectedContract.ContratoId,
                   DocId: doc.docTypeId,
                   EstadoDoc: 'PRESENTE CORRECTO',
+                  CajaLote: cajaLote.CajaLoteId,
                };
 
-               const [error, response, data] = await handlePromise(
+               const [error, response] = await handlePromise(
                   DocumentContractService.updateDocumentContract(doc.id, toSend),
                );
                if (!response.ok) {
@@ -140,7 +162,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                let incidences: any[] = [];
                docList.map((doc: any) => {
                   dataIn.map((d: any) => {
-                     if (d.DocumentoContratoId == doc.id && d.Resuelta == false) {
+                     if (d.DocumentoContratoId == doc.id && d.Resuelta) {
                         incidences.push(d);
                      }
                   });
@@ -154,7 +176,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                      updatedAt: new Date(),
                   };
 
-                  const { data, error, response } = await updateContract(selectedContract.ContratoId, toSend);
+                  await updateContract(selectedContract.ContratoId, toSend);
                }
             }
 
@@ -167,7 +189,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                   FechaGrabacion: new Date(),
                   EstadoContrato: 'ANULADA',
                   AnuladoSEfecto: data.AnuladoSEfecto,
-                  Conciliar: false,
                   updatedAt: new Date(),
                };
 
@@ -221,14 +242,10 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                      FechaProximaReclamacion: new Date() /* moment().add(30, 'days').format('YYYY-MM-DD') */,
                      updatedAt: new Date(),
                      NumeroReclamaciones: 0,
-                     AnuladoSEfecto: data.AnuladoSEfecto ? true : false,
+                     AnuladoSEfecto: data.AnuladoSEfecto,
                   };
 
-                  const {
-                     data: user,
-                     response: res,
-                     error: err,
-                  } = await updateContract(selectedContract.ContratoId, contractUpdate);
+                  const { response: res } = await updateContract(selectedContract.ContratoId, contractUpdate);
 
                   if (!res.ok) {
                      setLoading(false);
@@ -238,23 +255,19 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                         text: error ?? 'Error while udating contract',
                      });
                   }
-               } else {
-                  if (!incidence.checked && f && f.Resuelta == false) {
-                     const toSend = {
-                        ContratoId: selectedContract.ContratoId,
-                        DocumentoId: doc.id,
-                        Resuelta: true,
-                        Incidencia: incidence.IncidenciaId,
-                     };
+               } else if (!incidence.checked && !f?.Resuelta) {
+                  const toSend = {
+                     ContratoId: selectedContract.ContratoId,
+                     DocumentoId: doc.id,
+                     Resuelta: true,
+                     Incidencia: incidence.IncidenciaId,
+                  };
 
-                     const [error, response] = await handlePromise(
-                        DocumentIncidenceService.updateDocumentIncidence(f.IncidenciaDocId, toSend),
-                     );
-                  }
+                  await handlePromise(DocumentIncidenceService.updateDocumentIncidence(f.IncidenciaDocId, toSend));
                }
             }
 
-            if (doc.notCorrect && inci == false && doc.correct != true) {
+            if (doc.notCorrect && !inci && !doc.correct) {
                setLoading(false);
 
                return setAlert({
@@ -295,11 +308,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                   TipoConciliacionId: 13,
                };
 
-               const {
-                  data: user,
-                  response: res,
-                  error: err,
-               } = await updateContract(selectedContract.ContratoId, toSend);
+               const { response: res } = await updateContract(selectedContract.ContratoId, toSend);
 
                if (!res.ok) {
                   setLoading(false);
@@ -328,23 +337,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
          }
       }
 
-      const toSendCajaLote = {
-         caja: Number(caja),
-         lote: Number(lote),
-         contratoId: Number(selectedContract.ContratoId),
-         nota: data.NotaInterna,
-      };
-
-      const [error, response] = await handlePromise(cajaLoteService.createCajaLote(toSendCajaLote));
-      if (!response.ok) {
-         setLoading(false);
-         return setAlert({
-            type: 'error',
-            show: true,
-            text: error ?? 'Error while adding caja y lote',
-         });
-      }
-
       setLoading(false);
 
       setAlert({
@@ -364,11 +356,8 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
          for (const contractDocument of contractDocuments) {
             const isCorrect =
                contractDocument.EstadoDoc === 'PRESENTE CORRECTO' || contractDocument.EstadoDoc === 'CORRECTO';
-            const corr = contractDocument.EstadoDoc === 'CORRECTO';
 
             const notCorrect = contractDocument.EstadoDoc === 'PRESENTE CON INCIDENCIA';
-
-            const isConciliar = selectedContract.Conciliar === true;
 
             const incidences = contractDocument.MaestroDocumentos.TipoDocumentoIncidencia.map((incidence: any) => {
                return {
@@ -409,7 +398,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
          }
 
          reset({
-            AnuladoSEfecto: selectedContract.AnuladoSEfecto ? true : false,
+            AnuladoSEfecto: selectedContract.AnuladoSEfecto,
             Conciliar: selectedContract.Conciliar,
             ResultadoFDCON: selectedContract.ResultadoFDCON,
             EstadoContrato: selectedContract.EstadoContrato,

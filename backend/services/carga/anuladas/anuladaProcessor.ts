@@ -33,62 +33,6 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
          });
       } else {
          let anulada;
-         /* if (record['COMPAÑÍA'] == 'UCV' || record['COMPAÑÍA'] == 'UNI') {
-            const contract = await prismaClient.contrato.findFirst({
-               where: {
-                  OR: [
-                     {
-                        CodigoPoliza: record['CLAVE_OPERACIÓN'],
-                     },
-                     {
-                        CodigoSolicitud: record['CLAVE_OPERACIÓN'],
-                     },
-                  ],
-               },
-            });
-
-            if (contract) {
-               anulada = await prismaClient.contrato.update({
-                  where: {
-                     ContratoId: contract.ContratoId,
-                     CodigoPoliza: record['CLAVE_OPERACIÓN'],
-                  },
-                  data: {
-                     AnuladoSEfecto: true,
-                     EstadoContrato: 'ANULADA',
-                  },
-               });
-
-               details.push({
-                  ...record,
-                  estado: 'ACTUALIZADO',
-                  errores: {
-                     estado: 'ANULADA',
-                  },
-               });
-               actualizados++;
-               const {
-                  CompaniaId,
-                  ProductoId,
-                  CodigoPoliza,
-                  MediadorId,
-                  ClaveOperacion,
-                  Activo,
-                  TipoOperacion,
-                  Suplemento,
-                  CCC,
-                  CodigoSolicitud,
-                  updatedAt,
-                  TipoConciliacionId,
-                  UsuarioId,
-                  ...rest
-               } = anulada;
-               await createContractHistory({
-                  ...rest,
-                  Operacion: OPERACION_CONTRATO.ANULADO,
-                  EstadoContrato: ESTADO_CONTRATO.ANULADA,
-               });
-            } */
 
          const contract = await prismaClient.contrato.findFirst({
             where: {
@@ -122,20 +66,13 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
             });
             actualizados++;
             const {
-               CompaniaId,
-               ProductoId,
-               CodigoSolicitud,
-               Suplemento,
-               CCC,
                Activo,
-               ClaveOperacion,
-               TipoOperacion,
 
-               CodigoPoliza,
-               MediadorId,
+               TipoOperacion,
                updatedAt,
                TipoConciliacionId,
                UsuarioId,
+
                ...rest
             } = anulada;
             console.log(rest);

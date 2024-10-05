@@ -2,10 +2,7 @@ import { Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import { digitalSignatureValidator } from '../../../helpers/digitalSignatureValidator';
 import { contractUpdater } from './contractUpdater';
-import { digitalSignature } from './digitalSignatureCreator';
 
-/* import { contractUpdater } from "./contractUpdater";
- */
 export const processDigitalSignatureData = async (records: any[], user: { UsuarioId: any }) => {
    let actualizados = 0;
    let noactualizados = 0;

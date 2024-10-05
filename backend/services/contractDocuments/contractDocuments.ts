@@ -2,8 +2,9 @@ import { Usuario } from '@prisma/client';
 import { ContractDocumentStatusesEnum } from '../../constants/ContractDocumentStatusesEnum';
 import { prismaClient } from '../../server';
 import { handlePreLoadConciliation } from '../contracts/contractService';
-import { findContractDocumentHistory } from '../../helpers/documentContract';
 import moment from 'moment';
+import { findTipoConciliacion } from '../tipoConciliacion/tipoConciliacion';
+import { TiposConciliacion } from '../../constants/TiposConciliacion';
 
 export const createDocuments = async (
    createdContract: any,
@@ -56,12 +57,14 @@ export const createDocuments = async (
 
    await updateDNiState(createdContract, listDocuments);
 
+   const tipoConciliacion = await findTipoConciliacion(TiposConciliacion.carga_previa);
    if (!forPrecon) {
       await prismaClient.documentoContrato.updateMany({
          where: {
             ContratoId: createdContract.ContratoId,
          },
          data: {
+            TipoConciliacionId: tipoConciliacion!.tipoConciliacionId,
             EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
             FechaConciliacion: new Date(),
          },
@@ -70,6 +73,9 @@ export const createDocuments = async (
       const updated = await prismaClient.documentoContrato.findMany({
          where: {
             ContratoId: createdContract.ContratoId,
+         },
+         include: {
+            TipoConciliacion: true,
          },
       });
 
@@ -81,9 +87,14 @@ export const createDocuments = async (
          });
 
          if (!exist) { */
-         const { ContratoId, ...dataD } = updt;
+         const { ContratoId, TipoConciliacion, ...dataD } = updt;
 
-         await createContractDocumentHistory(dataD);
+         const toSend = {
+            ...dataD,
+            TipoConciliacion: tipoConciliacion?.nombre,
+         };
+
+         await createContractDocumentHistory(toSend);
          //}
       }
 
@@ -112,6 +123,7 @@ export const createDocuments = async (
          data: {
             EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
             FechaConciliacion: new Date(),
+            TipoConciliacionId: tipoConciliacion?.tipoConciliacionId,
          },
       });
 
@@ -121,18 +133,19 @@ export const createDocuments = async (
             DocId: { in: preconIds },
             ProdctoDoc: { in: preconIdsPD },
          },
+         include: {
+            TipoConciliacion: true,
+         },
       });
 
       for (const updt of updated) {
-         /*  const exist = await findContractDocumentHistory({
-            DocId: updt.DocId,
-            DocumentoId: updt.DocumentoId,
-            EstadoDoc: updt.EstadoDoc,
-         });
-         if (!exist) { */
-         const { ContratoId, ...dataD } = updt;
+         const { ContratoId, TipoConciliacion, ...dataD } = updt;
+         const toSend = {
+            ...dataD,
+            TipoConciliacion: tipoConciliacion?.nombre,
+         };
 
-         await createContractDocumentHistory(dataD);
+         await createContractDocumentHistory(toSend);
          //}
       }
    }
@@ -153,6 +166,8 @@ export const updateDNiState = async (contract: any, documents: any[]) => {
             Codigo: 'DNI',
          },
       });
+
+      const tipoConciliacion = await findTipoConciliacion(TiposConciliacion.carga_previa);
       if (dni) {
          const conDNI = documents.find((d: any) => d.DocId == dni.DocumentoId);
 
@@ -163,6 +178,8 @@ export const updateDNiState = async (contract: any, documents: any[]) => {
                },
                data: {
                   EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
+                  FechaConciliacion: new Date(),
+                  TipoConciliacionId: tipoConciliacion?.tipoConciliacionId,
                },
             });
 

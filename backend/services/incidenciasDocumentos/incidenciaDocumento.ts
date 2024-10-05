@@ -24,8 +24,6 @@ export const handleIncidences = async (createdContract: any, systemUser: Usuario
          if (productoDocumento.FechaBaja != null && moment(fechaOperacion).isSameOrAfter(moment(fechaBaja), 'day')) {
             continue;
          } else {
-            console.log('Fecha de baja mayor que fecha operacion');
-
             const document = await prismaClient.documentoContrato.create({
                data: {
                   Contrato: {

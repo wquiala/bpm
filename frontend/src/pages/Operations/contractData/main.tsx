@@ -1,10 +1,6 @@
-import { AlertContext } from '@/utils/Contexts/AlertContext';
-import { LoadingContext } from '@/utils/Contexts/LoadingContext';
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useContext, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { defaultValues, schema } from './components/schemas';
 import moment from 'moment';
 import ContractHeaderInputs from './components/ContractHeaderInputs';
@@ -14,6 +10,7 @@ import DocumentList from './components/DocumentList';
 import Button from '@/components/Base/Button';
 import ReclamationList from './Reclamations/reclamationList';
 import DigitalSignatureList from './DigitalSignature/digitalSignatureList';
+import { useEffect } from 'react';
 
 type Props = {
    selectedContract: any;
@@ -33,15 +30,10 @@ export interface Documents {
 }
 const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
    const { t } = useTranslation();
-   const navigate = useNavigate();
-
-   const [, setAlert] = useContext(AlertContext);
-   const [, setLoading] = useContext(LoadingContext);
    const {
       control,
       reset,
-      formState: { isValid },
-      handleSubmit,
+      //formState: { isValid },
    } = useForm({
       mode: 'onChange',
       resolver: yupResolver(schema(t)),
@@ -51,9 +43,8 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
    useEffect(() => {
       const resetFormFiels = async () => {
          const docList: any[] = [];
-         const contractDocuments = selectedContract?.DocumentoContrato;
 
-         function createIncidence(incidence: any, document: any) {
+         /*  function createIncidence(incidence: any, document: any) {
             const isIncidenceUnresolved =
                document.IncidenciaDocumento.find((inci: any) => inci.TipoIncidenciaId === incidence.TipoIncidenciaId)
                   ?.Resuelta === false;
@@ -62,9 +53,10 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
                name: incidence.Nombre,
                checked: isIncidenceUnresolved,
             };
-         }
+         } */
 
          selectedContract.DocumentoContrato.map((doc: any) => {
+            console.log(doc);
             docList.push({
                Codigo: doc.MaestroDocumentos.Codigo,
                Nombre: doc.MaestroDocumentos.Nombre,
@@ -77,7 +69,10 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
                FechaUltimaReclamacion: selectedContract.FechaReclamacion,
                FechaProximaReclamacion: selectedContract.FechaProximaReclamacion,
                incidences: doc.IncidenciaDocumento,
-               documentHistory: doc.DocumentoContratoHistory.map((his: any) => his),
+               documentHistory: doc.DocumentoContratoHistory,
+               TipoConciliacion: doc.TipoConciliacion?.nombre,
+               Caja: doc.CajaLote?.Caja,
+               Lote: doc.CajaLote?.Lote,
             });
          });
 
@@ -90,7 +85,7 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
             DNIAsegurado: selectedContract?.DNIAsegurado,
             NombreAsegurado: selectedContract?.NombreAsegurado,
             FechaOperacion: new Date(selectedContract.FechaOperacion).toLocaleDateString(),
-            Mediador: `${selectedContract?.Mediador?.Codigo} - ${selectedContract?.Mediador?.Nombre}` ?? null,
+            Mediador: `${selectedContract?.Mediador?.Codigo} - ${selectedContract?.Mediador?.Nombre}`,
             Revisar: selectedContract?.Revisar,
             Conciliar: selectedContract.Conciliar,
 
@@ -170,20 +165,14 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
                         Firma Digital
                      </Tab.Button>
                   </Tab>
-                  {/* <Tab>
-                            <Tab.Button className="w-full py-2" as="button">
-                                Reclamaciones
-                            </Tab.Button>
-                        </Tab>
-                        <Tab>
-                            <Tab.Button className="w-full py-2" as="button">
-                                Firma Digital
-                            </Tab.Button>
-                        </Tab> */}
                </Tab.List>
                <Tab.Panels className="mt-5">
                   <Tab.Panel className="leading-relaxed">
-                     <ContractAdiniotalDataInputs control={control} setSelectedContract={setSelectedContract} />
+                     <ContractAdiniotalDataInputs
+                        control={control}
+                        setSelectedContract={setSelectedContract}
+                        selectedContract={selectedContract}
+                     />
                   </Tab.Panel>
                   <Tab.Panel className="leading-relaxed">
                      <DocumentList

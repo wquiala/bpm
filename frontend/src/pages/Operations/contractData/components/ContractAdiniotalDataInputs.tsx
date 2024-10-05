@@ -1,13 +1,22 @@
 import Button from '@/components/Base/Button';
 import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
 import InputField from '@/custom-components/FormElements/InputField';
+import { HistoryContract } from '../../contract/historyDocuments';
+import { useEffect, useState } from 'react';
 
 type Props = {
    control: any;
    setSelectedContract: any;
+   selectedContract: any;
 };
 
-const ContractAdiniotalDataInputs = ({ control, setSelectedContract }: Props) => {
+const ContractAdiniotalDataInputs = ({ control, setSelectedContract, selectedContract }: Props) => {
+   const [showHistoryContract, setShowHistoryContract] = useState<boolean>(false);
+
+   const handleOperationHistory = () => {
+      setShowHistoryContract(true);
+   };
+
    return (
       <div className="box p-4 m-4 mb-2">
          <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -119,10 +128,18 @@ const ContractAdiniotalDataInputs = ({ control, setSelectedContract }: Props) =>
          </div>
 
          <div className="flex flex-col sm:flex-row justify-end items-end mr-5 my-2 gap-3">
+            <Button variant="primary" onClick={handleOperationHistory}>
+               Histórico de operaciones
+            </Button>
             <Button variant="danger" onClick={() => setSelectedContract(null)}>
                Cerrar
             </Button>
          </div>
+         <HistoryContract
+            show={showHistoryContract}
+            setShow={setShowHistoryContract}
+            selectedContract={selectedContract}
+         />
       </div>
    );
 };

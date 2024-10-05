@@ -2,10 +2,10 @@ import { ESTADO_CONTRATO, OPERACION_CONTRATO, Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import { ContractDocumentStatusesEnum } from '../../../constants/ContractDocumentStatusesEnum';
 import { tabletsCreator } from './tabletsCreator';
-import { ContractHistoryData } from '../../../interfaces/contractsInterfaces';
 import { createContractHistory } from '../../contracts/contractService';
 import { createContractDocumentHistory } from '../../contractDocuments/contractDocuments';
-import { findContractDocumentHistory } from '../../../helpers/documentContract';
+import { findTipoConciliacion } from '../../tipoConciliacion/tipoConciliacion';
+import { TiposConciliacion } from '../../../constants/TiposConciliacion';
 
 const fetchContract = async (ccc: string) => {
    return prismaClient.contrato.findFirst({
@@ -48,6 +48,7 @@ const resolveIncidences = async (documentoContrato: any, systemUser: Usuario) =>
 };
 
 const updateDocumentStatus = async (documentoContrato: any, systemUser: Usuario) => {
+   const tipoConciliacion = await findTipoConciliacion(TiposConciliacion.tableta);
    return await prismaClient.documentoContrato.update({
       where: {
          DocumentoId: documentoContrato.DocumentoId,
@@ -59,6 +60,9 @@ const updateDocumentStatus = async (documentoContrato: any, systemUser: Usuario)
             connect: {
                UsuarioId: systemUser?.UsuarioId,
             },
+         },
+         TipoConciliacion: {
+            connect: { tipoConciliacionId: tipoConciliacion!.tipoConciliacionId },
          },
       },
    });
@@ -109,22 +113,15 @@ const checkAndUpdateContractStatus = async (contract: any, conciliationType: any
       );
 
       const {
-         CompaniaId,
-         ProductoId,
-         CodigoSolicitud,
-         Suplemento,
-         CCC,
          Activo,
-         ClaveOperacion,
-         CodigoPoliza,
-         MediadorId,
+
          TipoOperacion,
          updatedAt,
          TipoConciliacionId,
          UsuarioId,
+
          ...data
       } = updated;
-      const dataH: ContractHistoryData = data;
 
       await createContractHistory({
          ...data,
@@ -224,8 +221,12 @@ export const contractUpdater = async (
 
                   if (!exist) { */
                   const { ContratoId, ...dataD } = query;
+                  const toSend = {
+                     ...dataD,
+                     TipoConciliacion: conciliationType.nombre,
+                  };
 
-                  await createContractDocumentHistory(dataD);
+                  await createContractDocumentHistory(toSend);
                   //}
                   updated = true;
                   details.push({
@@ -236,8 +237,6 @@ export const contractUpdater = async (
                }
             }
          }
-         /*          if (documentoContrato.EstadoDoc == 'CORRECT') a++;
-          */
 
          const cant = await prismaClient.documentoContrato.findMany({
             where: {
@@ -246,7 +245,7 @@ export const contractUpdater = async (
             },
          });
          if (cant.length == contract.DocumentoContrato.length) {
-            const updated = await checkAndUpdateContractStatus(contract, conciliationType, record, systemUser);
+            await checkAndUpdateContractStatus(contract, conciliationType, record, systemUser);
          }
       } else {
          updated = false;

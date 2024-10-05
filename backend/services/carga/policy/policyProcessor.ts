@@ -22,9 +22,6 @@ export const processPolicyData = async (data: RecordDiaria[], user: { UsuarioId:
       },
    });
    for await (let record of data) {
-      let errors: any[] = [];
-      let errorMsg;
-
       const { error: err } = await policyValidator(record);
 
       if (!record.CodigoPoliza && !record.CodigoSolicitud && !record.CCC) {

@@ -1,13 +1,4 @@
-import InputField from '@/custom-components/FormElements/InputField';
-import { AlertContext } from '@/utils/Contexts/AlertContext';
-import { LoadingContext } from '@/utils/Contexts/LoadingContext';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { useContext, useEffect } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
-import handlePromise from '@/utils/promise';
-import * as yup from 'yup';
-import LoadService from '@/services/LoadService';
+import { useFieldArray } from 'react-hook-form';
 import { DataTable } from '../../../components/ui/dataDocumentsTable';
 import { columnsDocumentsHistory, DocumentHistory } from './columnsDocumentsHistory';
 import ParentModal from '../CommonComponents/ParentModal';
@@ -19,20 +10,16 @@ type Props = {
 };
 
 export const HistoryDocuments = ({ show, setShow, control }: Props) => {
-   const { t } = useTranslation();
-
    const { fields } = useFieldArray({
       control,
       name: 'documents',
    });
 
-   const [, setAlert] = useContext(AlertContext);
-   const [, setLoading] = useContext(LoadingContext);
-
    return (
       <ParentModal size="xl" title="Históricos de documentos" show={show} setShow={setShow}>
          <div className="flex w-full justify-center items-center flex-col">
             {fields.map((doc: any) => {
+               console.log(doc);
                const history: DocumentHistory[] = doc.documentHistory.map((f: any) => ({
                   Familia_Documento: doc.Familia,
                   Documento: doc.Nombre,
@@ -41,6 +28,9 @@ export const HistoryDocuments = ({ show, setShow, control }: Props) => {
                   Codigo: doc.Codigo,
                   Estado: f.EstadoDoc,
                   Fase: doc.Fase,
+                  TipoConciliacion: f.TipoConciliacionId ? f.TipoConciliacion : 'Sin conciliar',
+                  Caja: f.CajaLoteId ? f.Caja : 'Sin caja asignada',
+                  Lote: f.CajaLoteId ? f.Lote : 'Sin lote asignado',
                }));
                return (
                   <div key={doc.id}>

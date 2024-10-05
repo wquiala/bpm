@@ -11,6 +11,9 @@ export type DocumentHistory = {
    Estado: string;
    Fase: 'PRECON' | 'CON';
    Fecha_estado: string;
+   TipoConciliacion: string;
+   Caja: string;
+   Lote: string;
 };
 
 export const columnsDocumentsHistory: ColumnDef<DocumentHistory>[] = [
@@ -38,5 +41,17 @@ export const columnsDocumentsHistory: ColumnDef<DocumentHistory>[] = [
    {
       accessorKey: 'Fecha_estado',
       header: 'Fecha del estado',
+   },
+   {
+      accessorKey: 'TipoConciliacion',
+      header: 'Tipo de conciliación',
+   },
+   {
+      accessorKey: 'Caja',
+      header: 'Caja',
+   },
+   {
+      accessorKey: 'Lote',
+      header: 'Lote',
    },
 ];

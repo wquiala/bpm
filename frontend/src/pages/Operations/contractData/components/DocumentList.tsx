@@ -1,18 +1,7 @@
-import Alert from '@/components/Base/Alert';
-import { Disclosure } from '@/components/Base/Headless';
-import Lucide from '@/components/Base/Lucide';
-import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
-import InputField from '@/custom-components/FormElements/InputField';
 import { useFieldArray } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
-import Table from '@/custom-components/Table/Table';
-import { ColumnDefinition } from 'tabulator-tables';
 import { DataTable } from '../../../../components/ui/dataDocumentsTable';
 import { columnsDocuments, Document } from '../../IncidencesDocuments/columnsDocuments';
-import { Documents } from '../main';
-import { columnsIncidences, Incidence } from '../../IncidencesDocuments/columnsIncidences';
-import moment from 'moment';
-import { strict } from 'assert';
+import { columnsIncidences } from '../../IncidencesDocuments/columnsIncidences';
 import Button from '@/components/Base/Button';
 import { useState } from 'react';
 import { HistoryDocuments } from '../../IncidencesDocuments/historyDocuments';
@@ -25,9 +14,8 @@ type Props = {
 };
 
 const DocumentList = ({ control, selectedContract, setSelectedContract }: Props) => {
-   const { t } = useTranslation();
    const [showHistoryDocuments, setShowHistoryDocuments] = useState<boolean>(false);
-   const [showHistoryincidences, setShowHistoryIncidences] = useState<boolean>(false);
+   const [showHistoryIncidences, setShowHistoryIncidences] = useState<boolean>(false);
 
    const { fields } = useFieldArray({
       control,
@@ -57,14 +45,14 @@ const DocumentList = ({ control, selectedContract, setSelectedContract }: Props)
 
    const incidencesList: any[] = [];
 
-   fields.map((doc: any) => {
-      doc.incidences.map((inci: any) => {
-         if (!inci.Resuelta)
+   fields.forEach((doc: any) => {
+      doc.incidences.forEach((inci: any) => {
+         if (!inci.Resuelta) {
             incidencesList.push({
                Familia_Documento: doc.Familia,
                Incidencia: inci.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                Comentarios: inci.Nota,
-               Estado_Incidencia: inci.Resuelta == true ? 'Resuelta' : 'No resuelta',
+               Estado_Incidencia: inci.Resuelta ? 'Resuelta' : 'No resuelta',
                Fecha_estado: inci.updatedAt ? new Date(inci.updatedAt).toLocaleDateString() : 'Sin fecha',
                FechaAltaIncidencia: new Date(inci.createdAt).toLocaleDateString(),
                FechaUltimaReclamacion: selectedContract.FechaReclamacion
@@ -74,6 +62,7 @@ const DocumentList = ({ control, selectedContract, setSelectedContract }: Props)
                   ? new Date(selectedContract.FechaProximaReclamacion).toLocaleDateString()
                   : 'Sin fecha',
             });
+         }
       });
    });
 
@@ -107,7 +96,7 @@ const DocumentList = ({ control, selectedContract, setSelectedContract }: Props)
             </Button>
          </div>
          <HistoryDocuments show={showHistoryDocuments} setShow={setShowHistoryDocuments} control={control} />{' '}
-         <HistoryIncidences show={showHistoryincidences} setShow={setShowHistoryIncidences} control={control} />
+         <HistoryIncidences show={showHistoryIncidences} setShow={setShowHistoryIncidences} control={control} />
       </div>
    );
 };
