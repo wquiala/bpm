@@ -65,6 +65,8 @@ export const getContracts = async (req: Request, res: Response) => {
                      FamiliaDocumento: true,
                   },
                },
+               TipoConciliacion: true,
+               CajaLote: true,
                DocumentoContratoHistory: true,
 
                IncidenciaDocumento: {
@@ -236,6 +238,8 @@ export const createContract = async (req: Request, res: Response) => {
                         TipoDocumentoIncidencia: { include: { MaestroDocumentos: true, MaestroIncidencias: true } },
                      },
                   },
+                  TipoConciliacion: true,
+                  CajaLote: true,
                },
             },
             Comunicacion: true,
@@ -244,21 +248,14 @@ export const createContract = async (req: Request, res: Response) => {
       });
 
       const {
-         CompaniaId: comp,
-         ProductoId: prod,
-         CodigoSolicitud,
-         Suplemento,
-         CCC,
          Activo,
-         ClaveOperacion,
-         EstadoContrato,
-         CodigoPoliza,
-         MediadorId: media,
+
          TipoOperacion,
          updatedAt,
-         Producto,
          TipoConciliacionId,
          UsuarioId,
+         Producto,
+         DocumentoContrato,
          ...data
       } = createdContract;
       const dataH: ContractHistoryData = data;
@@ -410,19 +407,13 @@ export const updateContract = async (req: Request, res: Response) => {
       });
 
       const {
-         CompaniaId,
-         ProductoId,
-         CodigoSolicitud,
-         Suplemento,
-         CCC,
          Activo,
-         ClaveOperacion,
-         CodigoPoliza,
-         MediadorId,
+
          TipoOperacion,
          updatedAt,
          TipoConciliacionId,
          UsuarioId,
+
          ...data
       } = updatedContract;
       const dataH: ContractHistoryData = data;

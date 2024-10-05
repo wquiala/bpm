@@ -17,7 +17,6 @@ import { digitalSignatureCreator } from '../digitalSignature/digitalSignature';
 import { createContractDocumentHistory, createDocuments } from '../../contractDocuments/contractDocuments';
 import { fetchBranch, fetchClave, fetchCompany, fetchContrato, fetchMediator } from '../../../helpers/fetch';
 import { handleIncidences } from '../../incidenciasDocumentos/incidenciaDocumento';
-import { findContractDocumentHistory } from '../../../helpers/documentContract';
 
 export const policyCreator = async (
    record: RecordDiaria,
@@ -28,7 +27,7 @@ export const policyCreator = async (
 ) => {
    let conError = 0;
    let hasError;
-   let insert: boolean | null = null;
+   let insert = null;
    let Desechados: number = 0;
    let revisar: boolean = false;
 
@@ -97,23 +96,23 @@ export const policyCreator = async (
          });
       }
    } else {
-      const { actualizar, query, solicitud, insertar, desechar } = await fetchContrato(record, clave);
+      const { actualizar, query, insertar, desechar } = await fetchContrato(record, clave);
 
       const CONTRATO = record.CodigoPoliza;
       if (actualizar) {
          const data: ContractUpdate = {};
 
-         data.Conciliar = record.Conciliar == 'SI' ? true : false;
-         data.Revisar = record.Revisar == 'SI' ? true : false;
+         data.Conciliar = record.Conciliar == 'SI';
+         data.Revisar = record.Revisar == 'SI';
 
          data.ResultadoFDCON = record.ResultadoFDCON;
 
          data.TipoEnvioCON = record.TipoEnvioCON;
-         data.IndicadorFDCON = record.IndicadorFDCON == 'SI' ? true : false;
+         data.IndicadorFDCON = record.IndicadorFDCON == 'SI';
          data.ResultadoFDPRECON = record.ResultadoFDPRECON;
 
          data.TipoEnvioPRECON = record.TipoEnvioPRECON;
-         data.IndicadorFDPRECON = record.IndicadorFDPRECON == 'SI' ? true : false;
+         data.IndicadorFDPRECON = record.IndicadorFDPRECON == 'SI';
 
          data.Operador = record.Operador;
 
@@ -125,7 +124,7 @@ export const policyCreator = async (
 
          data.DeporteAsegurado = record.DeporteAsegurado;
          data.ProfesionAsegurado = record.ProfesionAsegurado;
-         data.CSRespAfirmativas = record.CSRespAfirmativas == 'S' ? true : false;
+         data.CSRespAfirmativas = record.CSRespAfirmativas == 'S';
 
          data.FechaNacimientoAsegurado = parserDate(record.FechaNacimientoAsegurado!);
 
@@ -133,9 +132,9 @@ export const policyCreator = async (
 
          data.DNIAsegurado = record.DNIAsegurado;
 
-         data.AnuladoSEfecto = record.AnuladoSEfecto == 'S' ? true : false;
+         data.AnuladoSEfecto = record.AnuladoSEfecto == 'S';
 
-         if (record.AnuladoSEfecto == 'N' && query?.AnuladoSEfecto == true) {
+         if (record.AnuladoSEfecto == 'N' && query?.AnuladoSEfecto) {
             data.AnuladoSEfecto = false;
             data.EstadoContrato = !query.Conciliar && !query.Revisar ? 'TRAMITADA' : 'PENDIENTE';
          }
@@ -171,15 +170,15 @@ export const policyCreator = async (
             }
          }
 
-         if (record.AnuladoSEfecto == 'S' && query?.AnuladoSEfecto == false) {
+         if (record.AnuladoSEfecto == 'S' && query?.AnuladoSEfecto) {
             data.AnuladoSEfecto = true;
             data.EstadoContrato = 'ANULADA';
             data.Conciliar = false;
          }
 
-         data.FechaEfecto = parserDate(record.FechaEfecto!) ?? query?.FechaEfecto;
+         data.FechaEfecto = record.FechaEfecto ? parserDate(record.FechaEfecto) : query?.FechaEfecto;
 
-         data.FechaOperacion = parserDate(record.FechaOperacion!) ?? query?.FechaOperacion;
+         data.FechaOperacion = parserDate(record.FechaOperacion) ?? query?.FechaOperacion;
 
          data.ProductoId = producto?.ProductoId ?? query?.ProductoId;
 
@@ -306,51 +305,49 @@ export const policyCreator = async (
                },
             });
          }
-      } else {
-         if (desechar) {
-            const data = {
-               MotivoDesechado: 'REGISTRO EXISTENTE EN CONTRATOS',
-               Compania: record.Compania ?? '',
-               Producto: record.Producto ?? '',
-               FechaOperacion: record.FechaOperacion ?? '',
-               TipoOperacion: record.TipoOperacion ?? '',
-               CCC: record.CCC ?? '',
-               CodigoSolicitud: record.CodigoSolicitud ?? '',
-               CodigoPoliza: record.CodigoPoliza ?? '',
-               FechaEfecto: record.FechaEfecto ?? '',
-               AnuladoSEfecto: record.AnuladoSEfecto ?? '',
-               Suplemento: record.Suplemento ?? '',
-               DNIAsegurado: record.DNIAsegurado ?? '',
-               NombreAsegurado: record.NombreAsegurado ?? '',
-               FechaNacimientoAsegurado: record.FechaNacimientoAsegurado ?? '',
-               CSRespAfirmativas: record.CSRespAfirmativas ?? '',
-               ProfesionAsegurado: record.ProfesionAsegurado ?? '',
-               DeporteAsegurado: record.DeporteAsegurado ?? '',
-               DNITomador: record.DNITomador ?? '',
-               FechaValidezDNITomador: record.FechaValidezDNITomador ?? '',
-               NombreTomador: record.NombreTomador ?? '',
-               Mediador: record.Mediador ?? '',
-               Operador: record.Operador ?? '',
-               IndicadorFDPRECON: record.IndicadorFDPRECON ?? '',
-               TipoEnvioPRECON: record.TipoEnvioPRECON ?? '',
-               ResultadoFDPRECON: record.ResultadoFDPRECON ?? '',
-               IndicadorFDCON: record.IndicadorFDCON ?? '',
-               TipoEnvioCON: record.ResultadoFDCON ?? '',
-               ResultadoFDCON: record.ResultadoFDCON ?? '',
-               Revisar: record.Revisar ?? '',
-               Conciliar: record.Revisar ?? '',
-            };
+      } else if (desechar) {
+         const data = {
+            MotivoDesechado: 'REGISTRO EXISTENTE EN CONTRATOS',
+            Compania: record.Compania ?? '',
+            Producto: record.Producto ?? '',
+            FechaOperacion: record.FechaOperacion ?? '',
+            TipoOperacion: record.TipoOperacion ?? '',
+            CCC: record.CCC ?? '',
+            CodigoSolicitud: record.CodigoSolicitud ?? '',
+            CodigoPoliza: record.CodigoPoliza ?? '',
+            FechaEfecto: record.FechaEfecto ?? '',
+            AnuladoSEfecto: record.AnuladoSEfecto ?? '',
+            Suplemento: record.Suplemento ?? '',
+            DNIAsegurado: record.DNIAsegurado ?? '',
+            NombreAsegurado: record.NombreAsegurado ?? '',
+            FechaNacimientoAsegurado: record.FechaNacimientoAsegurado ?? '',
+            CSRespAfirmativas: record.CSRespAfirmativas ?? '',
+            ProfesionAsegurado: record.ProfesionAsegurado ?? '',
+            DeporteAsegurado: record.DeporteAsegurado ?? '',
+            DNITomador: record.DNITomador ?? '',
+            FechaValidezDNITomador: record.FechaValidezDNITomador ?? '',
+            NombreTomador: record.NombreTomador ?? '',
+            Mediador: record.Mediador ?? '',
+            Operador: record.Operador ?? '',
+            IndicadorFDPRECON: record.IndicadorFDPRECON ?? '',
+            TipoEnvioPRECON: record.TipoEnvioPRECON ?? '',
+            ResultadoFDPRECON: record.ResultadoFDPRECON ?? '',
+            IndicadorFDCON: record.IndicadorFDCON ?? '',
+            TipoEnvioCON: record.ResultadoFDCON ?? '',
+            ResultadoFDCON: record.ResultadoFDCON ?? '',
+            Revisar: record.Revisar ?? '',
+            Conciliar: record.Revisar ?? '',
+         };
 
-            await createDesechados(data);
-            Desechados++;
+         await createDesechados(data);
+         Desechados++;
 
-            details.push({
-               ...record,
-               estado: 'DESECHADO REGISTRO EXISTENTE EN CONTRATOS',
-               errores: err,
-            });
-            //Aqui lo desechamos porque ni inserta ni actualiza
-         }
+         details.push({
+            ...record,
+            estado: 'DESECHADO REGISTRO EXISTENTE EN CONTRATOS',
+            errores: err,
+         });
+         //Aqui lo desechamos porque ni inserta ni actualiza
       }
 
       for (const key in err) {

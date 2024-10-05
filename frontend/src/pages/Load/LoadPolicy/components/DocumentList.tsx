@@ -5,7 +5,7 @@ import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
 import InputField from '@/custom-components/FormElements/InputField';
 import { useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/Base/Button';
 
 type Props = {
@@ -18,7 +18,7 @@ type Props = {
 const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
    const { t } = useTranslation();
    const [to, setTo] = useState(false);
-   const [isPresent, setPresent] = useState(0);
+   const [isPresent, setIsPresent] = useState(0);
    const [porEmail, setEmail] = useState(false);
 
    const { fields } = useFieldArray({
@@ -38,7 +38,7 @@ const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
       });
    };
    const handleClickD = () => {
-      if (to == false) {
+      if (!to) {
          fields.forEach((field, index) => {
             setValue(`documents.${index}.present`, true); // Update value directly in form state
          });
@@ -52,7 +52,7 @@ const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
    };
 
    useEffect(() => {
-      setPresent(fields.filter((doc: any) => doc.estado == 'PRESENTE CORRECTO').length);
+      setIsPresent(fields.filter((doc: any) => doc.estado == 'PRESENTE CORRECTO').length);
    }, [fields]);
 
    return (
@@ -103,7 +103,7 @@ const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
                                              name={`documents.${index}.present`}
                                              onChange={() => handleOnchangePresent(index)}
                                              disabled={
-                                                control._defaultValues.documents[index].present == true ||
+                                                control._defaultValues.documents[index].present ||
                                                 getValues(`documents.${index}.porEmail`)
                                              }
                                           />
@@ -113,7 +113,7 @@ const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
                                              control={control}
                                              name={`documents.${index}.porEmail`}
                                              disabled={
-                                                control._defaultValues.documents[index].present == true ||
+                                                control._defaultValues.documents[index].present ||
                                                 control._defaultValues.EstadoContrato == 'ANULADA'
                                              }
                                              onChange={() => handleOnchangeEmail(index)}

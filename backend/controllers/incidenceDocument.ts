@@ -201,7 +201,7 @@ export const updateIncidenceDocument = async (req: Request, res: Response) => {
       throw new NotFoundException('Contract document not found', ErrorCode.NOT_FOUND_EXCEPTION);
    }
 
-   // Validations
+   // Validati
    /*  try {
       await prismaClient.tipoDocumentoIncidencia.findFirstOrThrow({
          where: {
@@ -249,7 +249,7 @@ export const updateIncidenceDocument = async (req: Request, res: Response) => {
          },
       });
 
-      const exist = findIncidenceHistory({
+      const exist = await findIncidenceHistory({
          IncidenciaDocId: updatedIncidenceDocument.IncidenciaDocId,
          Resultado: updatedIncidenceDocument.Resuelta!,
       });
@@ -304,7 +304,7 @@ export const updateIncidenceDocument = async (req: Request, res: Response) => {
        */
       let cantidad = 0;
       for (const id of ids) {
-         const cant = inci.map((inc) => inc.DocumentoContratoId == id && inc.Resuelta == true);
+         const cant = inci.map((inc) => inc.DocumentoContratoId == id && inc.Resuelta);
          if (cant.length > 0) {
             cantidad++;
          }
@@ -337,19 +337,13 @@ export const updateIncidenceDocument = async (req: Request, res: Response) => {
             });
 
             const {
-               CompaniaId,
-               ProductoId,
-               CodigoSolicitud,
-               Suplemento,
-               CCC,
                Activo,
-               ClaveOperacion,
-               CodigoPoliza,
-               MediadorId,
+
                TipoOperacion,
                updatedAt,
                TipoConciliacionId,
                UsuarioId,
+
                ...data
             } = updated;
             const dataH: ContractHistoryData = data;

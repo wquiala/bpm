@@ -11,15 +11,14 @@ datasource db {
 }
 
 model CajaLote {
-  CajaLoteId        Int                @id @default(autoincrement())
+  CajaLoteId        Int                 @id @default(autoincrement())
   ContratoId        Int?
   Caja              Int
   Lote              Int
-  Nota              String             @default("")
-  DocumentoId       Int?
-  fechaCreacion     DateTime           @default(now())
-  DocumentoContrato DocumentoContrato? @relation(fields: [DocumentoId], references: [DocumentoId])
-  Contrato          Contrato?          @relation(fields: [ContratoId], references: [ContratoId])
+  Nota              String              @default("")
+  fechaCreacion     DateTime            @default(now())
+  Contrato          Contrato?           @relation(fields: [ContratoId], references: [ContratoId])
+  DocumentoContrato DocumentoContrato[]
 }
 
 model Comunicacion {
@@ -237,30 +236,40 @@ model TipoDocumentoIncidencia {
 }
 
 model DocumentoContrato {
-  DocumentoId       Int       @id @default(autoincrement())
-  ContratoId        Int
-  DocId             Int
-  ProdctoDoc        Int
-  UsuarioId         Int
-  EstadoDoc         String
-  NumeReclamaciones Int       @default(0)
-  FechaReclamacion  DateTime?
+  DocumentoId Int @id @default(autoincrement())
+  ContratoId  Int
+  DocId       Int
+  ProdctoDoc  Int
 
-  FechaConciliacion   DateTime?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @default(now()) @updatedAt
+  UsuarioId          Int
+  CajaLoteId         Int?
+  TipoConciliacionId Int?
+  EstadoDoc          String
+  NumeReclamaciones  Int       @default(0)
+  FechaReclamacion   DateTime?
+
+  FechaConciliacion DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @default(now()) @updatedAt
+  CajaLote          CajaLote?         @relation(fields: [CajaLoteId], references: [CajaLoteId])
+  TipoConciliacion  TipoConciliacion? @relation(fields: [TipoConciliacionId], references: [tipoConciliacionId])
+
   ProductoDocumento   ProductoDocumento     @relation(fields: [ProdctoDoc], references: [ProductoDocId])
   Contrato            Contrato              @relation(fields: [ContratoId], references: [ContratoId])
   MaestroDocumentos   MaestroDocumentos     @relation(fields: [DocId], references: [DocumentoId])
   Usuario             Usuario               @relation(fields: [UsuarioId], references: [UsuarioId])
   IncidenciaDocumento IncidenciaDocumento[]
 
-  CajaLote                 CajaLote[]
   DocumentoContratoHistory DocumentoContratoHistory[]
 }
 
 model DocumentoContratoHistory {
   DocumentoContratoHistoryId Int       @id @default(autoincrement())
+  TipoConciliacionId         Int?
+  Caja                       Int?
+  Lote                       Int?
+  TipoConciliacion           String?
+  CajaLoteId                 Int?
   DocumentoId                Int
   DocId                      Int
   ProdctoDoc                 Int
@@ -296,13 +305,14 @@ model ProductoDocumento {
 }
 
 model TipoConciliacion {
-  tipoConciliacionId Int        @id @default(autoincrement())
+  tipoConciliacionId Int                 @id @default(autoincrement())
   nombre             String
-  createdAt          DateTime   @default(now())
+  createdAt          DateTime            @default(now())
   fechaBaja          DateTime?
-  updatedAt          DateTime   @default(now()) @updatedAt
-  Activo             Boolean    @default(true)
+  updatedAt          DateTime            @default(now()) @updatedAt
+  Activo             Boolean             @default(true)
   Contrato           Contrato[]
+  DocumentoContrato  DocumentoContrato[]
 }
 
 model Contrato {

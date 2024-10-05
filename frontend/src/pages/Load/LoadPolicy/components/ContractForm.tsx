@@ -13,20 +13,16 @@ import handlePromise from '@/utils/promise';
 import ObservationContractService from '@/services/ObservationContractService';
 import DocumentList from './DocumentList';
 import DocumentContractService from '@/services/DocumentContractService';
-import DocumentIncidenceService from '@/services/DocumentIncidenceService';
 import ObservationHistory from '../../common-components/ObservationHistory';
 import { defaultValues, schema } from '../../common-components/schemas';
 import ContractFormInputs from '../../common-components/ContractFormInputs';
 import ContractService from '@/services/ContractService';
-import { useSelector } from 'react-redux';
-import { store } from '@/stores/store';
-import { AppDispatch } from '../../../../stores/store';
-import { useAppDispatch, useAppSelector } from '@/stores/hooks';
+import { useAppSelector } from '@/stores/hooks';
 import InputField from '@/custom-components/FormElements/InputField';
-import cajaLoteService from '@/services/cajaLoteService';
 import { Disclosure } from '@/components/Base/Headless';
 import Alert from '@/components/Base/Alert';
 import CajaLoteHistory from '../../common-components/CajaLoteHistory';
+import { createCajaLote } from '@/helpers/FetchData/cajaLote';
 
 type Props = {
    selectedContract: any;
@@ -50,7 +46,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
       setValue,
       watch,
       getValues,
-      formState: { errors, isValid },
+      formState: { isValid },
       handleSubmit,
    } = useForm({
       mode: 'onChange',
@@ -69,7 +65,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
       setLoading(true);
 
       //Buscar si todos los doc estan correctos
-      const pre = docList.filter((doc: any) => doc.estado == 'PRESENTE CORRECTO' || doc.estado == 'POR EMAIL');
       if (!caja || !lote) {
          setLoading(false);
 
@@ -80,7 +75,17 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
          });
       }
 
-      //Preguntar si esta tramitado para solo aceptar caja lotes y observaciones y notas internas
+      //Metemos la caja y lote primero
+
+      const toSendCajaLote = {
+         caja: Number(caja),
+         lote: Number(lote),
+         contratoId: Number(selectedContract.ContratoId),
+         nota: data.NotaInterna,
+      };
+
+      const { data: cajaLote } = await createCajaLote(toSendCajaLote);
+      console.log(cajaLote);
       //Create observations
 
       let cont = 0;
@@ -109,6 +114,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                const toSend = {
                   ContratoId: selectedContract.ContratoId,
                   EstadoDoc: 'PRESENTE CORRECTO',
+                  CajaLote: cajaLote.CajaLoteId,
                };
 
                const [error, response] = await handlePromise(
@@ -131,6 +137,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                   const toSend = {
                      ContratoId: selectedContract.ContratoId,
                      EstadoDoc: 'POR EMAIL',
+                     CajaLote: cajaLote.CajaLoteId,
                   };
                   const [error, response] = await handlePromise(
                      DocumentContractService.updateDocumentContract(doc.id, toSend),
@@ -146,39 +153,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                }
             }
 
-            //Mark incidences as resolved
-
-            /*  for (const incidence of doc.incidences) {
-               const toSend = {
-                  ContratoId: selectedContract.ContratoId,
-                  DocumentoId: incidence.DocumentoContratoId,
-                  TipoDocumentoincidenciaId: incidence.TipoDocumentoIncidencia.TipoDocumentoIncidenciaId,
-
-                  Resuelta: true,
-                  Incidencia: incidence.IncidenciaDocId,
-               };
-
-               const currentDoc = selectedContract.DocumentoContrato.find(
-                  (doc: any) => doc.DocumentoId === toSend.DocumentoId,
-               );
-
-               const existingIncidence = currentDoc?.IncidenciaDocumento.find(
-                  (incidence: any) => incidence.IncidenciaDocId === toSend.Incidencia,
-               );
-               if (existingIncidence) {
-                  const [error, response] = await handlePromise(
-                     DocumentIncidenceService.updateDocumentIncidence(existingIncidence.IncidenciaDocId, toSend),
-                  );
-                  if (!response.ok) {
-                     setLoading(false);
-                     return setAlert({
-                        type: 'error',
-                        show: true,
-                        text: error ?? 'Error while adding incidence document',
-                     });
-                  }
-               }
-            } */
             cont++;
          }
       }
@@ -189,12 +163,12 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
 
          FechaGrabacion: new Date(),
 
-         AnuladoSEfecto: data.AnuladoSEfecto ? true : false,
+         AnuladoSEfecto: data.AnuladoSEfecto,
          TipoConciliacionId: cont == docList.length ? Number(13) : selectedContract.TipoConciliacionId,
          updatedAt: new Date(),
       };
 
-      if (data.AnuladoSEfecto == true) {
+      if (data.AnuladoSEfecto) {
          ContractData.EstadoContrato = 'ANULADA';
       }
 
@@ -208,25 +182,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
             show: true,
             text: error ?? 'Error while updating contract',
          });
-      }
-
-      if (response.ok) {
-         const toSendCajaLote = {
-            caja: Number(caja),
-            lote: Number(lote),
-            contratoId: Number(selectedContract.ContratoId),
-            nota: data.NotaInterna,
-         };
-
-         const [error, response] = await handlePromise(cajaLoteService.createCajaLote(toSendCajaLote));
-         if (!response.ok) {
-            setLoading(false);
-            return setAlert({
-               type: 'error',
-               show: true,
-               text: error ?? 'Error while adding caja y lote',
-            });
-         }
       }
 
       setLoading(false);
@@ -254,13 +209,13 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                estado: contractDocument.EstadoDoc,
                fase: contractDocument.ProductoDocumento.Fase,
 
-               incidences: contractDocument.IncidenciaDocumento.filter((incidence: any) => incidence.Resuelta == false),
-               porEmail: contractDocument.EstadoDoc == 'POR EMAIL',
+               incidences: contractDocument.IncidenciaDocumento.filter((incidence: any) => !incidence.Resuelta),
+               porEmail: false,
             });
          }
 
          reset({
-            AnuladoSEfecto: selectedContract.AnuladoSEfecto ? true : false,
+            AnuladoSEfecto: selectedContract.AnuladoSEfecto,
             Conciliar: selectedContract.Conciliar,
             ResultadoFDCON: selectedContract.ResultadoFDCON,
             EstadoContrato: selectedContract.EstadoContrato,

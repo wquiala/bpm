@@ -2,7 +2,6 @@ import { Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 
 import { TabletaRecord } from '../../../interfaces/contractsInterfaces';
-import { tabletsCreator } from './tabletsCreator';
 import { tabletValidator } from '../../../helpers/tabletValidator';
 import { contractUpdater } from './contractUpdater';
 
@@ -27,23 +26,9 @@ export const processTabletData = async (records: TabletaRecord[], user: { Usuari
 
       const { error: errs } = await tabletValidator(record);
 
-      /* for (const key in errs) {
-         if (errs.hasOwnProperty(key)) {
-            const value = errs[key];
-            if (value) {
-               Desechado++;
-            }
-         }
-         if (Desechado > 0) break;
-         details.push({
-            ...record,
-            estado: 'DOCUMENTO DESECHADO',
-            errs,
-         });
-      } */
       const { updated } = await contractUpdater(record, systemUser as Usuario, user, details, errs);
 
-      updated == true ? actualizados++ : noactualizados++;
+      updated ? actualizados++ : noactualizados++;
    }
 
    return {

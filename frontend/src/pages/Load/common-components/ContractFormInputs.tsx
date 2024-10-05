@@ -23,12 +23,8 @@ const ContractFormInputs = ({ control }: Props) => {
                <CheckBoxField
                   control={control}
                   name="AnuladoSEfecto"
-                  label={control._defaultValues.AnuladoSEfecto == true ? 'Contrato anulado' : 'Anular contrato'}
-                  disabled={
-                     control._defaultValues.AnuladoSEfecto == true ||
-                     control._defaultValues.EstadoContrato == 'TRAMITADA' ||
-                     control._defaultValues.EstadoContrato == 'ANULADA'
-                  }
+                  label={control._defaultValues.AnuladoSEfecto ? 'Contrato anulado' : 'Anular contrato'}
+                  disabled={control._defaultValues.EstadoContrato == 'ANULADA'}
                />
             </div>
          </div>
