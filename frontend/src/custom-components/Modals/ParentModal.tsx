@@ -68,7 +68,7 @@ const ParentModal = ({
                      <h2 className="text-base font-medium">{t(title)}</h2>
                   </div>
 
-                  <div
+                  <button
                      hidden={hiddenCloseMenuIcon}
                      style={{ cursor: 'pointer' }}
                      onClick={() => {
@@ -79,7 +79,7 @@ const ParentModal = ({
                      }}
                   >
                      <Lucide icon="X" className="w-8 h-8 text-slate-400" />
-                  </div>
+                  </button>
                </Dialog.Title>
             )}
 

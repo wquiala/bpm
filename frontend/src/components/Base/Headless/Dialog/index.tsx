@@ -158,7 +158,7 @@ function DialogFooter<C extends React.ElementType = 'div'>({
    as?: C;
 } & React.PropsWithChildren &
    React.ComponentPropsWithoutRef<C>) {
-   const Component = as || 'div';
+   const Component = as ?? 'div';
 
    return (
       <Component
