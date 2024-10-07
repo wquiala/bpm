@@ -38,6 +38,11 @@ const InputField = ({
 }: Props) => {
    const { t } = useTranslation();
    const [showPass, setShowPass] = useState<boolean>(false);
+   let inputType = type;
+
+   if (type === 'password') {
+      inputType = showPass ? 'text' : 'password';
+   }
 
    return (
       <div className={`${disableM ? '' : 'my-3 '} ${animationDirection}`}>
@@ -76,7 +81,7 @@ const InputField = ({
                               onChange(e.target.files[0]);
                            }
                         }}
-                        type={type === 'password' ? (showPass ? 'text' : 'password') : type}
+                        type={inputType}
                         disabled={disabled}
                         placeholder={placeholder}
                         onBlur={onBlur}
@@ -89,12 +94,12 @@ const InputField = ({
                      />
 
                      {type == 'password' && (
-                        <div
+                        <button
                            onClick={() => setShowPass(!showPass)}
                            className="cursor-pointer absolute flex items-center justify-center w-10 h-full border rounded-l bg-slate-100 text-slate-500 dark:bg-darkmode-700 dark:border-darkmode-800 dark:text-slate-400 right-0"
                         >
                            <Lucide icon={!showPass ? 'Eye' : 'EyeOff'} className="w-4 h-4" />
-                        </div>
+                        </button>
                      )}
                   </div>
 
