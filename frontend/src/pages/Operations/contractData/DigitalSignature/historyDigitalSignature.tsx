@@ -1,16 +1,8 @@
-import InputField from '@/custom-components/FormElements/InputField';
-import { AlertContext } from '@/utils/Contexts/AlertContext';
-import { LoadingContext } from '@/utils/Contexts/LoadingContext';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { useContext, useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
-import handlePromise from '@/utils/promise';
-import * as yup from 'yup';
 import ParentModal from '../../CommonComponents/ParentModal';
 import { columnsDigitalSignatureHistory, DigitalSignatureHistory } from './columnsDigitalSignatureHistory';
 import { DataTable } from '../../../../components/ui/dataDocumentsTable';
 import { getDigitalSignatureByContract } from '@/helpers/FetchData/digitalSignature';
+import { useEffect, useState } from 'react';
 
 type Props = {
    show: boolean;
@@ -20,10 +12,6 @@ type Props = {
 };
 
 export const HistoryDigitalSignature = ({ show, setShow, control, selectedContract }: Props) => {
-   const { t } = useTranslation();
-
-   const [, setAlert] = useContext(AlertContext);
-   const [, setLoading] = useContext(LoadingContext);
    const [digitalSignature, setDigitalSignature] = useState<DigitalSignatureHistory[]>();
    let historyList: DigitalSignatureHistory[] = [];
 

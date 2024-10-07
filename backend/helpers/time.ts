@@ -1,6 +1,3 @@
-import { BadRequestsException } from '../exceptions/bad-requests';
-import { ErrorCode } from '../exceptions/root';
-
 export const parserDate = (date: string) => {
    if (!date) {
       return null;

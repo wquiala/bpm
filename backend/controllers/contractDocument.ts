@@ -125,8 +125,6 @@ export const createContractDocument = async (req: Request, res: Response) => {
 export const updateContractDocument = async (req: Request, res: Response) => {
    //Validations
 
-   console.log('Vamos a actualizar');
-
    try {
       await prismaClient.documentoContrato.findFirstOrThrow({
          where: {

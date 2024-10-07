@@ -256,6 +256,8 @@ export const createContract = async (req: Request, res: Response) => {
          UsuarioId,
          Producto,
          DocumentoContrato,
+         Comunicacion,
+         HistorialContrato,
          ...data
       } = createdContract;
       const dataH: ContractHistoryData = data;

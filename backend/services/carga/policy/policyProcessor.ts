@@ -62,7 +62,7 @@ export const processPolicyData = async (data: RecordDiaria[], user: { UsuarioId:
             });
          }
          if (insert) Insertados++;
-         if (insert == false) Actualizados++;
+         if (!insert && insert != null) Actualizados++;
       }
    }
 

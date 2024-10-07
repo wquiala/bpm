@@ -18,6 +18,10 @@ export type ContractHistory = {
 
 export const columnsContractsHistory: ColumnDef<ContractHistory>[] = [
    {
+      accessorKey: 'Operacion',
+      header: 'Operación',
+   },
+   {
       accessorKey: 'CCC',
       header: 'CCC',
    },

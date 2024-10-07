@@ -1,6 +1,4 @@
 import ParentModal from '@/custom-components/Modals/ParentModal';
-import { logCarga } from '@/interfaces/logCarga';
-import { useTranslation } from 'react-i18next';
 import ReactJson from 'react-json-view';
 
 type Props = {
@@ -14,14 +12,13 @@ const UploadDetail = ({ show, setShow, selectedRow }: Props) => {
    let incomplete;
    let desechados;
    let actualizados;
-   const { t } = useTranslation();
 
    const row = selectedRow?.Details;
    if (row != undefined) {
-      insert = JSON.parse(row).filter((r: any) => r['estado'] == 'INSERTADO');
+      // insert = JSON.parse(row).filter((r: any) => r['estado'] == 'INSERTADO');
       incomplete = JSON.parse(row).filter((r: any) => r['estado'] == 'INCOMPLETO');
-      desechados = JSON.parse(row).filter((r: any) => r['estado'] == 'DESECHADO');
-      actualizados = JSON.parse(row).filter((r: any) => r['estado'] == 'ACTUALIZADO');
+      // desechados = JSON.parse(row).filter((r: any) => r['estado'] == 'DESECHADO');
+      //actualizados = JSON.parse(row).filter((r: any) => r['estado'] == 'ACTUALIZADO');
    }
 
    return (

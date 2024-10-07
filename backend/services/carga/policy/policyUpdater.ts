@@ -1,4 +1,3 @@
-import { ContractUpdate } from '../../../interfaces/contractsInterfaces';
 import { prismaClient } from '../../../server';
 
 export const updatePolicy = (data: any, id?: number) => {

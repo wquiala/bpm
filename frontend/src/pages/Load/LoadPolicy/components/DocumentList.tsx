@@ -5,7 +5,7 @@ import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
 import InputField from '@/custom-components/FormElements/InputField';
 import { useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Button from '@/components/Base/Button';
 
 type Props = {
@@ -18,9 +18,8 @@ type Props = {
 const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
    const { t } = useTranslation();
    const [to, setTo] = useState(false);
-   const [isPresent, setIsPresent] = useState(0);
-   const [porEmail, setEmail] = useState(false);
-
+   /*    const [isPresent, setIsPresent] = useState(0);
+    */
    const { fields } = useFieldArray({
       control,
       name: 'documents',
@@ -43,7 +42,7 @@ const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
             setValue(`documents.${index}.present`, true); // Update value directly in form state
          });
          setTo(true);
-      } else if (to == true) {
+      } else if (to) {
          fields.forEach((field, index) => {
             setValue(`documents.${index}.present`, false); // Update value directly in form state
          });
@@ -51,9 +50,9 @@ const DocumentList = ({ control, setValue, getValues, watch }: Props) => {
       }
    };
 
-   useEffect(() => {
+   /*  useEffect(() => {
       setIsPresent(fields.filter((doc: any) => doc.estado == 'PRESENTE CORRECTO').length);
-   }, [fields]);
+   }, [fields]); */
 
    return (
       <div className="box p-4 m-4 mb-0">

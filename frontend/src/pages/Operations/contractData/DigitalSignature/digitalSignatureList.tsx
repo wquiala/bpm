@@ -1,18 +1,5 @@
-import Alert from '@/components/Base/Alert';
-import { Disclosure } from '@/components/Base/Headless';
-import Lucide from '@/components/Base/Lucide';
-import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
-import InputField from '@/custom-components/FormElements/InputField';
-import { useFieldArray } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
-import Table from '@/custom-components/Table/Table';
-import { ColumnDefinition } from 'tabulator-tables';
 import { DataTable } from '../../../../components/ui/dataDocumentsTable';
-import { columnsDocuments, Document } from '../../IncidencesDocuments/columnsDocuments';
-import { Documents } from '../main';
-import { columnsIncidences, Incidence } from '../../IncidencesDocuments/columnsIncidences';
-import moment from 'moment';
-import { strict } from 'assert';
+
 import { columnsDigitalSignature, DigitalSignature } from './columnsDigitalSignature';
 import Button from '@/components/Base/Button';
 import { useState } from 'react';
@@ -25,8 +12,6 @@ type Props = {
 };
 
 const DigitalSignatureList = ({ control, selectedContract, setSelectedContract }: Props) => {
-   const { t } = useTranslation();
-
    const [showHistoryDigitalSignature, setShowHistoryDigitalSignature] = useState<boolean>(false);
 
    /*   FechaAlta: string;

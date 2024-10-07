@@ -30,7 +30,7 @@ export const createComunication = async (req: Request, resp: Response) => {
    //@ts-ignore
    const userId = req.user.UsuarioId;
    try {
-      const comunication = await createComunicationService(validateData, userId);
+      await createComunicationService(validateData, userId);
 
       resp.json({});
    } catch (error) {
@@ -90,15 +90,15 @@ export const sendEmail = async (req: Request, res: Response) => {
       const documentPending: any[] = [];
 
       if (contrato) {
-         contrato.DocumentoContrato.map((doc: any) => {
+         contrato.DocumentoContrato.forEach((doc: any) => {
             if (doc.EstadoDoc == 'PENDIENTE') {
                documentPending.push(doc);
             }
-            doc.IncidenciaDocumento.map((incidence: any) => {
+            doc.IncidenciaDocumento.forEach((incidence: any) => {
                if (
-                  incidence.Resuelta == false &&
+                  !incidence.Resuelta &&
                   moment(incidence.Reclamada).isBefore(moment(), 'minute') &&
-                  incidence.Revisada == true
+                  incidence.Revisada
                ) {
                   incidencesToSend.push({
                      DocumentoId: doc.DocumentoId,
@@ -133,7 +133,7 @@ export const sendEmail = async (req: Request, res: Response) => {
          }, {} as Record<string, Incidencia[]>);
       }
 
-      const send = await sendPolicyWithIncidenceReminder(
+      await sendPolicyWithIncidenceReminder(
          contrato.Mediador.Email ?? '',
          '',
          //@ts-ignore

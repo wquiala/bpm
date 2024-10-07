@@ -1,8 +1,6 @@
 import Button from '@/components/Base/Button';
 import ParentModal from '@/custom-components/Modals/ParentModal';
-import { useTranslation } from 'react-i18next';
-import ReactJson from 'react-json-view';
-import Papa from 'papaparse';
+
 import { incompletos, reprocesarPolizas } from '@/helpers/FetchData/contracts';
 import { useContext, useEffect, useState } from 'react';
 import { DataTable } from '@/components/ui/dataDocumentsTable';
@@ -19,7 +17,7 @@ type Props = {
 
 const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }: Props) => {
    const [incompletosData, setIncompletosData] = useState<any[]>([]);
-   const [loading, setLoading] = useContext(LoadingContext);
+   const [, setLoading] = useContext(LoadingContext);
 
    //const [toShow, setToShow] = useState([]);
    /*  let mostrar: any[] = [];
@@ -50,7 +48,7 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
       document.body.removeChild(link);
    }; */
 
-   const ButtonRecargar = () => {
+   /* const ButtonRecargar = () => {
       return (
          <div className="flex justify-end mb-2 fixed">
             <Button variant="primary" className="mr-2 h-5 w-32" onClick={handleRecargar}>
@@ -59,7 +57,7 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
          </div>
       );
    };
-
+ */
    const mostrar: Incompletos[] = incompletosData.map((i: any) => ({
       compania: i.Compania,
       mediador: i.Mediador,
@@ -85,7 +83,7 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
    useEffect(() => {
       if (show) {
          const inC = async () => {
-            const { data, response, error } = await incompletos();
+            const { data } = await incompletos();
             setIncompletosData(data);
          };
          inC();
@@ -107,18 +105,3 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
 };
 
 export default IncompletosComponent;
-{
-   /* <div className="flex flex-col gap-2">
-   <div className="w-full flex justify-end sticky z-10 top-0 left-0">
-      <Button variant="primary" className="mr-2 h-5 w-32  " onClick={handleDownload}>
-         Descargar CSV
-      </Button>
-      {select == 'INCOMPLETO REVISAR' && (
-         <Button variant="primary" className="mr-2 h-5 w-32  " onClick={handleRecargar}>
-            Re-Cargar
-         </Button>
-      )}
-   </div>
-   <div className="flex w-full justify-center items-center">{mostrar ? <ReactJson src={mostrar} /> : null}</div>
-</div>; */
-}

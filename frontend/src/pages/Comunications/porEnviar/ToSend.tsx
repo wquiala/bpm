@@ -1,29 +1,12 @@
-import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { AlertContext } from '@/utils/Contexts/AlertContext';
-import { LoadingContext } from '@/utils/Contexts/LoadingContext';
-import Alert from '@/components/Base/Alert';
-import Lucide from '@/components/Base/Lucide';
 import handlePromise from '@/utils/promise';
-import ContractService from '@/services/ContractService';
-import ContractForm from './IncidencesDocumentsFormToSend';
-import { useAppSelector } from '@/stores/hooks';
-import PolicyFilters from '../common-components/PolicyFilters';
-import SelectContractModal from '../common-components/SelectContractModal';
-import IncidencesDocumentsFormToCheck from './IncidencesDocumentsFormToSend';
 import DocumentIncidenceService from '@/services/DocumentIncidenceService';
 import IncidencesDocumentsFormToSend from './IncidencesDocumentsFormToSend';
+import { useEffect, useState } from 'react';
 
 function Main() {
-   const { t } = useTranslation();
-   const [, setAlert] = useContext(AlertContext);
-   const [, setLoading] = useContext(LoadingContext);
-
-   const { company, caja, lote } = useAppSelector((state) => state.settings);
-
    const [incidencesDocuments, setIncidencesDocuments] = useState<any[]>([]);
 
-   const onFilter = async (data: any) => {
+   /*  const onFilter = async (data: any) => {
       if (!company) {
          return setAlert({
             type: 'error',
@@ -31,13 +14,13 @@ function Main() {
             text: 'companyNotSelected',
          });
       }
-   };
+   }; */
 
    useEffect(() => {
       const get = async () => {
-         const [error, response, data] = await handlePromise(DocumentIncidenceService.getIncidenceDocuments());
+         const [, , data] = await handlePromise(DocumentIncidenceService.getIncidenceDocuments());
          const incidencesToCheck = data.filter(
-            (inci: any) => inci.Resuelta == false && inci.Revisada == true && inci.Reclamada == null,
+            (inci: any) => !inci.Resuelta && inci.Revisada && inci.Reclamada == null,
          );
          setIncidencesDocuments(incidencesToCheck);
       };

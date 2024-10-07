@@ -1,4 +1,3 @@
-import { Comunicacion } from '@prisma/client';
 import { prismaClient } from '../../server';
 
 export const createComunicationService = async (data: any, userId: string) => {

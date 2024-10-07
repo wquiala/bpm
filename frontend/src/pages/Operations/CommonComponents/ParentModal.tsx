@@ -1,6 +1,5 @@
 import React from 'react';
 import { Dialog } from '@/components/Base/Headless';
-import Button from '@/components/Base/Button';
 import Lucide, { Icon } from '@/components/Base/Lucide';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -64,7 +63,7 @@ const ParentModal = ({
                      <h2 className="text-base font-medium">{t(title)}</h2>
                   </div>
 
-                  <div
+                  <button
                      style={{ cursor: 'pointer' }}
                      onClick={() => {
                         setShow(false);
@@ -74,7 +73,7 @@ const ParentModal = ({
                      }}
                   >
                      <Lucide icon="X" className="w-8 h-8 text-slate-400" />
-                  </div>
+                  </button>
                </Dialog.Title>
             )}
 

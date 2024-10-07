@@ -1,5 +1,4 @@
 import moment from 'moment';
-import promise from '../../../../frontend/src/utils/promise';
 import { prismaClient } from '../../../server';
 import { ESTADO_CONTRATO, OPERACION_CONTRATO } from '@prisma/client';
 import { parserDate } from '../../../helpers/time';

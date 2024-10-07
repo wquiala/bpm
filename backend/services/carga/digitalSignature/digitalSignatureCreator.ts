@@ -1,5 +1,4 @@
 import { prismaClient } from '../../../server';
-import moment from 'moment';
 
 export const digitalSignature = async (records: any, actualizado: boolean, err: { [key: string]: string }) => {
    return await prismaClient.firmaDigital.create({

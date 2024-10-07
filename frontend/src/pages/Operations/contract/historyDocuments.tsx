@@ -1,8 +1,6 @@
-import { useFieldArray } from 'react-hook-form';
 import { DataTable } from '../../../components/ui/dataDocumentsTable';
 import { columnsContractsHistory, ContractHistory } from './columnsContractHistory';
 import ParentModal from '../CommonComponents/ParentModal';
-import { useEffect } from 'react';
 
 type Props = {
    show: boolean;

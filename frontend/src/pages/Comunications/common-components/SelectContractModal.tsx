@@ -37,6 +37,7 @@ const SelectContractModal = ({ show, setShow, selectedContract, setSelectedContr
       >
          <div className="flex flex-col justify-center gap-2">
             {filteredContracts.map((contract, index) => {
+               console.log(contract);
                return (
                   <div key={index} className="intro-y" onClick={() => setSelectedList(contract)}>
                      <div
