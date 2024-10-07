@@ -1,11 +1,9 @@
 import Button from '@/components/Base/Button';
-import React, { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useRef, useState } from 'react';
 import TableFilters from './TableFilters';
 import Table from '@/custom-components/Table/Table';
 import columns from './Columns';
 import { ColumnDefinition } from 'tabulator-tables';
-import UploadDetail from './UploadDetail';
 import UploadFile from './UploadFile';
 import UploadDetailData from './UploadDetailData';
 import IncompletosComponent from './Incompletos';
@@ -63,18 +61,23 @@ const List = ({ tableName, endpoint, uploadType }: Props) => {
    const onPrint = () => onTableAction('onPrint');
    const onFilter = () => onTableAction('onFilter');
 
+   const getUploadLabel = (uploadType: string) => {
+      switch (uploadType) {
+         case 'policy':
+            return 'Fichero de carga diaria';
+         case 'digitalSignature':
+            return 'Fichero de firma digital';
+         case 'anuladas':
+            return 'Fichero de anuladas';
+         default:
+            return 'Fichero de tabletas';
+      }
+   };
+
    return (
       <>
          <div className="flex flex-col items-center mt-8 intro-y sm:flex-row">
-            <h2 className="mr-auto text-lg font-medium">
-               {uploadType == 'policy'
-                  ? 'Fichero de carga diaria'
-                  : uploadType == 'digitalSignature'
-                  ? 'Fichero de firma digital'
-                  : uploadType == 'anuladas'
-                  ? 'Fichero de anuladas'
-                  : 'Fichero de tabletas'}
-            </h2>
+            <h2 className="mr-auto text-lg font-medium">{getUploadLabel(uploadType)}</h2>
             <div className="flex w-full mt-4 sm:w-auto sm:mt-0">
                <Button
                   variant="primary"

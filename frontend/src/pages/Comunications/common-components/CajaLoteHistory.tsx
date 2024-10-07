@@ -1,7 +1,6 @@
 import Alert from '@/components/Base/Alert';
 import { Disclosure } from '@/components/Base/Headless';
 import Lucide from '@/components/Base/Lucide';
-import { useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
 type Props = {
@@ -11,11 +10,6 @@ type Props = {
 
 const CajaLoteHistory = ({ selectedContract, control }: Props) => {
    const { t } = useTranslation();
-
-   const { fields, append, remove } = useFieldArray({
-      control,
-      name: 'CajasLotes',
-   });
 
    return (
       <div className="box p-4 m-4 mb-2">

@@ -1,6 +1,5 @@
 import Button from '@/components/Base/Button';
 import ParentModal from '@/custom-components/Modals/ParentModal';
-import { useTranslation } from 'react-i18next';
 import ReactJson from 'react-json-view';
 import Papa from 'papaparse';
 
@@ -30,21 +29,6 @@ const UploadDetailData = ({ show, setShow, selectedRow, select }: Props) => {
          mostrar = JSON.parse(row).filter((r: any) => r['estado'] == 'ACTUALIZADO');
       }
    }
-
-   const header = [
-      { label: 'Compañia', key: 'compania' },
-      { label: 'Producto', key: 'producto' },
-
-      { label: 'CCC', key: 'ccc' },
-      { label: 'Código de solicitud', key: 'codigoSolicitud' },
-      { label: 'Código de póliza', key: 'polizaContrato' },
-      { label: 'DNI del tomador', key: 'dniTomador' },
-      { label: 'Resultado firma digital CON', key: 'resultadoCon' },
-      { label: 'Resultado firma digital Pre CON', key: 'resultadoPrecon' },
-      { label: 'Conciliar', key: 'conciliar' },
-      { label: 'Revisar', key: 'revisar' },
-      { label: 'Estado', key: 'estado' },
-   ];
 
    const data: any[] = mostrar.map((m) => ({
       erroes: JSON.stringify(m.err),

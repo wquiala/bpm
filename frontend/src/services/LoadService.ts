@@ -13,11 +13,6 @@ export default {
    },
 
    reprocesarPolizas(data: any) {
-      const config = {
-         headers: {
-            'Content-Type': 'multipart/json',
-         },
-      };
       return api.post(`${baseUrl}/reprocesar`, { data, type: 'reload' });
    },
 };

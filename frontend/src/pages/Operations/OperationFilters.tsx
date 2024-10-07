@@ -6,7 +6,6 @@ import { useContext, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import handlePromise from '@/utils/promise';
 import * as yup from 'yup';
-import ContractService from '@/services/ContractService';
 import TypeConciliationService from '@/services/TypeConciliationService';
 import { AlertContext } from '@/utils/Contexts/AlertContext';
 import { LoadingContext } from '@/utils/Contexts/LoadingContext';
@@ -109,7 +108,7 @@ const OperationFilters = ({ onFilter }: Props) => {
                name="operationType"
                label="Tipo de Operación"
                placeholder="Tipo de Operación ..."
-               options={conciliationTypes as any[]}
+               options={conciliationTypes as any}
                addNull
             />
          </div>

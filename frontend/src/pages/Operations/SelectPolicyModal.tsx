@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import ParentModal from '@/custom-components/Modals/ParentModal';
 import { useTranslation } from 'react-i18next';
 import { twMerge } from 'tailwind-merge';
-import moment from 'moment';
 
 type Props = {
    filteredContracts: any[];
@@ -38,8 +37,9 @@ const SelectPolicyModal = ({ show, setShow, selectedContract, setSelectedContrac
       >
          <div className="flex flex-col justify-center gap-2">
             {filteredContracts.map((contract, index) => {
+               console.log(contract);
                return (
-                  <div key={index} className="intro-y" onClick={() => setSelectedList(contract)}>
+                  <button key={contract.ClaveOperacion} className="intro-y" onClick={() => setSelectedList(contract)}>
                      <div
                         className={twMerge([
                            'flex items-center px-4 py-4 mb-3 box zoom-in',
@@ -83,7 +83,7 @@ const SelectPolicyModal = ({ show, setShow, selectedContract, setSelectedContrac
                            </div>
                         </div>
                      </div>
-                  </div>
+                  </button>
                );
             })}
          </div>

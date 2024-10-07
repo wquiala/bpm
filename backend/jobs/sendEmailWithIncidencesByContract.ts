@@ -6,6 +6,8 @@ import { updateContractService } from '../services/contracts/contractService';
 import moment from 'moment';
 import { Contrato } from '@prisma/client';
 import { updateIncidenciaDocumentoService } from '../services/incidenciasDocumentos/incidenciaDocumento';
+import fs from 'fs';
+import path from 'path';
 type Incidencia = {
    DocumentoId: number;
    IncidenciaDocId: number;
@@ -212,6 +214,7 @@ export const sendPolicyWithIncidenceReminder = async (
    documentsWhitIncidencesToSend?: any,
    pendings?: any,
 ) => {
+   const plantilla = ``;
    let html = '';
    let incitoUpdate: any = [];
    const pendingsNames = `<div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f5f5f5;">
@@ -259,13 +262,13 @@ export const sendPolicyWithIncidenceReminder = async (
    };
 
    // Send email
-   transporter.sendMail(mailOptions, (error, info) => {
+   /*  transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
          return console.log(error);
       }
       console.log('Message sent: %s', info.messageId);
       getInfoEmailAndUpdateDB(info, mailOptions, user, contrato, documentsWhitIncidencesToSend, pendings);
-   });
+   }); */
    // Setup email data
 
    //actualizamos las fechas de reclamaciones de las incidencias

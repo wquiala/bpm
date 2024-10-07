@@ -1,6 +1,5 @@
 import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
 import InputField from '@/custom-components/FormElements/InputField';
-import { useAppSelector } from '@/stores/hooks';
 import React from 'react';
 
 type Props = {
@@ -8,8 +7,6 @@ type Props = {
 };
 
 const ContractHeaderInputs = ({ control }: Props) => {
-   const { caja, lote, companyList, company } = useAppSelector((state) => state.settings);
-
    return (
       <div className="box p-4 m-4 mb-2">
          <h2 className="flex font-bold text-2xl justify-center text-blue-900">

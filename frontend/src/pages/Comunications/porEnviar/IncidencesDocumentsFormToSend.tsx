@@ -1,23 +1,15 @@
 import Button from '@/components/Base/Button';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useContext, useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
-import TextAreaField from '@/custom-components/FormElements/TextArea';
 import Lucide from '@/components/Base/Lucide';
-import { AlertContext } from '@/utils/Contexts/AlertContext';
 import { LoadingContext } from '@/utils/Contexts/LoadingContext';
 
-import { useAppSelector } from '@/stores/hooks';
 import InputField from '@/custom-components/FormElements/InputField';
 
 import { defaultValues, schema } from '../common-components/schemasRevisar';
-import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
-import handlePromise from '@/utils/promise';
-import DocumentIncidenceService from '@/services/DocumentIncidenceService';
-import { sendEmail } from '@/helpers/FetchData/comunications';
 
 type Props = {
    incidencesDocuments: any;
@@ -27,19 +19,15 @@ type Props = {
 const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocuments }: Props) => {
    const { t } = useTranslation();
    const navigate = useNavigate();
-   const { caja, lote } = useAppSelector((state) => state.settings);
 
-   const [, setAlert] = useContext(AlertContext);
    const [, setLoading] = useContext(LoadingContext);
    const [claves, setClaves] = useState<any>([]);
 
    const {
       control,
       reset,
-      setValue,
-      watch,
-      getValues,
-      formState: { errors, isValid },
+
+      formState: { isValid },
       handleSubmit,
    } = useForm({
       mode: 'onChange',
@@ -47,13 +35,7 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
       defaultValues: defaultValues,
    });
 
-   const { fields, append, remove } = useFieldArray({
-      control,
-      name: 'incidences',
-   });
-
    const onSubmit = async (data: any) => {
-      console.log(data);
       setLoading(true);
       const incidences: any[] = [];
       for (const inci of data.incidences) {
@@ -62,13 +44,10 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
          }
       }
 
-      // const { data: da, error, response } = await sendEmail(incidences);
+      //const { data: da, error, response } = await sendEmail(incidences);
       setLoading(false);
       navigate('/');
    };
-
-   const [revisarTodos, setRevisarTodos] = useState(false);
-   const [enviarTodos, setEnviarTodos] = useState(false);
 
    useEffect(() => {
       if (incidencesDocuments && incidencesDocuments.length > 0) {
@@ -118,17 +97,8 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
       }
    }, [claves]); // Dependencia solo de claves
 
-   const handleTodoRevisado = () => {
-      const newRevisarEstado = !revisarTodos; // Invertir el estado actual
-
-      // Actualizar el estado para todos los elementos en el array de arrays
-      claves.forEach((group: any, groupIndex: any) => {
-         group.forEach((item: any, index: any) => {
-            setValue(`incidences.${groupIndex}.${index}.revisada`, newRevisarEstado);
-         });
-      });
-
-      setRevisarTodos(newRevisarEstado); // Actualizar el estado de la variable
+   const habndleDownloadEmail = (groupIndex: any) => {
+      console.log('descargar email' + groupIndex);
    };
 
    return (
@@ -139,8 +109,20 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
                   ? claves.map((group: any, groupIndex: number) => {
                        const clave = group[0].claveOperacion;
                        return (
-                          <div key={groupIndex}>
-                             <h1>Contrato {clave}</h1>
+                          <div key={clave}>
+                             <div className="flex justify-between">
+                                <h1>Contrato {clave}</h1>
+                                <Button
+                                   variant="outline-primary"
+                                   type="button"
+                                   className="flex gap-2"
+                                   onClick={() => habndleDownloadEmail(clave)}
+                                >
+                                   Descargue el email
+                                   <Lucide icon="Mail" />
+                                </Button>
+                             </div>
+
                              <br />
                              {group.map((item: any, index: number) => {
                                 return (

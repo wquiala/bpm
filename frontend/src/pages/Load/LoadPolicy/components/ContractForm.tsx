@@ -109,8 +109,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
       for (const doc of docList) {
          if (doc.present || doc.porEmail) {
             if (doc.present) {
-               //Update document contracts
-               /*  if (doc.estado != 'PRESENTE CORRECTO' || doc.estado != 'POR EMAIL') { */
                const toSend = {
                   ContratoId: selectedContract.ContratoId,
                   EstadoDoc: 'PRESENTE CORRECTO',

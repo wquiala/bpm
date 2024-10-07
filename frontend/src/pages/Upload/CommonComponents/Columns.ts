@@ -1,11 +1,4 @@
-import { useTranslation } from 'react-i18next';
-import UploadDetail from './UploadDetail';
-import List from './List';
-import { useState } from 'react';
-
 const columns = (handleCellClick: any) => {
-   const { t } = useTranslation();
-
    const cols = [
       {
          title: '',
@@ -46,7 +39,6 @@ const columns = (handleCellClick: any) => {
 
          formatter(cell: any) {
             const response: any = cell.getData();
-            const handleClick = () => {};
             return `<div class="flex items-center lg:justify-center" >
                             ${response?.TotalRegistros ?? '---'}
                         </div>`;

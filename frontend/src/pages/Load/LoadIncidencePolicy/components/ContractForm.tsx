@@ -4,7 +4,7 @@ import { useContext, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import moment from 'moment';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ObservationHistory from '../../common-components/ObservationHistory';
 import TextAreaField from '@/custom-components/FormElements/TextArea';
 import Lucide from '@/components/Base/Lucide';
@@ -23,11 +23,20 @@ import CajaLoteHistory from '../../common-components/CajaLoteHistory';
 import InputField from '@/custom-components/FormElements/InputField';
 import { getContracts, updateContract } from '../../../../helpers/FetchData/contracts';
 import { useAppSelector } from '@/stores/hooks';
-import ContractService from '@/services/ContractService';
-import cajaLoteService from '@/services/cajaLoteService';
-import { getContractDocumentsbyContract } from '@/helpers/FetchData/contractsDocuments';
+
 import { getIncidences } from '@/helpers/FetchData/incidencesDocuments';
 import { createCajaLote } from '@/helpers/FetchData/cajaLote';
+interface toSendtDataContract {
+   EstadoContrato?: string;
+   AnuladoSEfecto?: boolean;
+
+   FechaGrabacion?: Date;
+   NotaInterna?: string;
+   TipoConciliacionId?: number;
+   NumeroReclamaciones?: number;
+   updatedAt?: Date;
+   FechaProximaReclamacion?: Date;
+}
 
 type Props = {
    selectedContract: any;
@@ -43,12 +52,10 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
    const [, setAlert] = useContext(AlertContext);
    const [, setLoading] = useContext(LoadingContext);
 
-   const { company } = useAppSelector((state) => state.settings);
-
    const {
       control,
       reset,
-      formState: { errors, isValid },
+      formState: { isValid },
       handleSubmit,
       setValue,
       getValues,
@@ -80,7 +87,9 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
       const observations = data.DetalleObservacion;
       const docList = data.documents;
 
-      let inci;
+      let inci = false;
+      let newInci = false;
+      let moreInci = false;
 
       setLoading(true);
 
@@ -103,14 +112,14 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
          nota: data.NotaInterna,
       };
 
-      const { data: cajaLote, response, error } = await createCajaLote(toSendCajaLote);
+      const { data: cajaLote, response, error: err } = await createCajaLote(toSendCajaLote);
 
       if (!response.ok) {
          setLoading(false);
          return setAlert({
             type: 'error',
             show: true,
-            text: error ?? 'Error while adding caja y lote',
+            text: err ?? 'Error while adding caja y lote',
          });
       }
 
@@ -135,8 +144,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
 
       let contDocOk = 0;
       for (const doc of docList) {
-         inci = false;
-
          if (doc.correct) {
             contDocOk++;
             if (doc.estado != 'PRESENTE CORRECTO') {
@@ -162,49 +169,19 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                let incidences: any[] = [];
                docList.map((doc: any) => {
                   dataIn.map((d: any) => {
-                     if (d.DocumentoContratoId == doc.id && d.Resuelta) {
+                     if (d.DocumentoContratoId == doc.id && !d.Resuelta) {
                         incidences.push(d);
                      }
                   });
                });
 
                if (incidences.length > 0) {
+                  moreInci = true;
                   //Ponemos el contador de reclamaciones a cero y ponemos fecha de proxima reclamacion la fecha actual
-                  const toSend = {
-                     FechaProximaReclamacion: new Date(),
-                     NumeroReclamaciones: 0,
-                     updatedAt: new Date(),
-                  };
-
-                  await updateContract(selectedContract.ContratoId, toSend);
                }
             }
 
             //Quitar las incidencias si tiene, esto se hace en el backend
-         } else if (!doc.correct && !doc.notCorrect) {
-            if (data.AnuladoSEfecto && !selectedContract.AnuladoSEfecto) {
-               const ContractData = {
-                  NotaInterna: data.NotaInterna != '' ? data.NotaInterna : selectedContract.NotaInterna,
-
-                  FechaGrabacion: new Date(),
-                  EstadoContrato: 'ANULADA',
-                  AnuladoSEfecto: data.AnuladoSEfecto,
-                  updatedAt: new Date(),
-               };
-
-               const { error, response } = await updateContract(selectedContract.ContratoId, ContractData);
-
-               if (!response.ok) {
-                  setLoading(false);
-                  return setAlert({
-                     type: 'error',
-                     show: true,
-                     text: error ?? 'Error while updating contract',
-                  });
-               }
-            } else {
-               continue;
-            }
          } else {
             let contIncidences = 0;
             for (const incidence of doc.incidences) {
@@ -216,6 +193,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                }
 
                if (incidence.checked && !f) {
+                  newInci = true;
                   contIncidences++;
                   const toSend = {
                      ContratoId: selectedContract.ContratoId,
@@ -237,9 +215,9 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                      });
                   }
 
-                  const contractUpdate = {
+                  /*   const contractUpdate = {
                      EstadoContrato: !data.AnuladoSEfecto ? 'PENDIENTE' : 'ANULADA',
-                     FechaProximaReclamacion: new Date() /* moment().add(30, 'days').format('YYYY-MM-DD') */,
+                     FechaProximaReclamacion: new Date(),
                      updatedAt: new Date(),
                      NumeroReclamaciones: 0,
                      AnuladoSEfecto: data.AnuladoSEfecto,
@@ -254,14 +232,15 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                         show: true,
                         text: error ?? 'Error while udating contract',
                      });
-                  }
-               } else if (!incidence.checked && !f?.Resuelta) {
+                  } */
+               } else if (!incidence.checked && f && !f.Resuelta) {
                   const toSend = {
                      ContratoId: selectedContract.ContratoId,
                      DocumentoId: doc.id,
                      Resuelta: true,
                      Incidencia: incidence.IncidenciaId,
                   };
+                  console.log('aqui estamos ');
 
                   await handlePromise(DocumentIncidenceService.updateDocumentIncidence(f.IncidenciaDocId, toSend));
                }
@@ -271,70 +250,47 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                setLoading(false);
 
                return setAlert({
-                  type: 'success',
+                  type: 'error',
                   show: true,
                   text: 'Si el documento no esta correcto debe seleccionar las incidencias',
                });
             }
          }
+      }
+      //Aqui se actualiza el contrato
+      //buscamos el contrato para ver si ya esta en Tramitado
 
-         if (contDocOk == docList.length) {
-            //buscamos el contrato para ver si ya esta en Tramitado
+      const { data: da } = await getContracts(selectedContract.ContratoId);
+      const toSend: toSendtDataContract = {};
+      if (contDocOk == docList.length && da.EstadoContrato != 'TRAMITADA') {
+         toSend.EstadoContrato = 'TRAMITADA';
+         toSend.TipoConciliacionId = 13;
+         toSend.FechaGrabacion = new Date();
+      }
 
-            const { data: da, response, error } = await getContracts(selectedContract.ContratoId);
+      if (newInci || moreInci) {
+         toSend.FechaProximaReclamacion = new Date();
+         toSend.NumeroReclamaciones = 0;
+      }
 
-            if (!response.ok) {
-               setLoading(false);
-               return setAlert({
-                  type: 'error',
-                  show: true,
-                  text: 'Contract not found',
-               });
-            }
+      if (data.AnuladoSEfecto) {
+         toSend.EstadoContrato = 'ANULADA';
+         toSend.AnuladoSEfecto = data.AnuladoSEfecto;
+      }
 
-            if (da.EstadoContrato != 'TRAMITADA') {
-               const toSend = {
-                  EstadoContrato:
-                     contDocOk == docList.length && !data.AnuladoSEfecto
-                        ? 'TRAMITADA'
-                        : data.AnuladoSEfecto == true
-                        ? 'ANULADA'
-                        : selectedContract.EstadoContrato,
-                  AnuladoSEfecto: data.AnuladoSEfecto ? true : false,
+      if (data.NotaInterna != '') {
+         toSend.NotaInterna = data.NotaInterna;
+      }
 
-                  FechaGrabacion: new Date(),
-                  Conciliar: false,
-                  NotaInterna: data.NotaInterna != '' ? data.NotaInterna : da.NotaInterna,
-                  TipoConciliacionId: 13,
-               };
+      await updateContract(selectedContract.ContratoId, toSend);
 
-               const { response: res } = await updateContract(selectedContract.ContratoId, toSend);
-
-               if (!res.ok) {
-                  setLoading(false);
-                  return setAlert({
-                     type: 'error',
-                     show: true,
-                     text: error ?? 'Error while udating contract',
-                  });
-               }
-            }
-         } else {
-            const toSend = {
-               NotaInterna: data.NotaInterna ?? selectedContract.NotaInterna,
-            };
-
-            const { data: da, response: res, error } = await updateContract(selectedContract.ContratoId, toSend);
-
-            if (!res.ok) {
-               setLoading(false);
-               return setAlert({
-                  type: 'error',
-                  show: true,
-                  text: error ?? 'Error while udating contract',
-               });
-            }
-         }
+      if (!response.ok) {
+         setLoading(false);
+         return setAlert({
+            type: 'error',
+            show: true,
+            text: 'Contract not found',
+         });
       }
 
       setLoading(false);
@@ -370,10 +326,10 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
 
                   checked: contractDocument.IncidenciaDocumento.find(
                      (inci: any) =>
-                        inci.TipoIncidenciaDocumentoId == incidence.TipoDocumentoIncidenciaId && inci.Resuelta == false,
+                        inci.TipoIncidenciaDocumentoId == incidence.TipoDocumentoIncidenciaId && !inci.Resuelta,
                   ),
                   notas: contractDocument.IncidenciaDocumento.find((i: any) => {
-                     if (i.TipoIncidenciaDocumentoId == incidence.TipoDocumentoIncidenciaId && i.Resuelta == false)
+                     if (i.TipoIncidenciaDocumentoId == incidence.TipoDocumentoIncidenciaId && !i.Resuelta)
                         return i.Nota;
                   }),
                };
@@ -440,7 +396,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                Contrato grabado tramitado, cualquier actualización al contrato dirijase a grabación sin incidencias
             </h2>
          )}{' '}
-         {selectedContract.Revisar == false && (
+         {!selectedContract.Revisar && (
             <h1 className="flex font-bold text-2xl justify-center text-blue-900">
                Este contrato tiene el parámetro revisar en NO por lo que no se pueden grabar incidencias en el
             </h1>
@@ -521,9 +477,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
             </Button>
             <Button
                variant="primary"
-               disabled={
-                  selectedContract.EstadoContrato == 'TRAMITADA' || !isValid || selectedContract.Revisar == false
-               }
+               disabled={selectedContract.EstadoContrato == 'TRAMITADA' || !isValid || !selectedContract.Revisar}
                type="submit"
             >
                Grabar

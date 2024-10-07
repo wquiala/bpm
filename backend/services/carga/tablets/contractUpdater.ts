@@ -260,7 +260,7 @@ export const contractUpdater = async (
          if (err.hasOwnProperty(key)) {
             const value = err[key];
             if (value) {
-               hasError = true;
+               //hasError = true;
                conError++;
             }
          }

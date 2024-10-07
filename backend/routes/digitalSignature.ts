@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { errorHandler } from '../error-handler';
 
-import adminMiddleware from '../middlewares/admin';
 import authMiddleware from '../middlewares/auth';
 import { getDigitalSignatureByContract } from '../controllers/digitalSignature';
 

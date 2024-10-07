@@ -39,7 +39,9 @@ const TableFilters = ({
             }}
          >
             <div className="items-center sm:flex sm:mr-4">
-               <label className="flex-none w-12 mr-2 xl:w-auto xl:flex-initial">Columna</label>
+               <label htmlFor="Columna" className="flex-none w-12 mr-2 xl:w-auto xl:flex-initial">
+                  Columna
+               </label>
 
                <FormSelect
                   id="tabulator-html-filter-field"

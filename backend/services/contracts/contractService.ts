@@ -1,8 +1,8 @@
-import { ESTADO_CONTRATO, NoProcesar, OPERACION_CONTRATO } from '@prisma/client';
+import { ESTADO_CONTRATO, OPERACION_CONTRATO } from '@prisma/client';
 import { BadRequestsException } from '../../exceptions/bad-requests';
 import { ErrorCode } from '../../exceptions/root';
 import { prismaClient } from '../../server';
-import { ContractHistoryData, NoProcesarInterface, RecordDiaria } from '../../interfaces/contractsInterfaces';
+import { ContractHistoryData } from '../../interfaces/contractsInterfaces';
 
 export const findContractByClaveOperacion = async (clave: string) => {
    try {

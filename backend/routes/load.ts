@@ -5,7 +5,6 @@ import monitorMiddleware from '../middlewares/monitor';
 import authMiddleware from '../middlewares/auth';
 import multer from 'multer';
 import path from 'path';
-import { reprocesar } from '../controllers/contract';
 
 const storage = multer.diskStorage({
    destination: 'uploads/',

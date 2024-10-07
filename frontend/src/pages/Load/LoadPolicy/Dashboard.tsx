@@ -16,7 +16,7 @@ function Main() {
    const [, setAlert] = useContext(AlertContext);
    const [, setLoading] = useContext(LoadingContext);
 
-   const { company, caja, lote } = useAppSelector((state) => state.settings);
+   const { company } = useAppSelector((state) => state.settings);
 
    const [filteredContracts, setFilteredContracts] = useState<any[]>([]);
    const [selectedContract, setSelectedContract] = useState<any>(null);

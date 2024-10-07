@@ -1,7 +1,4 @@
-import moment from 'moment';
-import { TabletaRecord } from '../../../interfaces/contractsInterfaces';
 import { prismaClient } from '../../../server';
-import { parserDate } from '../../../helpers/time';
 
 export const tabletsCreator = async (record: any, actualizado: boolean, err: { [key: string]: string }) => {
    return await prismaClient.tableta.create({

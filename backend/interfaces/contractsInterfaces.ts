@@ -63,24 +63,26 @@ export interface ContractHistoryData {
    createdAt?: Date;
 }
 
+type FechaOperacionType = string | null | Date;
+
 export interface ContractUpdate {
    ContratoId?: number;
    EstadoContrato?: ESTADO_CONTRATO;
    CompaniaId?: number;
    ProductoId?: number;
    ClaveOperacion?: string;
-   FechaOperacion?: string | null | Date;
+   FechaOperacion?: FechaOperacionType;
    CodigoPoliza?: string;
-   FechaEfecto?: string | null | Date;
+   FechaEfecto?: FechaOperacionType;
    AnuladoSEfecto?: boolean;
    DNIAsegurado?: string;
    NombreAsegurado?: string;
-   FechaNacimientoAsegurado?: string | null | Date;
+   FechaNacimientoAsegurado?: FechaOperacionType;
    CSRespAfirmativas?: boolean | null;
    ProfesionAsegurado?: string;
    DeporteAsegurado?: string;
    DNITomador?: string;
-   FechaValidezDNITomador?: string | null | Date;
+   FechaValidezDNITomador?: FechaOperacionType;
    NombreTomador?: string;
    MediadorId?: number;
    Operador?: string;
@@ -93,8 +95,8 @@ export interface ContractUpdate {
    Revisar?: boolean;
    Conciliar?: boolean;
    NumeroReclamaciones?: number;
-   FechaProximaReclamacion?: string | null | Date;
-   FechaReclamacion?: string | null | Date;
+   FechaProximaReclamacion?: FechaOperacionType;
+   FechaReclamacion?: FechaOperacionType;
 
    errores?: string;
 }

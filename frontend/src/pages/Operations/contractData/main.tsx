@@ -7,7 +7,6 @@ import ContractHeaderInputs from './components/ContractHeaderInputs';
 import { Tab } from '@/components/Base/Headless';
 import ContractAdiniotalDataInputs from './components/ContractAdiniotalDataInputs';
 import DocumentList from './components/DocumentList';
-import Button from '@/components/Base/Button';
 import ReclamationList from './Reclamations/reclamationList';
 import DigitalSignatureList from './DigitalSignature/digitalSignatureList';
 import { useEffect } from 'react';
@@ -56,7 +55,7 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
          } */
 
          selectedContract.DocumentoContrato.map((doc: any) => {
-            console.log(doc);
+            console.log(selectedContract);
             docList.push({
                Codigo: doc.MaestroDocumentos.Codigo,
                Nombre: doc.MaestroDocumentos.Nombre,

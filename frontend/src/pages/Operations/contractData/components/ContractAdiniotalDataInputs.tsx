@@ -2,7 +2,7 @@ import Button from '@/components/Base/Button';
 import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
 import InputField from '@/custom-components/FormElements/InputField';
 import { HistoryContract } from '../../contract/historyDocuments';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 type Props = {
    control: any;
