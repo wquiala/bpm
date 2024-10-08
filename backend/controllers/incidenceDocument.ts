@@ -88,16 +88,6 @@ export const createIncidenceDocument = async (req: Request, res: Response) => {
    }
 
    try {
-      await prismaClient.maestroIncidencias.findFirstOrThrow({
-         where: {
-            IncidenciaId: validatedData.Incidencia,
-         },
-      });
-   } catch (error) {
-      throw new NotFoundException('Incidence not found', ErrorCode.NOT_FOUND_EXCEPTION);
-   }
-
-   try {
       const createdIncidenceDocument = await prismaClient.incidenciaDocumento.create({
          data: {
             Usuario: {

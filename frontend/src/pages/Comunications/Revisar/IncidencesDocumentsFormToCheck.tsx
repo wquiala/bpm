@@ -1,25 +1,18 @@
 import Button from '@/components/Base/Button';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useContext, useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
-import TextAreaField from '@/custom-components/FormElements/TextArea';
-import Lucide from '@/components/Base/Lucide';
 import { AlertContext } from '@/utils/Contexts/AlertContext';
 import { LoadingContext } from '@/utils/Contexts/LoadingContext';
 
-import { useAppSelector } from '@/stores/hooks';
 import InputField from '@/custom-components/FormElements/InputField';
 
 import { defaultValues, schema } from '../common-components/schemasRevisar';
 import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
-import { todo } from 'node:test';
 import handlePromise from '@/utils/promise';
 import DocumentIncidenceService from '@/services/DocumentIncidenceService';
-import { Incidences } from './Incidences';
-import { array } from 'yup';
 
 type Props = {
    incidencesDocuments: any;
@@ -29,26 +22,19 @@ type Props = {
 const IncidencesDocumentsFormToCheck = ({ incidencesDocuments, setIncidencesDocuments }: Props) => {
    const { t } = useTranslation();
    const navigate = useNavigate();
-   const { caja, lote } = useAppSelector((state) => state.settings);
    const [, setAlert] = useContext(AlertContext);
    const [, setLoading] = useContext(LoadingContext);
    const {
       control,
       reset,
       setValue,
-      watch,
-      getValues,
-      formState: { errors, isValid },
+
+      formState: { isValid },
       handleSubmit,
    } = useForm({
       mode: 'onChange',
       resolver: yupResolver(schema(t)),
       defaultValues: defaultValues,
-   });
-
-   const { fields, append, remove } = useFieldArray({
-      control,
-      name: 'incidences',
    });
 
    const [claves, setClaves] = useState<any>([]);
@@ -84,8 +70,8 @@ const IncidencesDocumentsFormToCheck = ({ incidencesDocuments, setIncidencesDocu
    };
 
    const [revisarTodos, setRevisarTodos] = useState(false);
-   const [enviarTodos, setEnviarTodos] = useState(false);
-
+   /*    const [enviarTodos, setEnviarTodos] = useState(false);
+    */
    useEffect(() => {
       if (incidencesDocuments && incidencesDocuments.length > 0) {
          const array: any[] = [];
@@ -148,20 +134,30 @@ const IncidencesDocumentsFormToCheck = ({ incidencesDocuments, setIncidencesDocu
       setRevisarTodos(newRevisarEstado); // Actualizar el estado de la variable
    };
 
+   let contenido;
+
+   if (Array.isArray(incidencesDocuments)) {
+      if (incidencesDocuments.length > 1) {
+         contenido = (
+            <div className="flex justify-end gap-11">
+               <Button variant="primary" type="button" onClick={handleTodoRevisado}>
+                  Marcar todo como revisado
+               </Button>
+            </div>
+         );
+      } else if (incidencesDocuments.length === 1) {
+         contenido = '';
+      } else {
+         contenido = <div>No hay incidencias que revisar</div>;
+      }
+   } else {
+      contenido = <div>No hay incidencias que revisar</div>;
+   }
+
    return (
       <form className="flex flex-col mt-4 box" onSubmit={handleSubmit(onSubmit)}>
          <div className="pt-0 p-2 m-2 mb-2">
-            {Array.isArray(incidencesDocuments) && incidencesDocuments.length > 1 ? (
-               <div className="flex justify-end gap-11">
-                  <Button variant="primary" type="button" onClick={handleTodoRevisado}>
-                     Marcar todo como revisado
-                  </Button>
-               </div>
-            ) : Array.isArray(incidencesDocuments) && incidencesDocuments.length == 1 ? (
-               ''
-            ) : (
-               <div>No hay incidencias que revisar</div>
-            )}
+            {contenido}
 
             <div className="flex flex-col gap-3">
                {Array.isArray(claves) && claves.length > 0

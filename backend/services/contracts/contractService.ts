@@ -25,6 +25,8 @@ export const findContractByClaveOperacion = async (clave: string) => {
                },
             },
             Mediador: true,
+            Compania: true,
+            Producto: true,
          },
       });
       return contrato;

@@ -68,13 +68,11 @@ export const InputFieldDynamic = ({
    setValue,
 }: Props) => {
    const { t } = useTranslation();
-   const [showPass, setShowPass] = useState<boolean>(false);
 
    const [inputValue, setInputValue] = useState('');
    const [suggestions, setSuggestions] = useState<any[]>([]);
    const [isFocused, setIsFocused] = useState(false);
    const inputRef = useRef<HTMLInputElement>(null);
-   const [products, setProducts] = useState();
    const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
    useEffect(() => {
@@ -176,16 +174,18 @@ export const InputFieldDynamic = ({
                      {isFocused && suggestions.length > 0 && (
                         <ul className="absolute w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-60 overflow-y-auto mt-10">
                            {suggestions.map((suggestion, index) => (
-                              <li
-                                 key={index}
-                                 onClick={() =>
-                                    handleSuggestionClick(`${suggestion.codigo} - ${suggestion.name}`, onChange)
-                                 }
-                                 className={`px-4 py-2 cursor-pointer ${
-                                    highlightedIndex === index ? 'bg-gray-200' : ''
-                                 }`}
-                              >
-                                 {suggestion.codigo}-{suggestion.name}
+                              <li key={suggestion.codigo}>
+                                 <button
+                                    type="button"
+                                    onClick={() =>
+                                       handleSuggestionClick(`${suggestion.codigo} - ${suggestion.name}`, onChange)
+                                    }
+                                    className={`px-4 py-2 cursor-pointer ${
+                                       highlightedIndex === index ? 'bg-gray-200' : ''
+                                    }`}
+                                 >
+                                    {suggestion.codigo}-{suggestion.name}
+                                 </button>
                               </li>
                            ))}
                         </ul>

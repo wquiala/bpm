@@ -436,7 +436,9 @@ export const getContractById = async (req: Request, res: Response) => {
             ContratoId: parseInt(req.params.id),
          },
          include: {
+            Producto: true,
             Usuario: true,
+            Compania: true,
             TipoConciliacion: true,
             DocumentoContrato: {
                include: {

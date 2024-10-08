@@ -20,6 +20,10 @@ const app: Express = express();
 
 // Create a transporter object using the default SMTP transport
 
+(() => {
+   console.log('estamos aqui');
+})();
+
 // Schedule task to run every minute
 /* schedule.scheduleJob('0 * * * *', async () => {
    console.log('Executing cron jobs');
