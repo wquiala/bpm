@@ -269,11 +269,6 @@ export const sendPolicyWithIncidenceReminder = async (
          incidoc = `  ${nombreDocumento}
                   ${inciList.map((inci: any) => `${inci}\n`)}`;
       });
-      /*   */
-
-      /*  documentsWhitIncidencesToSend.forEach((element: any) => {
-         console.log(element);
-      }); */
 
       console.log(pendings);
       const data = {
@@ -288,7 +283,7 @@ export const sendPolicyWithIncidenceReminder = async (
       };
 
       generateDocument(data, content);
-   } else if (contrato.Compania.Nombre == 'UNI') {
+   } /* else if (contrato.Compania.Nombre == 'UNI') {
       let incidoc;
       const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_PLV.docx'));
       Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
@@ -303,11 +298,6 @@ export const sendPolicyWithIncidenceReminder = async (
          incidoc = `  ${nombreDocumento}
                   ${inciList.map((inci: any) => `${inci}\n`)}`;
       });
-      /*   */
-
-      /*  documentsWhitIncidencesToSend.forEach((element: any) => {
-         console.log(element);
-      }); */
 
       console.log(pendings);
       const data = {
@@ -337,11 +327,6 @@ export const sendPolicyWithIncidenceReminder = async (
          incidoc = `  ${nombreDocumento}
                   ${inciList.map((inci: any) => `${inci}\n`)}`;
       });
-      /*   */
-
-      /*  documentsWhitIncidencesToSend.forEach((element: any) => {
-         console.log(element);
-      }); */
 
       console.log(pendings);
       const data = {
@@ -356,7 +341,7 @@ export const sendPolicyWithIncidenceReminder = async (
       };
 
       generateDocument(data, content);
-   }
+   } */
 
    const plantilla = ``;
    let html = '';
