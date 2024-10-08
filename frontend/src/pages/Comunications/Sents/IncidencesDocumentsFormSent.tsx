@@ -1,23 +1,11 @@
-import Button from '@/components/Base/Button';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import moment from 'moment';
-import { useNavigate } from 'react-router-dom';
-import TextAreaField from '@/custom-components/FormElements/TextArea';
-import Lucide from '@/components/Base/Lucide';
-import { AlertContext } from '@/utils/Contexts/AlertContext';
-import { LoadingContext } from '@/utils/Contexts/LoadingContext';
 
-import { useAppSelector } from '@/stores/hooks';
 import InputField from '@/custom-components/FormElements/InputField';
 
 import { defaultValues, schema } from '../common-components/schemasRevisar';
-import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
-import { todo } from 'node:test';
-import handlePromise from '@/utils/promise';
-import DocumentIncidenceService from '@/services/DocumentIncidenceService';
 
 type Props = {
    incidencesDocuments: any;
@@ -26,19 +14,12 @@ type Props = {
 
 const IncidencesDocumentsFormSent = ({ incidencesDocuments, setIncidencesDocuments }: Props) => {
    const { t } = useTranslation();
-   const navigate = useNavigate();
-   const { caja, lote } = useAppSelector((state) => state.settings);
-
-   const [, setAlert] = useContext(AlertContext);
-   const [, setLoading] = useContext(LoadingContext);
 
    const {
       control,
       reset,
-      setValue,
-      watch,
-      getValues,
-      formState: { errors, isValid },
+      //      setValue,
+
       handleSubmit,
    } = useForm({
       mode: 'onChange',
@@ -46,16 +27,15 @@ const IncidencesDocumentsFormSent = ({ incidencesDocuments, setIncidencesDocumen
       defaultValues: defaultValues,
    });
 
-   const { fields, append, remove } = useFieldArray({
+   const { fields } = useFieldArray({
       control,
       name: 'incidences',
    });
 
    const onSubmit = async (data: any) => {};
 
-   const [revisarTodos, setRevisarTodos] = useState(false);
-   const [enviarTodos, setEnviarTodos] = useState(false);
-
+   /*    const [revisarTodos, setRevisarTodos] = useState(false);
+    */
    useEffect(() => {
       const resetFormFiels = async () => {
          const incidenceList = [];
@@ -83,7 +63,7 @@ const IncidencesDocumentsFormSent = ({ incidencesDocuments, setIncidencesDocumen
       }
    }, [incidencesDocuments]);
 
-   const handleTodoRevisado = () => {
+   /*  const handleTodoRevisado = () => {
       if (revisarTodos) {
          fields.map((field, index) => {
             setValue(`incidences.${index}.revisada`, false);
@@ -95,7 +75,7 @@ const IncidencesDocumentsFormSent = ({ incidencesDocuments, setIncidencesDocumen
          });
          setRevisarTodos(true);
       }
-   };
+   }; */
 
    return (
       <form className="flex flex-col mt-4 box" onSubmit={handleSubmit(onSubmit)}>

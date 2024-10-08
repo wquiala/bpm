@@ -95,6 +95,7 @@ const InputField = ({
 
                      {type == 'password' && (
                         <button
+                           type="button"
                            onClick={() => setShowPass(!showPass)}
                            className="cursor-pointer absolute flex items-center justify-center w-10 h-full border rounded-l bg-slate-100 text-slate-500 dark:bg-darkmode-700 dark:border-darkmode-800 dark:text-slate-400 right-0"
                         >

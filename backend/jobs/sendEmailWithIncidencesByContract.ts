@@ -5,9 +5,14 @@ import { createComunicationService } from '../services/comunications/comunicatio
 import { updateContractService } from '../services/contracts/contractService';
 import moment from 'moment';
 import { Contrato } from '@prisma/client';
-import { updateIncidenciaDocumentoService } from '../services/incidenciasDocumentos/incidenciaDocumento';
+//import { updateIncidenciaDocumentoService } from '../services/incidenciasDocumentos/incidenciaDocumento';
 import fs from 'fs';
 import path from 'path';
+import mammoth from 'mammoth';
+
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
+
 type Incidencia = {
    DocumentoId: number;
    IncidenciaDocId: number;
@@ -42,7 +47,7 @@ export const sendEmailWithIncidencesByContract = async () => {
 
    const contractsTocheck = contracts.filter(
       (contract: Contrato) =>
-         contract.Conciliar == true &&
+         contract.Conciliar &&
          moment(contract.FechaProximaReclamacion).isSameOrBefore(moment(), 'day') &&
          contract.EstadoContrato != 'TRAMITADA' &&
          contract.EstadoContrato != 'ANULADA',
@@ -205,6 +210,39 @@ export const buildDocumentsWithIncidences = async (contract: any) => {
    return incidences;
 };
 
+export const generateDocument = (data: any, content: any) => {
+   // Cargar la plantilla .docx
+   // Cargar la plantilla en un zip usando PizZip
+   const zip = new PizZip(content);
+
+   // Cargar el zip en docxtemplater
+   const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+   });
+
+   // Reemplazar las variables en la plantilla con los valores de 'data'
+   const test = doc.setData(data);
+
+   try {
+      // Rellenar los campos en el documento
+      doc.render();
+   } catch (error) {
+      console.error('Error rendering document:', error);
+      throw error;
+   }
+
+   // Generar el archivo .docx a partir de la plantilla actualizada
+   const output = doc.getZip().generate({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
+   });
+
+   console.log(output);
+
+   // Guardar el archivo generado
+   fs.writeFileSync(path.resolve(__dirname, `../files/emails/emailsCopy/${data.claveOperacion}.docx`), output);
+};
 export const sendPolicyWithIncidenceReminder = async (
    to: string,
    cc: string,
@@ -214,6 +252,112 @@ export const sendPolicyWithIncidenceReminder = async (
    documentsWhitIncidencesToSend?: any,
    pendings?: any,
 ) => {
+   let ruta;
+   console.log(contrato);
+   if (contrato.Compania.Nombre == 'PLV') {
+      let incidoc;
+      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_PLV.docx'));
+      Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
+         const inciList: any[] = [];
+         const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
+         const documento = nombreDocumento;
+         console.log(incidencias);
+         incidencias.forEach((element: any) => {
+            inciList.push(element.incidenciaNombre);
+         });
+
+         incidoc = `  ${nombreDocumento}
+                  ${inciList.map((inci: any) => `${inci}\n`)}`;
+      });
+      /*   */
+
+      /*  documentsWhitIncidencesToSend.forEach((element: any) => {
+         console.log(element);
+      }); */
+
+      console.log(pendings);
+      const data = {
+         nombreCompania: contrato.Compania.Descripcion,
+         claveOperacion: contrato.ClaveOperacion,
+         DNITomador: contrato.DNITomador,
+         nombreProducto: contrato.Producto.Descripcion,
+         nombreTomador: contrato.NombreTomador,
+         comentarios: incidoc,
+         documentosPendiente: pendings.map((element: any) => element.nombre),
+         Observaciones: 'Prueba',
+      };
+
+      generateDocument(data, content);
+   } else if (contrato.Compania.Nombre == 'UNI') {
+      let incidoc;
+      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_PLV.docx'));
+      Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
+         const inciList: any[] = [];
+         const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
+         const documento = nombreDocumento;
+         console.log(incidencias);
+         incidencias.forEach((element: any) => {
+            inciList.push(element.incidenciaNombre);
+         });
+
+         incidoc = `  ${nombreDocumento}
+                  ${inciList.map((inci: any) => `${inci}\n`)}`;
+      });
+      /*   */
+
+      /*  documentsWhitIncidencesToSend.forEach((element: any) => {
+         console.log(element);
+      }); */
+
+      console.log(pendings);
+      const data = {
+         nombreCompania: contrato.Compania.Descripcion,
+         claveOperacion: contrato.ClaveOperacion,
+         DNITomador: contrato.DNITomador,
+         nombreProducto: contrato.Producto.Descripcion,
+         nombreTomador: contrato.NombreTomador,
+         comentarios: incidoc,
+         documentosPendiente: pendings.map((element: any) => element.nombre),
+         Observaciones: 'Prueba',
+      };
+
+      generateDocument(data, content);
+   } else {
+      let incidoc;
+      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_PLV.docx'));
+      Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
+         const inciList: any[] = [];
+         const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
+         const documento = nombreDocumento;
+         console.log(incidencias);
+         incidencias.forEach((element: any) => {
+            inciList.push(element.incidenciaNombre);
+         });
+
+         incidoc = `  ${nombreDocumento}
+                  ${inciList.map((inci: any) => `${inci}\n`)}`;
+      });
+      /*   */
+
+      /*  documentsWhitIncidencesToSend.forEach((element: any) => {
+         console.log(element);
+      }); */
+
+      console.log(pendings);
+      const data = {
+         nombreCompania: contrato.Compania.Descripcion,
+         claveOperacion: contrato.ClaveOperacion,
+         DNITomador: contrato.DNITomador,
+         nombreProducto: contrato.Producto.Descripcion,
+         nombreTomador: contrato.NombreTomador,
+         comentarios: incidoc,
+         documentosPendiente: pendings.map((element: any) => element.nombre),
+         Observaciones: 'Prueba',
+      };
+
+      generateDocument(data, content);
+   }
+
    const plantilla = ``;
    let html = '';
    let incitoUpdate: any = [];
@@ -273,11 +417,11 @@ export const sendPolicyWithIncidenceReminder = async (
 
    //actualizamos las fechas de reclamaciones de las incidencias
 
-   if (incitoUpdate.length > 0) {
+   /*  if (incitoUpdate.length > 0) {
       for (const incidence of incitoUpdate) {
          await updateIncidenciaDocumentoService(incidence.IncidenciaDocId, { Reclamada: new Date() });
       }
-   }
+   } */
 };
 
 export const getInfoEmailAndUpdateDB = async (

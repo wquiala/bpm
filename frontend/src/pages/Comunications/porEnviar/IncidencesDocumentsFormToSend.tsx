@@ -10,6 +10,7 @@ import { LoadingContext } from '@/utils/Contexts/LoadingContext';
 import InputField from '@/custom-components/FormElements/InputField';
 
 import { defaultValues, schema } from '../common-components/schemasRevisar';
+import { sendEmail } from '@/helpers/FetchData/comunications';
 
 type Props = {
    incidencesDocuments: any;
@@ -44,9 +45,9 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
          }
       }
 
-      //const { data: da, error, response } = await sendEmail(incidences);
+      await sendEmail(incidences);
       setLoading(false);
-      navigate('/');
+      // navigate('/');
    };
 
    useEffect(() => {

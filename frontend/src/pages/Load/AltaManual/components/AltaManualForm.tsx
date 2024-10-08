@@ -1,67 +1,45 @@
 import Button from '@/components/Base/Button';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useContext, useEffect } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
-import TextAreaField from '@/custom-components/FormElements/TextArea';
-import Lucide from '@/components/Base/Lucide';
-import { AlertContext } from '@/utils/Contexts/AlertContext';
 import { LoadingContext } from '@/utils/Contexts/LoadingContext';
 import handlePromise from '@/utils/promise';
 import ObservationContractService from '@/services/ObservationContractService';
 import DocumentContractService from '@/services/DocumentContractService';
 import DocumentIncidenceService from '@/services/DocumentIncidenceService';
-import ObservationHistory from '../../common-components/ObservationHistory';
 import { defaultValues, schema } from '../../AltaManual/schemas';
 import ContractFormInputs from '../../AltaManual/components/ContractFormInputs';
-import ContractService from '@/services/ContractService';
-import { useSelector } from 'react-redux';
-import { store } from '@/stores/store';
-import { AppDispatch } from '../../../../stores/store';
-import { useAppDispatch, useAppSelector } from '@/stores/hooks';
+import { useAppSelector } from '@/stores/hooks';
 import InputField from '@/custom-components/FormElements/InputField';
-import cajaLoteService from '@/services/cajaLoteService';
-import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
-import DocumentList from './DocumentList';
-import { getMediadores } from '@/helpers/FetchData/mediador';
+
 import { createContract, getContracts, updateContract } from '@/helpers/FetchData/contracts';
 import { parserDate } from '@/helpers/parseDate';
-import { response } from 'express';
-import { getContractDocumentsbyContract } from '@/helpers/FetchData/contractsDocuments';
+import { AlertContext } from '@/utils/Contexts/AlertContext';
 
 type Props = {
    /*  selectedContract: any;
    setSelectedContract: (contract: any) => void; */
 };
 
-const AltaManualForm = (/* { selectedContract, setSelectedContract }: Props */) => {
+const AltaManualForm = () => {
    const { t } = useTranslation();
    const navigate = useNavigate();
 
-   const { caja, lote, companyList, company } = useAppSelector((state) => state.settings);
+   const { company } = useAppSelector((state) => state.settings);
    const [, setAlert] = useContext(AlertContext);
    const [, setLoading] = useContext(LoadingContext);
 
-   const {
-      control,
-      reset,
-      setValue,
-      formState: { errors, isValid },
-      getValues,
-      handleSubmit,
-      watch,
-   } = useForm({
+   const { control, reset, setValue, getValues, handleSubmit } = useForm({
       mode: 'onChange',
       resolver: yupResolver(schema(t)),
       defaultValues: defaultValues,
    });
 
-   const { fields, append, remove } = useFieldArray({
-      control,
-      name: 'DetalleObservacion',
-   });
+   const proccessIncidence = (incidence: any) => {};
+
    const onSubmit = async (data: any) => {
       console.log(data);
       const observations = data.DetalleObservacion;
@@ -71,16 +49,6 @@ const AltaManualForm = (/* { selectedContract, setSelectedContract }: Props */) 
       let inci;
 
       setLoading(true);
-
-      /* if (!caja || !lote) {
-         setLoading(false);
-
-         return setAlert({
-            type: 'error',
-            show: true,
-            text: 'La caja y el lote son obligatorios para la grabación',
-         });
-      } */
 
       //Preparamos los datos del contrato que se van a cargar
 
@@ -106,7 +74,7 @@ const AltaManualForm = (/* { selectedContract, setSelectedContract }: Props */) 
 
       const dataContract = {
          EstadoContrato: 'PENDIENTE',
-         ClaveOperacion: data.CCC ? data.CCC : data.CodigoPoliza ? data.CodigoPoliza : data.CodigoSolicitud,
+         ClaveOperacion: data.CodigoPoliza ? data.CodigoPoliza : data.CodigoSolicitud,
          CompaniaId: data.CompaniaId,
          ProductoId: data.ProductoId,
          MediadorId: data.MediadorId,
@@ -181,7 +149,7 @@ const AltaManualForm = (/* { selectedContract, setSelectedContract }: Props */) 
                      EstadoDoc: 'PRESENTE CORRECTO',
                   };
 
-                  const [error, response, data] = await handlePromise(
+                  const [error, response] = await handlePromise(
                      DocumentContractService.updateDocumentContract(id, toSend),
                   );
                   if (!response.ok) {
@@ -222,7 +190,6 @@ const AltaManualForm = (/* { selectedContract, setSelectedContract }: Props */) 
                let contIncidences = 0;
                for (const incidence of doc.incidences) {
                   if (incidence.checked) {
-                     console.log('Vamos aqui');
                      inci = true;
                      contIncidences++;
                      const toSend = {
@@ -232,8 +199,6 @@ const AltaManualForm = (/* { selectedContract, setSelectedContract }: Props */) 
                         Incidencia: incidence.IncidenciaId,
                         Nota: incidence.notas.Nota,
                      };
-
-                     console.log(toSend);
 
                      const [error, response] = await handlePromise(
                         DocumentIncidenceService.createDocumentIncidence(toSend),
@@ -252,14 +217,10 @@ const AltaManualForm = (/* { selectedContract, setSelectedContract }: Props */) 
                         FechaProximaReclamacion: new Date() /* moment().add(30, 'days').format('YYYY-MM-DD') */,
                         updatedAt: new Date(),
                         NumeroReclamaciones: 0,
-                        AnuladoSEfecto: data.AnuladoSEfecto ? true : false,
+                        AnuladoSEfecto: data.AnuladoSEfecto,
                      };
 
-                     const {
-                        data: user,
-                        response: res,
-                        error: err,
-                     } = await updateContract(contractCreated.ContratoId, contractUpdate);
+                     const { response: res } = await updateContract(contractCreated.ContratoId, contractUpdate);
 
                      if (!res.ok) {
                         setLoading(false);
@@ -272,7 +233,7 @@ const AltaManualForm = (/* { selectedContract, setSelectedContract }: Props */) 
                   }
                }
 
-               if (doc.notCorrect && inci == false && doc.correct != true) {
+               if (doc.notCorrect && !inci && !doc.correct) {
                   setLoading(false);
 
                   return setAlert({
@@ -306,11 +267,7 @@ const AltaManualForm = (/* { selectedContract, setSelectedContract }: Props */) 
                      TipoConciliacionId: 13,
                   };
 
-                  const {
-                     data: user,
-                     response: res,
-                     error: err,
-                  } = await updateContract(contractCreated.ContratoId, toSend);
+                  const { response: res } = await updateContract(contractCreated.ContratoId, toSend);
 
                   if (!res.ok) {
                      setLoading(false);
