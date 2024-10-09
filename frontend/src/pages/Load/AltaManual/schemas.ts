@@ -1,10 +1,9 @@
 import * as yup from 'yup';
 
 export const defaultValues = {
-   MediadorId: 26314,
-   ProductoId: 191,
-   CompaniaId: 5,
    EstadoContrato: '',
+
+   CompaniaId: null,
 
    CompaniaNombre: '',
    ProductoNombre: '',
@@ -26,17 +25,13 @@ export const defaultValues = {
    DNIAsegurado: '',
    NombreAsegurado: '',
    FechaNacimientoAsegurado: '',
-   Profesion: '',
-   Deporte: '',
+   ProfesionAsegurado: '',
+   DeporteAsegurado: '',
    Operador: '',
 
-   DetalleObservacion: [],
-   documents: [],
    AnuladoSEfecto: false,
    Conciliar: true,
    Revisar: true,
-
-   NotaInterna: '',
 
    /* Suplemento: '',
 
@@ -50,9 +45,7 @@ export const defaultValues = {
 
 export const schema = (t: any) =>
    yup.object().shape({
-      MediadorId: yup.number(),
-      ProductoId: yup.number(),
-      CompaniaId: yup.number(),
+      CompaniaId: yup.number().required().nullable(),
       EstadoContrato: yup.string(),
 
       ProductoNombre: yup.string().required(t('errors.required') ?? ''),
@@ -62,7 +55,7 @@ export const schema = (t: any) =>
       FechaOperacion: yup.string().required('Este campo es obligatorio').nullable(),
       TipoOperacion: yup.string(),
 
-      FechaEfecto: yup.string().required('Este campo es obligatorio').nullable(),
+      FechaEfecto: yup.string().nullable(),
 
       CCC: yup.string(),
       CodigoSolicitud: yup.string().required(t('errors.required') ?? ''),
@@ -74,17 +67,11 @@ export const schema = (t: any) =>
       DNIAsegurado: yup.string().required('Este campo es obligatorio'),
       NombreAsegurado: yup.string(),
       FechaNacimientoAsegurado: yup.string().nullable(),
-      Profesion: yup.string(),
-      Deporte: yup.string(),
+      ProfesionAsegurado: yup.string(),
+      DeporteAsegurado: yup.string(),
       Operador: yup.string(),
 
-      DetalleObservacion: yup
-         .array()
-         .of(yup.object().shape({ observation: yup.string().required(t('errors.required') ?? '') })),
-      documents: yup.array(),
       AnuladoSEfecto: yup.boolean(),
       Conciliar: yup.boolean(),
       Revisar: yup.boolean(),
-
-      NotaInterna: yup.string().optional(),
    });

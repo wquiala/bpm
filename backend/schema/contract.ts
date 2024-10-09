@@ -3,11 +3,12 @@ import { z } from 'zod';
 // Zod schema for creating a Contrato
 export const createContratoSchema = z.object({
    ClaveOperacion: z.string(),
+   Operador: z.string(),
 
    EstadoContrato: z.string(),
-   CompaniaId: z.number(),
-   ProductoId: z.number(),
-   MediadorId: z.number(),
+   CompaniaNombre: z.string(),
+   ProductoCodigo: z.string(),
+   MediadorCodigo: z.string(),
    AnuladoSE: z.boolean().optional(),
    /*    CSRespAfirm: z.boolean(),
     */ FechaNacimientoAsegurado: z.string().datetime().optional().nullable(),
@@ -23,7 +24,7 @@ export const createContratoSchema = z.object({
    CodigoPoliza: z.string().optional(),
    DNITomador: z.string().optional(),
    NombreTomador: z.string().optional(),
-   FechaDNITomador: z.string().datetime().optional().nullable(),
+   FechaValidezDNITomador: z.string().datetime().optional().nullable(),
    DNIAsegurado: z.string().optional(),
    NombreAsegurado: z.string().optional(),
    ProfesionAsegurado: z.string().optional(),

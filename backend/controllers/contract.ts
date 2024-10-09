@@ -147,35 +147,54 @@ export const getContracts = async (req: Request, res: Response) => {
 
 export const createContract = async (req: Request, res: Response) => {
    const validatedData = createContratoSchema.parse(req.body);
+   let company;
 
+   const contract = await prismaClient.contrato.findFirst({
+      where: {
+         OR: [
+            { CCC: validatedData.CCC },
+            { CodigoPoliza: validatedData.CodigoPoliza },
+            { CodigoSolicitud: validatedData.CodigoSolicitud },
+            {
+               ClaveOperacion: validatedData.ClaveOperacion,
+            },
+         ],
+      },
+   });
+   if (contract) {
+      throw new BadRequestsException('Este contrato ya está registrado en el sistema', ErrorCode.BAD_REQUEST_EXCEPTION);
+   }
    try {
-      await prismaClient.compania.findFirstOrThrow({
+      company = await prismaClient.compania.findFirstOrThrow({
          where: {
-            CompaniaId: validatedData.CompaniaId,
+            Nombre: validatedData.CompaniaNombre,
          },
       });
    } catch (error) {
-      throw new NotFoundException('Company not found', ErrorCode.NOT_FOUND_EXCEPTION);
+      throw new NotFoundException('Compañia no encontrada', ErrorCode.NOT_FOUND_EXCEPTION);
    }
 
-   try {
-      await prismaClient.producto.findFirstOrThrow({
-         where: {
-            ProductoId: validatedData.ProductoId,
-         },
-      });
-   } catch (error) {
-      throw new NotFoundException('Branch not found', ErrorCode.NOT_FOUND_EXCEPTION);
-   }
+   let producto;
 
    try {
-      await prismaClient.mediador.findFirstOrThrow({
+      producto = await prismaClient.producto.findFirstOrThrow({
          where: {
-            MediadorId: validatedData.MediadorId,
+            Codigo: validatedData.ProductoCodigo,
          },
       });
    } catch (error) {
-      throw new NotFoundException('Mediator not found', ErrorCode.NOT_FOUND_EXCEPTION);
+      throw new NotFoundException('Producto no encontrado', ErrorCode.NOT_FOUND_EXCEPTION);
+   }
+
+   let mediador;
+   try {
+      mediador = await prismaClient.mediador.findFirstOrThrow({
+         where: {
+            Codigo: validatedData.MediadorCodigo,
+         },
+      });
+   } catch (error) {
+      throw new NotFoundException('Mediador no encontrado', ErrorCode.NOT_FOUND_EXCEPTION);
    }
    let user;
    try {
@@ -191,7 +210,7 @@ export const createContract = async (req: Request, res: Response) => {
    }
 
    try {
-      const { CompaniaId, ProductoId, MediadorId, ...dataWithoutConnects } = validatedData;
+      const { CompaniaNombre, ProductoCodigo, MediadorCodigo, ...dataWithoutConnects } = validatedData;
       const createdContract = await prismaClient.contrato.create({
          data: {
             Usuario: {
@@ -202,17 +221,17 @@ export const createContract = async (req: Request, res: Response) => {
             },
             Compania: {
                connect: {
-                  CompaniaId: CompaniaId,
+                  CompaniaId: company.CompaniaId,
                },
             },
             Producto: {
                connect: {
-                  ProductoId: ProductoId,
+                  ProductoId: producto.ProductoId,
                },
             },
             Mediador: {
                connect: {
-                  MediadorId: MediadorId,
+                  MediadorId: mediador.MediadorId,
                },
             },
             ...(dataWithoutConnects as any),
@@ -288,7 +307,7 @@ export const createContract = async (req: Request, res: Response) => {
 const createDocuments = async (createdContract: any, systemUser: Usuario) => {
    for (const productoTipoOperacion of createdContract.Producto.ProductoTipoOperacion) {
       for (const productoDocumento of productoTipoOperacion.ProductoDocumento) {
-         const createdDocumentContract = await prismaClient.documentoContrato.create({
+         await prismaClient.documentoContrato.create({
             data: {
                Contrato: {
                   connect: {
@@ -495,4 +514,23 @@ export const Incompletos = async (req: Request, res: Response) => {
    });
 
    res.json(incompletos);
+};
+
+export const deleteIncompletoById = async (req: Request, res: Response) => {
+   //@ts-ignore
+
+   const id = req.params.id;
+   const incompleta = await prismaClient.incompletas.findFirst({
+      where: {
+         incompletaId: parseInt(id),
+      },
+   });
+
+   if (!incompleta) throw new NotFoundException('Contrato no encontrado', ErrorCode.NOT_FOUND_EXCEPTION);
+
+   const del = await prismaClient.incompletas.delete({
+      where: { incompletaId: incompleta.incompletaId },
+   });
+
+   res.json(del);
 };

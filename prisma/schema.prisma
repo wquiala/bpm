@@ -164,6 +164,7 @@ model RepositorioPlantillas {
 model Producto {
   ProductoId            Int                     @id @default(autoincrement())
   CompId                Int
+  Familia               String
   Codigo                String                  @unique
   Descripcion           String?
   Reclamar              Boolean?                @default(false)
