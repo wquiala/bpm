@@ -62,7 +62,9 @@ function TomSelect(props: Readonly<TomSelectProps>) {
 
          if (initialRender.current) {
             // Unique attribute
-            tomSelectRef.current.setAttribute('data-id', '_' + Math.random().toString(36).slice(2, 9));
+            const randomId = '_' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
+
+            tomSelectRef.current.setAttribute('data-id', randomId);
 
             // Clone the select element to prevent tom select remove the original element
             const clonedEl = tomSelectRef.current.cloneNode(true) as TomSelectElement;
