@@ -59,7 +59,7 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
             incidenceList.push({
                DocumentoId: incidencesDocument.DocumentoContrato.DocumentoId,
                IncidenciaDocId: incidencesDocument.IncidenciaDocId,
-               nombreDocumento: incidencesDocument.DocumentoContrato.MaestroDocumentos.Codigo,
+               nombreDocumento: incidencesDocument.DocumentoContrato.MaestroDocumentos.Nombre,
                claveOperacion: incidencesDocument.DocumentoContrato.Contrato.ClaveOperacion,
                incidenciaNombre: incidencesDocument.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                mediador: incidencesDocument.DocumentoContrato.Contrato.Mediador.Nombre,

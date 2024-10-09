@@ -1,4 +1,5 @@
 import api from '@/utils/api/useApi';
+import { number } from 'yup';
 
 const baseUrl = '/contracts';
 
@@ -19,6 +20,9 @@ export default {
       return api.delete(`${baseUrl}/${id}`);
    },
 
+   deleteIncompletosByClave(id: number) {
+      return api.delete(`${baseUrl}/incompletos/${id}`);
+   },
    getIncompletos() {
       return api.get(`${baseUrl}/incompletos`);
    },

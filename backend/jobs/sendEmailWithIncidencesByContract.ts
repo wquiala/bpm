@@ -238,11 +238,45 @@ export const generateDocument = (data: any, content: any) => {
       compression: 'DEFLATE',
    });
 
-   console.log(output);
-
    // Guardar el archivo generado
-   fs.writeFileSync(path.resolve(__dirname, `../files/emails/emailsCopy/${data.claveOperacion}.docx`), output);
+
+   const outputPath = path.resolve(
+      __dirname,
+      `../files/emails/emailsCopy/${data.claveOperacion}_${new Date().toISOString()}.docx`,
+   );
+   fs.writeFileSync(outputPath, output);
+
+   mammoth
+      .extractRawText({ path: outputPath })
+      .then((result) => {
+         console.log('Contenido del documento:');
+         console.log(result.value); // Texto extraído del documento .docx
+      })
+      .catch((err) => {
+         console.error('Error al extraer texto del documento:', err);
+      });
 };
+
+interface DocumentData {
+   nombreCompania?: string;
+   claveOperacion?: string;
+   DNITomador?: string;
+   DNIAsegurado?: string;
+   nombreAsegurado?: string;
+
+   nombreProducto?: string;
+   nombreTomador?: string;
+   comentarios?: string;
+   documentosPendiente?: string;
+   Observaciones?: string;
+   tipo?: string;
+   IncidencesDocuments?: string;
+   DocumentNoRecivida?: string;
+   FechaOperacion?: string;
+   CCC?: string;
+   CodigoPoliza?: string;
+   CdigoSolicitud?: string;
+}
 export const sendPolicyWithIncidenceReminder = async (
    to: string,
    cc: string,
@@ -253,96 +287,120 @@ export const sendPolicyWithIncidenceReminder = async (
    pendings?: any,
 ) => {
    let ruta;
-   console.log(contrato);
+
    if (contrato.Compania.Nombre == 'PLV') {
-      let incidoc;
+      let fullInciden: string = '';
+
+      console.log(documentsWhitIncidencesToSend);
+
       const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_PLV.docx'));
       Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
          const inciList: any[] = [];
+         let incidoc;
+
          const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
          const documento = nombreDocumento;
-         console.log(incidencias);
          incidencias.forEach((element: any) => {
             inciList.push(element.incidenciaNombre);
          });
 
-         incidoc = `  ${nombreDocumento}
-                  ${inciList.map((inci: any) => `${inci}\n`)}`;
+         incidoc = `${nombreDocumento}: \n\n     •  ${inciList.join('\n     •  ')}\n\n`;
+
+         fullInciden += incidoc;
       });
 
-      console.log(pendings);
-      const data = {
+      const data: DocumentData = {
+         tipo: contrato.CodigoPoliza ? 'póliza' : 'solicitud',
+         IncidencesDocuments: fullInciden.length > 0 ? 'Documentación recibida con incidencias' : '',
+         DocumentNoRecivida: pendings.length > 0 ? 'Documentación no recibida' : '',
          nombreCompania: contrato.Compania.Descripcion,
          claveOperacion: contrato.ClaveOperacion,
          DNITomador: contrato.DNITomador,
          nombreProducto: contrato.Producto.Descripcion,
          nombreTomador: contrato.NombreTomador,
-         comentarios: incidoc,
-         documentosPendiente: pendings.map((element: any) => element.nombre),
+         comentarios: fullInciden,
+         documentosPendiente: pendings.map((element: any) => `• ${element.nombre}\n`),
          Observaciones: 'Prueba',
       };
 
       generateDocument(data, content);
-   } /* else if (contrato.Compania.Nombre == 'UNI') {
+   } else if (contrato.Compania.Nombre == 'UNI') {
+      let fullInciden: string = '';
+
       let incidoc;
-      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_PLV.docx'));
+      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_Unicorp.docx'));
       Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
          const inciList: any[] = [];
          const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
          const documento = nombreDocumento;
-         console.log(incidencias);
          incidencias.forEach((element: any) => {
             inciList.push(element.incidenciaNombre);
          });
 
-         incidoc = `  ${nombreDocumento}
-                  ${inciList.map((inci: any) => `${inci}\n`)}`;
+         incidoc = `${nombreDocumento}: \n\n     •  ${inciList.join('\n     •  ')}\n\n`;
+
+         fullInciden += incidoc;
       });
 
-      console.log(pendings);
-      const data = {
+      const data: DocumentData = {
          nombreCompania: contrato.Compania.Descripcion,
          claveOperacion: contrato.ClaveOperacion,
          DNITomador: contrato.DNITomador,
          nombreProducto: contrato.Producto.Descripcion,
          nombreTomador: contrato.NombreTomador,
+         IncidencesDocuments: fullInciden.length > 0 ? 'Documentación recibida con incidencias' : '',
+
+         DocumentNoRecivida: pendings.length > 0 ? 'Documentación no recibida' : '',
+         CCC: contrato.CCC,
+
          comentarios: incidoc,
+
          documentosPendiente: pendings.map((element: any) => element.nombre),
+         FechaOperacion: new Date(contrato.FechaOperacion).toLocaleString(),
+         CodigoPoliza: contrato.CodigoPoliza,
+         CdigoSolicitud: contrato.CodigoSolicitud,
+         nombreAsegurado: contrato.NombreAsegurado,
+         DNIAsegurado: contrato.DNIAsegurado,
          Observaciones: 'Prueba',
       };
 
       generateDocument(data, content);
    } else {
+      let fullInciden: string = '';
+
       let incidoc;
-      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_PLV.docx'));
+      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_AVP.docx'));
       Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
          const inciList: any[] = [];
          const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
          const documento = nombreDocumento;
-         console.log(incidencias);
          incidencias.forEach((element: any) => {
             inciList.push(element.incidenciaNombre);
          });
 
-         incidoc = `  ${nombreDocumento}
-                  ${inciList.map((inci: any) => `${inci}\n`)}`;
+         incidoc = `${nombreDocumento}: \n\n     •  ${inciList.join('\n     •  ')}\n\n`;
+
+         fullInciden += incidoc;
       });
 
-      console.log(pendings);
-      const data = {
+      const data: DocumentData = {
          nombreCompania: contrato.Compania.Descripcion,
          claveOperacion: contrato.ClaveOperacion,
          DNITomador: contrato.DNITomador,
          nombreProducto: contrato.Producto.Descripcion,
          nombreTomador: contrato.NombreTomador,
+
+         IncidencesDocuments: fullInciden.length > 0 ? 'Documentación recibida con incidencias' : '',
+         DocumentNoRecivida: pendings.length > 0 ? 'Documentación no recibida' : '',
+
          comentarios: incidoc,
+
          documentosPendiente: pendings.map((element: any) => element.nombre),
          Observaciones: 'Prueba',
       };
 
       generateDocument(data, content);
-   } */
-
+   }
    const plantilla = ``;
    let html = '';
    let incitoUpdate: any = [];

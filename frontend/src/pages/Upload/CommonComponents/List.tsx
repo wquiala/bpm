@@ -6,7 +6,7 @@ import columns from './Columns';
 import { ColumnDefinition } from 'tabulator-tables';
 import UploadFile from './UploadFile';
 import UploadDetailData from './UploadDetailData';
-import IncompletosComponent from './Incompletos';
+import IncompletosComponent from '../Incompletas/Incompletos';
 
 type Props = {
    tableName: string;

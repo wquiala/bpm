@@ -51,64 +51,6 @@ const ContractFormInputs = ({ control, getValue, setValue }: Props) => {
       if (company) {
          resetFormFields();
       }
-
-      const resetDocuments = async (selectProduct: string, selectMediador: string) => {
-         const codigoProduct = selectProduct.split(' ')[0];
-         const codigoMediador = selectMediador.split(' ')[0];
-         const { data, response, error } = await getProductsByCodigo(codigoProduct);
-         console.log(data.ProductoId);
-         if (!response.ok) {
-            //Mandar un error aqui
-         } else {
-            setValue(`ProductoId`, data.ProductoId);
-         }
-
-         const { data: dataM, response: resM, error: errM } = await getMediadorByCode(codigoMediador);
-         console.log(dataM.MediadorId);
-         if (!response.ok) {
-            //Lanzar un err aqui
-         } else {
-            setValue(`MediadorId`, dataM.MediadorId);
-         }
-
-         const documentList = [];
-         const producto = data.data;
-         for (const tipoOp of producto.ProductoTipoOperacion) {
-            for (const prodDoc of tipoOp.ProductoDocumento) {
-               documentList.push({
-                  ProductoDocId: prodDoc.ProductoDocId,
-                  fase: prodDoc.Fase,
-                  CodigoDoc: prodDoc.MaestroDocumento.DocumentoId,
-                  name: prodDoc.MaestroDocumento.Nombre,
-                  estado: 'PENDIENTE',
-                  correct: false,
-                  notCorrect: false,
-                  incidences: prodDoc.MaestroDocumento.MaestroIncidencias.map((inci: any) => {
-                     return {
-                        IncidenciaId: inci.IncidenciaId,
-                        DocAsociadoId: inci.DocAsociadoId,
-
-                        Codigo: inci.Codigo,
-                        Nombre: inci.Nombre,
-                        estado: inci.EstadoDoc,
-
-                        checked: false,
-                        notas: '',
-                        /* Comentario: contractDocument.IncidenciaDocumento.map((inci: any) => {
-                     return inci.Nota;
-                  }), */
-                     };
-                  }),
-               });
-            }
-         }
-
-         setValue(`documents`, documentList);
-      };
-
-      if (getValue(`ProductoNombre`) != '' && getValue(`MediadorNombre`) != '') {
-         resetDocuments(getValue(`ProductoNombre`), getValue(`MediadorNombre`));
-      }
    }, [company, getValue(`ProductoNombre`), getValue(`MediadorNombre`)]);
 
    return (
@@ -121,9 +63,9 @@ const ContractFormInputs = ({ control, getValue, setValue }: Props) => {
             <div className="w-full sm:w-1/2 self-center ">
                <CheckBoxField control={control} name="Conciliar" label="Conciliar" />
             </div>
-            <div className="w-full sm:w-1/2 self-center ">
+            {/*  <div className="w-full sm:w-1/2 self-center ">
                <CheckBoxField control={control} name="AnuladoSEfecto" label="Anular" />
-            </div>
+            </div> */}
          </div>
          {/* Segunda Fila */}
          <div className="flex flex-col sm:flex-row gap-0  sm:gap-4">
@@ -154,24 +96,21 @@ const ContractFormInputs = ({ control, getValue, setValue }: Props) => {
                </FormSelect> */}
             </div>
             <div className="w-full sm:w-1/2 z-50">
-               <InputFieldDynamic
+               <InputField
                   control={control}
                   name="ProductoNombre"
+                  type="text"
                   label="Producto"
-                  data={products}
-                  getValues={getValue}
-                  setValue={setValue}
+                  placeholder="Código de producto"
                />
             </div>
             <div className="w-full sm:w-1/2 z-50">
-               <InputFieldDynamic
+               <InputField
                   control={control}
                   name="MediadorNombre"
                   type="text"
                   label="Mediador"
-                  data={mediadores}
-                  getValues={getValue}
-                  setValue={setValue}
+                  placeholder="Código de mediador"
                />
             </div>
          </div>
@@ -191,10 +130,10 @@ const ContractFormInputs = ({ control, getValue, setValue }: Props) => {
                />
             </div>
             <div className="w-full sm:w-1/2">
-               <InputField control={control} name="Profesion" type="text" label="Profesión" />
+               <InputField control={control} name="ProfesionAsegurado" type="text" label="Profesión" />
             </div>
             <div className="w-full sm:w-1/2">
-               <InputField control={control} name="Deporte" type="text" label="Deporte" />
+               <InputField control={control} name="DeporteAsegurado" type="text" label="Deporte" />
             </div>
          </div>
          <div className="flex flex-col sm:flex-row gap-0  sm:gap-4">

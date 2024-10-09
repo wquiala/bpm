@@ -51,3 +51,13 @@ export const incompletos = async () => {
       error,
    };
 };
+
+export const deleteIncompletosByClave = async (id: number) => {
+   const [error, response, data] = await handlePromise(ContractService.deleteIncompletosByClave(id));
+   console.log(data);
+   return {
+      response,
+      data,
+      error,
+   };
+};
