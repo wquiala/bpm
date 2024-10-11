@@ -82,3 +82,15 @@ export const createCajaLote = async (req: Request, res: Response) => {
       throw new InternalException('Something went wrong!', error, ErrorCode.INTERNAL_EXCEPTION);
    }
 };
+
+export const findCajaLoteById = async (id: number) => {
+   try {
+      const cajaLote = await prismaClient.cajaLote.findFirstOrThrow({
+         where: { CajaLoteId: id },
+      });
+
+      return cajaLote;
+   } catch (error) {
+      throw new NotFoundException('No se encuentra esta caja-lote', ErrorCode.NOT_FOUND_EXCEPTION);
+   }
+};

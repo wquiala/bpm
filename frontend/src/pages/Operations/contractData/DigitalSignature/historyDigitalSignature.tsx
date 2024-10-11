@@ -1,8 +1,8 @@
-import ParentModal from '../../CommonComponents/ParentModal';
 import { columnsDigitalSignatureHistory, DigitalSignatureHistory } from './columnsDigitalSignatureHistory';
 import { DataTable } from '../../../../components/ui/dataDocumentsTable';
 import { getDigitalSignatureByContract } from '@/helpers/FetchData/digitalSignature';
 import { useEffect, useState } from 'react';
+import ParentModal from '@/custom-components/Modals/ParentModal';
 
 type Props = {
    show: boolean;
@@ -70,7 +70,7 @@ export const HistoryDigitalSignature = ({ show, setShow, control, selectedContra
   ResultadoFDCON           String? */
 
    return (
-      <ParentModal size="xl" title="Histórico de firma digital" show={show} setShow={setShow}>
+      <ParentModal size="xl" title="Histórico de firma digital" show={show} setShow={setShow} hideFooter>
          <div className="flex w-full justify-center items-center flex-col">
             <DataTable columns={columnsDigitalSignatureHistory} data={historyList} />
          </div>

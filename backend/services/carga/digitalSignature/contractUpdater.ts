@@ -6,6 +6,8 @@ import { createContractHistory } from '../../contracts/contractService';
 import { findTipoConciliacion } from '../../tipoConciliacion/tipoConciliacion';
 import { TiposConciliacion } from '../../../constants/TiposConciliacion';
 import { createContractDocumentHistory } from '../../contractDocuments/contractDocuments';
+import { parserDate } from '../../../helpers/time';
+import moment from 'moment';
 
 export const contractUpdater = async (
    record: any,
@@ -14,8 +16,7 @@ export const contractUpdater = async (
    err: { [key: string]: string },
    details: any[],
 ) => {
-   let updated;
-   let insertados;
+   let updated = false;
 
    if (record['RESULTADO']) {
       const contract = await prismaClient.contrato.findFirst({
@@ -80,7 +81,6 @@ export const contractUpdater = async (
 
             //Aqui tengo que ponerlo como actualizado en true en el history
             await digitalSignature(record, true, err);
-            insertados = true;
          } else if (contract && conciliationType && contract.EstadoContrato != 'TRAMITADA') {
             for (const documentoContrato of contract.DocumentoContrato) {
                for (const documentIncidence of documentoContrato.IncidenciaDocumento) {
@@ -104,6 +104,7 @@ export const contractUpdater = async (
                   },
                   data: {
                      EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
+
                      FechaConciliacion: new Date(),
                      Usuario: {
                         connect: {
@@ -114,6 +115,7 @@ export const contractUpdater = async (
                      TipoConciliacion: {
                         connect: { tipoConciliacionId: conciliationType.tipoConciliacionId },
                      },
+                     FechaEstado: moment(record['FECHA_CIERRE'], 'DD/MM/YYYY HH:mm:ss').toDate(),
                   },
                });
 
@@ -122,7 +124,7 @@ export const contractUpdater = async (
                   ...dataD,
                   TipoConciliacion: conciliationType.nombre,
                };
-
+               /*  */
                await createContractDocumentHistory(toSend);
             }
 
@@ -173,82 +175,69 @@ export const contractUpdater = async (
 
             //Aqui tengo que ponerlo como actualizado en true en el history
             await digitalSignature(record, true, err);
-            insertados = true;
          } else {
-            await digitalSignature(record, false, err);
-            insertados = true;
-
-            updated = false;
             details.push({
                ...record,
-               estado: 'NO ACTUALIZADO',
+               estado: 'DESECHADO',
                errores: err,
             });
          }
-      } else {
-         if (
-            contract &&
-            (contract.EstadoContrato != 'TRAMITADA' ||
-               (contract.EstadoContrato == 'TRAMITADA' &&
-                  (contract.ResultadoFDCON == '' || !contract.ResultadoFDCON.includes('acept'))))
-         ) {
-            const contratoUpdated = await prismaClient.contrato.update({
-               where: {
-                  ContratoId: contract?.ContratoId,
-               },
-               data: {
-                  ResultadoFDCON: record['RESULTADO'],
-                  TipoEnvioCON: record['TIPO_ENVIO'],
+      } else if (
+         contract &&
+         (contract.EstadoContrato != 'TRAMITADA' ||
+            (contract.EstadoContrato == 'TRAMITADA' &&
+               (contract.ResultadoFDCON == '' || !contract.ResultadoFDCON.includes('acept'))))
+      ) {
+         const contratoUpdated = await prismaClient.contrato.update({
+            where: {
+               ContratoId: contract?.ContratoId,
+            },
+            data: {
+               ResultadoFDCON: record['RESULTADO'],
+               TipoEnvioCON: record['TIPO_ENVIO'],
 
-                  Usuario: {
-                     connect: {
-                        UsuarioId: systemUser?.UsuarioId,
-                     },
+               Usuario: {
+                  connect: {
+                     UsuarioId: systemUser?.UsuarioId,
                   },
                },
-            });
+            },
+         });
 
-            updated = true;
+         updated = true;
 
-            const {
-               Activo,
+         const {
+            Activo,
 
-               TipoOperacion,
-               updatedAt,
-               TipoConciliacionId,
-               UsuarioId,
-               ...data
-            } = contratoUpdated;
+            TipoOperacion,
+            updatedAt,
+            TipoConciliacionId,
+            UsuarioId,
+            ...data
+         } = contratoUpdated;
 
-            await createContractHistory({
-               ...data,
-               Operacion: OPERACION_CONTRATO.ACTUALIZADO,
-            });
-            details.push({
-               ...record,
-               estado: 'ACTUALIZADO',
-               errores: err,
-            });
+         await createContractHistory({
+            ...data,
+            Operacion: OPERACION_CONTRATO.ACTUALIZADO,
+         });
+         details.push({
+            ...record,
+            estado: 'ACTUALIZADO',
+            errores: err,
+         });
 
-            //Aqui tengo que ponerlo como actualizado en true en el history
-            await digitalSignature(record, true, err);
-            insertados = true;
-         } else {
-            await digitalSignature(record, false, err);
-            insertados = true;
-
-            updated = false;
-            details.push({
-               ...record,
-               estado: 'NO ACTUALIZADO',
-               errores: err,
-            });
-         }
+         //Aqui tengo que ponerlo como actualizado en true en el history
+         await digitalSignature(record, true, err);
+      } else {
+         details.push({
+            ...record,
+            estado: 'DESECHADO',
+            errores: err,
+         });
       }
    }
 
    return {
       updated,
-      insertados,
    };
 };

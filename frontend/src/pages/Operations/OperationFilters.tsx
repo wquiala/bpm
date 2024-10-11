@@ -21,6 +21,7 @@ const OperationFilters = ({ onFilter }: Props) => {
    const [, setLoading] = useContext(LoadingContext);
 
    const [conciliationTypes, setConciliationTypes] = useState<any[]>([]);
+   const [operationType, setOperationType] = useState<any[]>([{ value: 'Alta', label: 'Alta' }]);
 
    const defaultValue = {
       nif: '',
@@ -102,16 +103,16 @@ const OperationFilters = ({ onFilter }: Props) => {
             <InputField control={control} name="ccc" label="CCC - UCV" placeholder="CCC - UCV ..." />
          </div>
 
-         <div className="min-w-[250px] px-2">
+         {/* <div className="min-w-[250px] px-2">
             <Select
                control={control}
                name="operationType"
                label="Tipo de Operación"
                placeholder="Tipo de Operación ..."
-               options={conciliationTypes as any}
+               options={operationType as any[]}
                addNull
             />
-         </div>
+         </div> */}
 
          <div className="min-w-[250px] px-2">
             <Select

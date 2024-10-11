@@ -10,22 +10,23 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
    let noactualizados = 0;
    let details: any[] = [];
    let insertado = 0;
+   let Desechados = 0;
 
    for (let record of records) {
       if (!record['CLAVE_OPERACIÓN'] || !record['FECHA EMISIÓN ANULACIÓN']) {
-         conError++;
+         Desechados++;
          details.push({
             ...record,
-            estado: 'NO PROCESADA',
+            estado: 'DESECHADO',
             errores: {
                claveFecha: 'Sin clave o fecha',
             },
          });
       } else if (!moment(record['FECHA EMISIÓN ANULACIÓN'], 'DD/MM/YYYY', true).isValid()) {
-         conError++;
+         Desechados++;
          details.push({
             ...record,
-            estado: 'NO PROCESADA',
+            estado: 'DESECHADO',
             errores: {
                fechaemision: 'Fecha no válida',
             },
@@ -53,7 +54,6 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
                data: {
                   AnuladoSEfecto: true,
                   EstadoContrato: 'ANULADA',
-                  Conciliar: false,
                },
             });
             details.push({
@@ -74,31 +74,36 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
 
                ...rest
             } = anulada;
-            console.log(rest);
             await createContractHistory({
                ...rest,
                Operacion: OPERACION_CONTRATO.ANULADO,
                EstadoContrato: ESTADO_CONTRATO.ANULADA,
             });
-         } else noactualizados++;
-      }
-      await prismaClient.anuladas.create({
-         data: {
-            claveOperacion: record['CLAVE_OPERACIÓN'],
-            compannia: record['COMPAÑÍA'],
-            motivoAnulacion: record['MOTIVO ANULACIÓN'],
-            fechaEfectoAnulacion: parserDate(record['FECHA EMISIÓN ANULACIÓN']) ?? null,
-            fechaEmisionAnulacion: parserDate(record['FECHA EFECTO ANULACIÓN']) ?? null,
-         },
-      });
 
-      insertado++;
+            await prismaClient.anuladas.create({
+               data: {
+                  claveOperacion: record['CLAVE_OPERACIÓN'],
+                  compannia: record['COMPAÑÍA'],
+                  motivoAnulacion: record['MOTIVO ANULACIÓN'],
+                  fechaEfectoAnulacion: parserDate(record['FECHA EMISIÓN ANULACIÓN']) ?? null,
+                  fechaEmisionAnulacion: parserDate(record['FECHA EFECTO ANULACIÓN']) ?? null,
+               },
+            });
+         } else {
+            Desechados++;
+            details.push({
+               ...record,
+               estado: 'DESECHADO',
+               errores: {
+                  claveFecha: 'Sin registro que actualizar',
+               },
+            });
+         }
+      }
    }
    return {
       actualizados,
-      noactualizados,
-      conError,
       details,
-      insertado,
+      Desechados,
    };
 };

@@ -30,7 +30,7 @@ const DocumentList = ({ control, selectedContract, setSelectedContract }: Props)
          Codigo: doc.Codigo,
          Documento: doc.Nombre,
          Estado: doc.Estado,
-         Fecha_estado: doc.FechaEstado ? new Date(doc.FechaEstado).toLocaleDateString() : 'Sin fecha',
+         Fecha_estado: doc.FechaEstado ? new Date(doc.FechaEstado).toLocaleString() : 'Sin fecha',
          FechaUltimaRecepcion: doc.FechaUltimaRecepcion
             ? new Date(doc.FechaUltimaRecepcion).toLocaleDateString()
             : 'Sin fecha',
@@ -53,7 +53,7 @@ const DocumentList = ({ control, selectedContract, setSelectedContract }: Props)
                Incidencia: inci.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                Comentarios: inci.Nota,
                Estado_Incidencia: inci.Resuelta ? 'Resuelta' : 'No resuelta',
-               Fecha_estado: inci.updatedAt ? new Date(inci.updatedAt).toLocaleDateString() : 'Sin fecha',
+               Fecha_estado: inci.FechaEstado ? new Date(inci.FechaEstado).toLocaleDateString() : 'Sin fecha',
                FechaAltaIncidencia: new Date(inci.createdAt).toLocaleDateString(),
                FechaUltimaReclamacion: selectedContract.FechaReclamacion
                   ? new Date(selectedContract.FechaReclamacion).toLocaleDateString()

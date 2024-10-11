@@ -1,6 +1,6 @@
+import ParentModal from '@/custom-components/Modals/ParentModal';
 import { DataTable } from '../../../components/ui/dataDocumentsTable';
 import { columnsContractsHistory, ContractHistory } from './columnsContractHistory';
-import ParentModal from '../CommonComponents/ParentModal';
 
 type Props = {
    show: boolean;

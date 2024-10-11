@@ -13,11 +13,12 @@ export const createIncidenciaDocumentoSchema = z.object({
    Revisada: z.boolean().optional(),
    Enviar: z.boolean().optional(),
    Reclamada: z.string().optional() || null,
+   CajaLote: z.number(),
 });
 
 export const updateIncidenciaDocumentoSchema = z.object({
    ContratoId: z.number().optional(),
-   DocumentoId: z.number().optional(),
+   DocumentoId: z.number(),
    /*    TipoIncidenciaId: z.number(),
     */ Resuelta: z.boolean().optional(),
    /*    NumReclamaciones: z.number().optional(),
@@ -28,4 +29,5 @@ export const updateIncidenciaDocumentoSchema = z.object({
    Enviar: z.boolean().optional(),
    Reclamada: z.string().optional(),
    TipoDocumentoincidenciaId: z.number().optional(),
+   CajaLote: z.number().optional(),
 });

@@ -10,6 +10,7 @@ import { ESTADO_CONTRATO, Usuario } from '@prisma/client';
 import { ContractHistoryData, OPERACION_CONTRATO } from '../interfaces/contractsInterfaces';
 import { processPolicyData } from '../services/carga/policy/policyProcessor';
 import { createContractHistory } from '../services/contracts/contractService';
+import { createContractDocumentHistory } from '../services/contractDocuments/contractDocuments';
 
 export const getContracts = async (req: Request, res: Response) => {
    const { company, policy, dni, secuencialDni, ccc, code, requestCode, operationType, reconcile } = req.query;
@@ -101,12 +102,12 @@ export const getContracts = async (req: Request, res: Response) => {
             : {}),
          ...(dni
             ? {
-                 DNIAsegurado: dni as string,
+                 OR: [{ DNIAsegurado: dni as string }, { DNITomador: dni as string }],
               }
             : {}),
          ...(secuencialDni
             ? {
-                 DNIAsegurado: secuencialDni as string,
+                 OR: [{ DNIAsegurado: secuencialDni as string }, { DNITomador: secuencialDni as string }],
               }
             : {}),
          ...(ccc
@@ -307,7 +308,7 @@ export const createContract = async (req: Request, res: Response) => {
 const createDocuments = async (createdContract: any, systemUser: Usuario) => {
    for (const productoTipoOperacion of createdContract.Producto.ProductoTipoOperacion) {
       for (const productoDocumento of productoTipoOperacion.ProductoDocumento) {
-         await prismaClient.documentoContrato.create({
+         const doc = await prismaClient.documentoContrato.create({
             data: {
                Contrato: {
                   connect: {
@@ -330,18 +331,16 @@ const createDocuments = async (createdContract: any, systemUser: Usuario) => {
                      ProductoDocId: productoDocumento.ProductoDocId,
                   },
                },
+               FechaEstado: new Date(),
             },
          });
+         const { ContratoId, ...dataD } = doc;
 
-         /*   await prismaClient.documentoContratoHistory.create({
-            data: {
-               DocumentoContratoId: createdDocumentContract.DocumentoId,
-               DocId: createdDocumentContract.DocId,
-               ProdctoDoc: createdDocumentContract.ProdctoDoc,
-               UsuarioId: createdDocumentContract.UsuarioId,
-               EstadoDoc: ContractDocumentStatusesEnum.PENDING,
-            },
-         }); */
+         const toSend = {
+            ...dataD,
+         };
+
+         await createContractDocumentHistory(toSend);
       }
    }
 };
@@ -533,4 +532,19 @@ export const deleteIncompletoById = async (req: Request, res: Response) => {
    });
 
    res.json(del);
+};
+
+export const editIncompleto = async (req: Request, res: Response) => {
+   const id = parseInt(req.params.id);
+
+   const data = req.body;
+
+   const incompleta = await prismaClient.incompletas.update({
+      where: { incompletaId: id },
+      data: {
+         ...data,
+      },
+   });
+
+   res.json(incompleta);
 };

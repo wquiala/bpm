@@ -23,7 +23,7 @@ const ContractFormInputsIncompletas = ({ control }: Props) => {
                <InputField control={control} name="Producto" type="text" label="Producto" />
             </div>
             <div className="w-full sm:w-1/2">
-               <InputField control={control} name="Mediador" type="text" label="Compañía" />
+               <InputField control={control} name="Mediador" type="text" label="Mediador" />
             </div>
             <div className="w-full sm:w-1/2 self-center ">
                <CheckBoxField control={control} name="AnuladoSEfecto" label="Anulado sin Efecto" />

@@ -3,6 +3,8 @@ import { prismaClient } from '../../server';
 import { ContractDocumentStatusesEnum } from '../../constants/ContractDocumentStatusesEnum';
 import { createContractDocumentHistory, updateDNiState } from '../contractDocuments/contractDocuments';
 import moment from 'moment';
+import { NotFoundException } from '../../exceptions/not-found';
+import { ErrorCode } from '../../exceptions/root';
 
 export const updateIncidenciaDocumentoService = (id: number, data: any) => {
    return prismaClient.incidenciaDocumento.update({
@@ -47,6 +49,7 @@ export const handleIncidences = async (createdContract: any, systemUser: Usuario
                         ProductoDocId: productoDocumento.ProductoDocId,
                      },
                   },
+                  FechaEstado: new Date(),
                },
             });
 
@@ -54,10 +57,28 @@ export const handleIncidences = async (createdContract: any, systemUser: Usuario
 
             const { ContratoId, ...dataD } = document;
 
-            await createContractDocumentHistory(dataD);
+            const toSend = {
+               ...dataD,
+            };
+
+            await createContractDocumentHistory(toSend);
          }
       }
    }
 
    if (createdContract.FechaValidezDNITomador) await updateDNiState(createdContract, listDocuments);
+};
+
+export const findIncidenceDocumentById = async (id: number) => {
+   try {
+      const incidence = await prismaClient.incidenciaDocumento.findFirstOrThrow({
+         where: {
+            IncidenciaDocId: id,
+         },
+      });
+
+      return incidence;
+   } catch (error) {
+      throw new NotFoundException('Incidence document not found', ErrorCode.NOT_FOUND_EXCEPTION);
+   }
 };

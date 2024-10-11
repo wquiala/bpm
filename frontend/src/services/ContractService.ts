@@ -26,4 +26,8 @@ export default {
    getIncompletos() {
       return api.get(`${baseUrl}/incompletos`);
    },
+
+   setIncompleto(id: number, data: any) {
+      return api.put(`${baseUrl}/incompletos/${id}`, data);
+   },
 };

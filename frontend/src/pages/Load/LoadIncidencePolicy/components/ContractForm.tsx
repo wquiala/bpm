@@ -201,6 +201,7 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                      Resuelta: !incidence.checked,
                      Incidencia: incidence.IncidenciaId,
                      Nota: incidence.notas.Nota,
+                     CajaLote: cajaLote.CajaLoteId,
                   };
 
                   const [error, response] = await handlePromise(
@@ -214,25 +215,6 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                         text: error ?? 'Error while adding incidence document',
                      });
                   }
-
-                  /*   const contractUpdate = {
-                     EstadoContrato: !data.AnuladoSEfecto ? 'PENDIENTE' : 'ANULADA',
-                     FechaProximaReclamacion: new Date(),
-                     updatedAt: new Date(),
-                     NumeroReclamaciones: 0,
-                     AnuladoSEfecto: data.AnuladoSEfecto,
-                  };
-
-                  const { response: res } = await updateContract(selectedContract.ContratoId, contractUpdate);
-
-                  if (!res.ok) {
-                     setLoading(false);
-                     return setAlert({
-                        type: 'error',
-                        show: true,
-                        text: error ?? 'Error while udating contract',
-                     });
-                  } */
                } else if (!incidence.checked && f && !f.Resuelta) {
                   const toSend = {
                      ContratoId: selectedContract.ContratoId,

@@ -15,6 +15,6 @@ export const updateContratoDocumentoSchema = z.object({
    ContratoId: z.number(),
    /*  DocId: z.number(), */
    EstadoDoc: z.string().optional(),
-   CajaLote: z.number().optional(),
+   CajaLote: z.number(),
    TipoConciliacionId: z.number().optional(),
 });

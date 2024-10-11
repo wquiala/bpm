@@ -153,6 +153,7 @@ export const policyCreator = async (
                   },
                   data: {
                      EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
+                     FechaEstado: new Date(),
                   },
                });
 
@@ -164,8 +165,11 @@ export const policyCreator = async (
 
                if (!exist) { */
                const { ContratoId, ...dataD } = updateDoc;
+               const toSend = {
+                  ...dataD,
+               };
 
-               await createContractDocumentHistory(dataD);
+               await createContractDocumentHistory(toSend);
                //  }
             }
          }
