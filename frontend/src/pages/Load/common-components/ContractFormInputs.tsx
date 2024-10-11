@@ -60,6 +60,9 @@ const ContractFormInputs = ({ control }: Props) => {
             <div className="w-full sm:w-1/2">
                <InputField control={control} name="DNIAsegurado" type="text" label="InsuranceDNI" disabled />
             </div>
+            <div className="w-full sm:w-1/2">
+               <InputField control={control} name="DNITomador" type="text" label="DNI Tomador" disabled />
+            </div>
          </div>
       </div>
    );

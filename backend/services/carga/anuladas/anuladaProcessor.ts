@@ -46,7 +46,7 @@ export const anuladaProcessor = async (records: any, user: { UsuarioId: any }) =
                ],
             },
          });
-         if (contract) {
+         if (contract && contract.EstadoContrato != 'ANULADA') {
             anulada = await prismaClient.contrato.update({
                where: {
                   ContratoId: contract.ContratoId,
