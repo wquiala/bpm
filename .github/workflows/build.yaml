@@ -37,4 +37,4 @@ jobs:
            uses: actions/setup-java@v3
            with:
               java-version: '11'
-              distribution: 'temurin' # Puedes usar 'temurin' o 'zulu' u otra distribución de tu preferencia.
+              distribution: 'zulu' # Puedes usar 'temurin' o 'zulu' u otra distribución de tu preferencia.
