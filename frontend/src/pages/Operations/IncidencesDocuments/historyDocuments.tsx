@@ -1,7 +1,7 @@
 import { useFieldArray } from 'react-hook-form';
 import { DataTable } from '../../../components/ui/dataDocumentsTable';
 import { columnsDocumentsHistory, DocumentHistory } from './columnsDocumentsHistory';
-import ParentModal from '../CommonComponents/ParentModal';
+import ParentModal from '@/custom-components/Modals/ParentModal';
 
 type Props = {
    show: boolean;
@@ -16,14 +16,14 @@ export const HistoryDocuments = ({ show, setShow, control }: Props) => {
    });
 
    return (
-      <ParentModal size="xl" title="Históricos de documentos" show={show} setShow={setShow}>
+      <ParentModal size="xl" title="Históricos de documentos" show={show} setShow={setShow} hideFooter>
          <div className="flex w-full justify-center items-center flex-col">
             {fields.map((doc: any) => {
                console.log(doc);
                const history: DocumentHistory[] = doc.documentHistory.map((f: any) => ({
                   Familia_Documento: doc.Familia,
                   Documento: doc.Nombre,
-                  Fecha_estado: f.updatedAt ? new Date(f.updatedAt).toLocaleString() : 'Sin fecha',
+                  Fecha_estado: f.FechaEstado ? new Date(f.FechaEstado).toLocaleString() : 'Sin fecha',
 
                   Codigo: doc.Codigo,
                   Estado: f.EstadoDoc,

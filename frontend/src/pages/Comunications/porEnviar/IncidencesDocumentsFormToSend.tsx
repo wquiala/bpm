@@ -36,6 +36,9 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
       defaultValues: defaultValues,
    });
 
+   const handleImprimir = () => {
+      console.log('Vamos a imprimir');
+   };
    const onSubmit = async (data: any) => {
       setLoading(true);
       const incidences: any[] = [];
@@ -166,9 +169,14 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
                {t('goBack')}
             </Button>
             {Array.isArray(incidencesDocuments) && incidencesDocuments.length > 0 && (
-               <Button variant="primary" disabled={!isValid} type="submit">
-                  Enviar
-               </Button>
+               <div className="flex gap-3">
+                  <Button variant="primary" disabled={!isValid} type="button" onClick={handleImprimir}>
+                     Imprimir
+                  </Button>
+                  <Button variant="primary" disabled={!isValid} type="submit">
+                     Enviar
+                  </Button>
+               </div>
             )}
          </div>
       </form>

@@ -1,14 +1,19 @@
 ('use client');
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 import ParentModal from '@/custom-components/Modals/ParentModal';
 
-import { deleteIncompletosByClave, incompletos /* reprocesarPolizas */ } from '@/helpers/FetchData/contracts';
+import {
+   deleteIncompletosByClave,
+   incompletos /* reprocesarPolizas */,
+   reprocesarPolizas,
+} from '@/helpers/FetchData/contracts';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import { EditIncompletoModal } from './editIncompletoModal';
+import { LoadingContext } from '@/utils/Contexts/LoadingContext';
+import Button from '@/components/Base/Button';
 
 type Registro = {
    id: number;
@@ -37,6 +42,7 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
    const [incompletosData, setIncompletosData] = useState<any[]>([]);
    const [editIncompleto, setEditIncompleto] = useState(false);
    const [selectedIncompleto, setSelectedIncompleto] = useState(null);
+   const [, setLoading] = useContext(LoadingContext);
 
    //const [toShow, setToShow] = useState([]);
    /*  let mostrar: any[] = [];
@@ -47,16 +53,15 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
       ...m,
    })); */
 
-   /* const ButtonRecargar = () => {
+   const ButtonRecargar = () => {
       return (
-         <div className="flex justify-end mb-2 fixed">
+         <div className="flex justify-end mb-2 fixed z-50">
             <Button variant="primary" className="mr-2 h-5 w-32" onClick={handleRecargar}>
                Re-Cargar
             </Button>
          </div>
       );
    };
- */
 
    // Función para manejar la edición de un registro
    const handleEditar = async (id: number) => {
@@ -74,7 +79,7 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
          setIncompletosData(nuevaLista);
       }
    };
-   /* const handleRecargar = async () => {
+   const handleRecargar = async () => {
       setLoading(true);
       const dataP = incompletosData.map((d: any) => {
          const { incompletaId, errores, createdAt, Insertada, ...rest } = d;
@@ -85,7 +90,7 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
       setLoading(false);
       setShow(false);
       onRefresh();
-   }; */
+   };
 
    useEffect(() => {
       if (show) {
@@ -96,66 +101,67 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
          };
          inC();
       }
-   }, [show]);
+   }, [show, editIncompleto]);
 
    return (
       <ParentModal size="xl" title={`Contratos incompletos`} show={show} setShow={setShow} hideFooter>
-         <div className="container mx-auto p-4">
-            <Table>
-               <TableHeader>
-                  <TableRow>
-                     <TableHead>#</TableHead>
-                     <TableHead>Compañia</TableHead>
-                     <TableHead>Mediador</TableHead>
-                     <TableHead>Producto</TableHead>
-                     <TableHead>DNI asegurado</TableHead>
-                     <TableHead>Solicitud</TableHead>
-                     <TableHead>Póliza</TableHead>
-                     <TableHead>Errores</TableHead>
-                  </TableRow>
-               </TableHeader>
-               <TableBody>
-                  {incompletosData.length > 0
-                     ? incompletosData.map((registro, index) => (
-                          <TableRow key={registro.incompletaId}>
-                             <TableCell>{index + 1}</TableCell>
-                             <TableCell>{registro.Compania}</TableCell>
-                             <TableCell>{registro.Mediador}</TableCell>
-                             <TableCell>{registro.Producto}</TableCell>
-                             <TableCell>{registro.DNIAsegurado}</TableCell>
-                             <TableCell>{registro.CodigoSolicitud}</TableCell>
-                             <TableCell>{registro.CodigoPoliza}</TableCell>
-                             <TableCell>{JSON.stringify(registro.errores)}</TableCell>
-                             <TableCell>
-                                <div className="flex space-x-2">
-                                   <Button
-                                      variant="outline"
-                                      size="icon"
-                                      onClick={() => handleEditar(registro.incompletaId)}
-                                   >
-                                      <Pencil className="h-4 w-4" />
-                                      <span className="sr-only">Editar</span>
-                                   </Button>
-                                   <Button
-                                      variant="outline"
-                                      size="icon"
-                                      onClick={() => handleEliminar(registro.incompletaId)}
-                                   >
-                                      <Trash2 className="h-4 w-4" />
-                                      <span className="sr-only">Eliminar</span>
-                                   </Button>
-                                </div>
-                             </TableCell>
-                          </TableRow>
-                       ))
-                     : 'No hay registros incompletos'}
-               </TableBody>
-            </Table>
-            <EditIncompletoModal
-               showEdit={editIncompleto}
-               setShowEdit={setEditIncompleto}
-               incompletaData={selectedIncompleto}
-            />
+         <div>
+            <ButtonRecargar />
+            <div className="container mx-auto p-4">
+               <Table>
+                  <TableHeader>
+                     <TableRow>
+                        <TableHead>#</TableHead>
+                        <TableHead>Compañia</TableHead>
+                        <TableHead>Mediador</TableHead>
+                        <TableHead>Producto</TableHead>
+                        <TableHead>DNI asegurado</TableHead>
+                        <TableHead>Solicitud</TableHead>
+                        <TableHead>Póliza</TableHead>
+                        <TableHead>Errores</TableHead>
+                     </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                     {incompletosData.length > 0
+                        ? incompletosData.map((registro, index) => (
+                             <TableRow key={registro.incompletaId}>
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell>{registro.Compania}</TableCell>
+                                <TableCell>{registro.Mediador}</TableCell>
+                                <TableCell>{registro.Producto}</TableCell>
+                                <TableCell>{registro.DNIAsegurado}</TableCell>
+                                <TableCell>{registro.CodigoSolicitud}</TableCell>
+                                <TableCell>{registro.CodigoPoliza}</TableCell>
+                                <TableCell>{JSON.stringify(registro.errores)}</TableCell>
+                                <TableCell>
+                                   <div className="flex space-x-2">
+                                      <Button
+                                         variant="outline-primary"
+                                         onClick={() => handleEditar(registro.incompletaId)}
+                                      >
+                                         <Pencil className="h-4 w-4" />
+                                         <span className="sr-only">Editar</span>
+                                      </Button>
+                                      <Button
+                                         variant="outline-primary"
+                                         onClick={() => handleEliminar(registro.incompletaId)}
+                                      >
+                                         <Trash2 className="h-4 w-4" />
+                                         <span className="sr-only">Eliminar</span>
+                                      </Button>
+                                   </div>
+                                </TableCell>
+                             </TableRow>
+                          ))
+                        : 'No hay registros incompletos'}
+                  </TableBody>
+               </Table>
+               <EditIncompletoModal
+                  showEdit={editIncompleto}
+                  setShowEdit={setEditIncompleto}
+                  incompletaData={selectedIncompleto}
+               />
+            </div>
          </div>
       </ParentModal>
    );

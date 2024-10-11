@@ -1,11 +1,14 @@
 import ParentModal from '@/custom-components/Modals/ParentModal';
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { defaultValues, schema } from './schemasIncompleto';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { t } from 'i18next';
 import ContractFormInputsIncompletas from './ContractFormInputs';
 import Button from '@/components/Base/Button';
+import { editIcompleto } from '@/helpers/FetchData/contracts';
+import { AlertContext } from '@/utils/Contexts/AlertContext';
+import { LoadingContext } from '@/utils/Contexts/LoadingContext';
 
 interface Props {
    showEdit: boolean;
@@ -25,8 +28,33 @@ export const EditIncompletoModal = ({ showEdit, setShowEdit, incompletaData }: P
       defaultValues: defaultValues,
    });
 
-   const onSubmit = (data: any) => {
-      console.log(data);
+   const [, setAlert] = useContext(AlertContext);
+   const [, setLoading] = useContext(LoadingContext);
+
+   const onSubmit = async (data: any) => {
+      setLoading(true);
+
+      const { response, error } = await editIcompleto(incompletaData.incompletaId, data);
+
+      if (!response.ok) {
+         setLoading(false);
+         return setAlert({
+            type: 'error',
+            show: true,
+            text: error ?? 'Error en la actualización',
+         });
+      } else {
+         setLoading(false);
+         setShowEdit(false);
+
+         reset();
+
+         return setAlert({
+            type: 'success',
+            show: true,
+            text: error ?? 'Edición satisfactoria',
+         });
+      }
    };
    useEffect(() => {
       const resetFields = async () => {

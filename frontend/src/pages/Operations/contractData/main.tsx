@@ -55,14 +55,13 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
          } */
 
          selectedContract.DocumentoContrato.map((doc: any) => {
-            console.log(selectedContract);
             docList.push({
                Codigo: doc.MaestroDocumentos.Codigo,
                Nombre: doc.MaestroDocumentos.Nombre,
                Familia: doc.MaestroDocumentos.FamiliaDocumento.Codigo,
                Grupo: doc.MaestroDocumentos.FamiliaDocumento.Nombre,
                Estado: doc.EstadoDoc,
-               FechaEstado: doc.updatedAt,
+               FechaEstado: doc.FechaEstado,
                Fase: doc.ProductoDocumento.Fase,
                FechaUltimaRecepcion: doc.updatedAt,
                FechaUltimaReclamacion: selectedContract.FechaReclamacion,

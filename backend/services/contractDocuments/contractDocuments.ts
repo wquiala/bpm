@@ -44,12 +44,17 @@ export const createDocuments = async (
                         ProductoDocId: productoDocumento.ProductoDocId,
                      },
                   },
+                  FechaEstado: new Date(),
                },
             });
 
             const { ContratoId, ...dataD } = documents;
 
-            await createContractDocumentHistory(dataD);
+            const toSend = {
+               ...dataD,
+            };
+
+            await createContractDocumentHistory(toSend);
             listDocuments.push(documents);
          }
       }
@@ -67,6 +72,7 @@ export const createDocuments = async (
             TipoConciliacionId: tipoConciliacion!.tipoConciliacionId,
             EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
             FechaConciliacion: new Date(),
+            FechaEstado: new Date(),
          },
       });
 
@@ -124,6 +130,7 @@ export const createDocuments = async (
             EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
             FechaConciliacion: new Date(),
             TipoConciliacionId: tipoConciliacion?.tipoConciliacionId,
+            FechaEstado: new Date(),
          },
       });
 
@@ -180,6 +187,7 @@ export const updateDNiState = async (contract: any, documents: any[]) => {
                   EstadoDoc: ContractDocumentStatusesEnum.CORRECT,
                   FechaConciliacion: new Date(),
                   TipoConciliacionId: tipoConciliacion?.tipoConciliacionId,
+                  FechaEstado: new Date(),
                },
             });
 
@@ -191,7 +199,11 @@ export const updateDNiState = async (contract: any, documents: any[]) => {
             if (!exist) { */
             const { ContratoId, ...dataD } = conDNIUpdated;
 
-            await createContractDocumentHistory(dataD);
+            const toSend = {
+               ...dataD,
+            };
+
+            await createContractDocumentHistory(toSend);
             //}
          }
       }

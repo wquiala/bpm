@@ -10,6 +10,7 @@ import { createIncidenceDocumentHistory } from './incidenceDocument';
 import { createContractHistory, updateContractService } from '../services/contracts/contractService';
 import { createContractDocumentHistory } from '../services/contractDocuments/contractDocuments';
 import { findIncidenceHistory } from '../helpers/incidenceDocumentHistory';
+import { findCajaLoteById } from './cajaLote';
 
 export const getContractDocuments = async (req: Request, res: Response) => {
    const { contratoId } = req.query;
@@ -87,12 +88,16 @@ export const createContractDocument = async (req: Request, res: Response) => {
                   ProductoDocId: validatedData.ProductoId,
                },
             },
+            FechaEstado: new Date(),
          },
       });
 
       const { ContratoId, ...dataD } = createdContractDocument;
+      const toSend = {
+         ...dataD,
+      };
 
-      await createContractDocumentHistory(dataD);
+      await createContractDocumentHistory(toSend);
 
       const updated = await prismaClient.contrato.update({
          where: {
@@ -148,17 +153,8 @@ export const updateContractDocument = async (req: Request, res: Response) => {
       throw new NotFoundException('Contract not found', ErrorCode.NOT_FOUND_EXCEPTION);
    }
 
-   let cajaLote;
+   const cajaLote = await findCajaLoteById(validatedData.CajaLote);
 
-   try {
-      cajaLote = await prismaClient.cajaLote.findFirstOrThrow({
-         where: {
-            CajaLoteId: validatedData.CajaLote,
-         },
-      });
-   } catch (error) {
-      throw new NotFoundException('Caja Lote not found', ErrorCode.NOT_FOUND_EXCEPTION);
-   }
    const id = req.params.id;
    //Update contract document
    let conciliacion;
@@ -204,6 +200,7 @@ export const updateContractDocument = async (req: Request, res: Response) => {
 
             FechaConciliacion: new Date(),
             updatedAt: new Date(),
+            FechaEstado: new Date(),
          },
          include: {
             MaestroDocumentos: { include: { FamiliaDocumento: true } },

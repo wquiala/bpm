@@ -1,7 +1,7 @@
 import { useFieldArray } from 'react-hook-form';
 import { DataTable } from '../../../components/ui/dataDocumentsTable';
 import { columnsIncidencesHistory } from './columnsIncidencesHistory';
-import ParentModal from '../CommonComponents/ParentModal';
+import ParentModal from '@/custom-components/Modals/ParentModal';
 
 type Props = {
    show: boolean;
@@ -16,7 +16,7 @@ export const HistoryIncidences = ({ show, setShow, control }: Props) => {
    });
 
    return (
-      <ParentModal size="xl" title="Históricos de incidencias" show={show} setShow={setShow}>
+      <ParentModal size="xl" title="Históricos de incidencias" show={show} setShow={setShow} hideFooter>
          <div className="flex w-full justify-center items-center flex-col">
             {fields.map((doc: any) => {
                const incidences = doc.incidences;
@@ -28,7 +28,7 @@ export const HistoryIncidences = ({ show, setShow, control }: Props) => {
                            Incidencia: inci.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                            Comentarios: h.Nota,
                            EstadoIncidencia: h.Resuelta ? 'Resuelta' : 'No resuelta',
-                           Fecha_estado: new Date(h.updatedAt).toLocaleString(),
+                           Fecha_estado: new Date(h.FechaEstado).toLocaleString(),
                         });
                      });
                   });

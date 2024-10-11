@@ -3,6 +3,7 @@ import { BadRequestsException } from '../../exceptions/bad-requests';
 import { ErrorCode } from '../../exceptions/root';
 import { prismaClient } from '../../server';
 import { ContractHistoryData } from '../../interfaces/contractsInterfaces';
+import { NotFoundException } from '../../exceptions/not-found';
 
 export const findContractByClaveOperacion = async (clave: string) => {
    try {
@@ -120,4 +121,18 @@ export const createContractHistory = async (
               ...rest,
            },
         });
+};
+
+export const getContracById = async (id: number) => {
+   try {
+      const contract = await prismaClient.contrato.findFirstOrThrow({
+         where: {
+            ContratoId: id,
+         },
+      });
+
+      return contract;
+   } catch (error) {
+      throw new NotFoundException('Contrato no encontrado', ErrorCode.NOT_FOUND_EXCEPTION);
+   }
 };

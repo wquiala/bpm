@@ -54,7 +54,16 @@ export const incompletos = async () => {
 
 export const deleteIncompletosByClave = async (id: number) => {
    const [error, response, data] = await handlePromise(ContractService.deleteIncompletosByClave(id));
-   console.log(data);
+   return {
+      response,
+      data,
+      error,
+   };
+};
+
+export const editIcompleto = async (id: number, incom: any) => {
+   console.log(incom);
+   const [error, response, data] = await handlePromise(ContractService.setIncompleto(id, incom));
    return {
       response,
       data,

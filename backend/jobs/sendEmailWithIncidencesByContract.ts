@@ -291,8 +291,6 @@ export const sendPolicyWithIncidenceReminder = async (
    if (contrato.Compania.Nombre == 'PLV') {
       let fullInciden: string = '';
 
-      console.log(documentsWhitIncidencesToSend);
-
       const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_PLV.docx'));
       Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
          const inciList: any[] = [];

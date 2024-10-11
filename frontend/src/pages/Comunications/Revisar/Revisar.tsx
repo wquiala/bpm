@@ -1,44 +1,33 @@
-import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { AlertContext } from '@/utils/Contexts/AlertContext';
-import { LoadingContext } from '@/utils/Contexts/LoadingContext';
-import Alert from '@/components/Base/Alert';
-import Lucide from '@/components/Base/Lucide';
+import { useEffect, useState } from 'react';
+
 import handlePromise from '@/utils/promise';
-import ContractService from '@/services/ContractService';
-import ContractForm from './IncidencesDocumentsFormToCheck';
-import { useAppSelector } from '@/stores/hooks';
-import PolicyFilters from '../common-components/PolicyFilters';
-import SelectContractModal from '../common-components/SelectContractModal';
+
 import IncidencesDocumentsFormToCheck from './IncidencesDocumentsFormToCheck';
 import DocumentIncidenceService from '@/services/DocumentIncidenceService';
 
 function Main() {
-   const { t } = useTranslation();
-   const [, setAlert] = useContext(AlertContext);
-   const [, setLoading] = useContext(LoadingContext);
+   /*    const [, setAlert] = useContext(AlertContext);
 
-   const { company, caja, lote } = useAppSelector((state) => state.settings);
+   const { company } = useAppSelector((state) => state.settings); */
 
    const [incidencesDocuments, setIncidencesDocuments] = useState<any>(null);
-   const [incidencesToOBJ, setInciToOBJ] = useState<any>(null);
 
    const incidenceList: any[] = [];
 
-   const onFilter = async (data: any) => {
-      if (!company) {
+   /* const onFilter = async (data: any) => {
+       if (!company) {
          return setAlert({
             type: 'error',
             show: true,
             text: 'companyNotSelected',
          });
       }
-   };
+   }; */
 
    useEffect(() => {
       const get = async () => {
-         const [error, response, data] = await handlePromise(DocumentIncidenceService.getIncidenceDocuments());
-         const incidencesToCheck = data.filter((inci: any) => inci.Resuelta == false && inci.Revisada == false);
+         const [data] = await handlePromise(DocumentIncidenceService.getIncidenceDocuments());
+         const incidencesToCheck = data.filter((inci: any) => !inci.Resuelta && !inci.Revisada);
          setIncidencesDocuments(incidencesToCheck);
       };
 

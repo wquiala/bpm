@@ -100,6 +100,10 @@ model Compania {
   CorreoSoporte   String?
   ReclamarSoporte Boolean?   @default(false)
   ColorBase       String?
+  MailRemitente   String?
+  MailRespuesta   String?
+  MailCopiaOculta String?
+  CC              String?
   createdAt       DateTime?  @default(now())
   FechaBaja       DateTime?
   updatedAt       DateTime?  @default(now()) @updatedAt
@@ -164,7 +168,7 @@ model RepositorioPlantillas {
 model Producto {
   ProductoId            Int                     @id @default(autoincrement())
   CompId                Int
-  Familia               String
+  Familia               String?
   Codigo                String                  @unique
   Descripcion           String?
   Reclamar              Boolean?                @default(false)
@@ -237,10 +241,11 @@ model TipoDocumentoIncidencia {
 }
 
 model DocumentoContrato {
-  DocumentoId Int @id @default(autoincrement())
+  DocumentoId Int      @id @default(autoincrement())
   ContratoId  Int
   DocId       Int
   ProdctoDoc  Int
+  FechaEstado DateTime
 
   UsuarioId          Int
   CajaLoteId         Int?
@@ -267,6 +272,7 @@ model DocumentoContrato {
 model DocumentoContratoHistory {
   DocumentoContratoHistoryId Int       @id @default(autoincrement())
   TipoConciliacionId         Int?
+  FechaEstado                DateTime  @default(now())
   Caja                       Int?
   Lote                       Int?
   TipoConciliacion           String?

@@ -11,7 +11,7 @@ export const processTabletData = async (records: TabletaRecord[], user: { Usuari
    let details: any[] = [];
    let RegistrosOk: number = 0;
    let RegistrosError: number = 0;
-   let Desechado: number = 0;
+   let Desechados: number = 0;
 
    const systemUser = await prismaClient.usuario.findFirst({
       where: {
@@ -28,14 +28,12 @@ export const processTabletData = async (records: TabletaRecord[], user: { Usuari
 
       const { updated } = await contractUpdater(record, systemUser as Usuario, user, details, errs);
 
-      updated ? actualizados++ : noactualizados++;
+      updated ? actualizados++ : Desechados++;
    }
 
    return {
       actualizados,
-      noactualizados,
       details,
-      RegistrosOk,
-      RegistrosError,
+      Desechados,
    };
 };

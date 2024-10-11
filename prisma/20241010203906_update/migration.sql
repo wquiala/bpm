@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `DocumentoContratoHistory` ADD COLUMN `FechaEstado` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);

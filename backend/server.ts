@@ -5,24 +5,16 @@ import { PrismaClient } from '@prisma/client';
 import { NODE_ENV, PORT } from './secrets';
 import { errorMiddleware } from './middlewares/errors';
 import path from 'path';
-import fs from 'fs';
 import cors from 'cors';
 import { sendEmailWithIncidencesByContract } from './jobs/sendEmailWithIncidencesByContract';
 import logger from './logger';
-import rtfToHtml from 'html-to-rtf';
 
-import schedule from 'node-schedule';
-import mammoth from 'mammoth';
 /* import { checkNoLoadedContracts } from './jobs/checkNoLoadedContracts';
  */ /* import { checkNoLoadedContracts } from "./jobs/checkNoLoadedContracts";
  */
 const app: Express = express();
 
 // Create a transporter object using the default SMTP transport
-
-(() => {
-   console.log('estamos aqui');
-})();
 
 // Schedule task to run every minute
 /* schedule.scheduleJob('0 * * * *', async () => {
