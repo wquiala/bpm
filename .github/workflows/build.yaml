@@ -16,20 +16,10 @@ jobs:
            uses: actions/setup-java@v3
            with:
               java-version: '11'
-              distribution: 'zulu' # O 'temurin', según tu preferencia.
+              distribution: 'zulu'
 
          - name: Install SonarQube Scanner
-           run: |
-              wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
-              unzip sonar-scanner-cli-4.8.0.2856-linux.zip
-              mv sonar-scanner-4.8.0.2856-linux sonar-scanner
-              export PATH="$PATH:${{ github.workspace }}/sonar-scanner/bin"
-
-         - name: Cache SonarQube packages
-           uses: actions/cache@v3
-           with:
-              path: ~/.sonar/cache
-              key: ${{ runner.os }}-sonar
+           run: npm install -g sonar-scanner
 
          - name: Run SonarQube analysis
            env:
