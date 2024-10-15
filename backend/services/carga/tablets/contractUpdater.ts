@@ -214,13 +214,6 @@ export const contractUpdater = async (
 
                   const query = await updateDocumentStatus(documentoContrato, systemUser, record);
 
-                  /*  const exist = await findContractDocumentHistory({
-                     DocId: query.DocId,
-                     DocumentoId: query.DocumentoId,
-                     EstadoDoc: query.EstadoDoc,
-                  });
-
-                  if (!exist) { */
                   const { ContratoId, ...dataD } = query;
                   const toSend = {
                      ...dataD,
@@ -255,15 +248,6 @@ export const contractUpdater = async (
             estado: 'DESECHADO',
             errores: err,
          });
-      }
-
-      for (const key in err) {
-         if (err.hasOwnProperty(key)) {
-            const value = err[key];
-            if (value) {
-               //hasError = true;
-            }
-         }
       }
    } else {
       details.push({

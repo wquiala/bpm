@@ -215,6 +215,13 @@ model MaestroDocumentos {
   TipoDocumentoIncidencia TipoDocumentoIncidencia[]
 }
 
+model DocumentsGenerated {
+  id             Int    @id @default(autoincrement())
+  urlDoc         String
+  email          String @db.LongText
+  claveOperacion String
+}
+
 model FamiliaDocumento {
   FamiliaId          Int                  @id @default(autoincrement())
   Codigo             String

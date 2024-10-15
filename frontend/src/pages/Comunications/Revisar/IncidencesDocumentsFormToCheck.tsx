@@ -106,6 +106,8 @@ const IncidencesDocumentsFormToCheck = ({ incidencesDocuments, setIncidencesDocu
             array.push(incidences);
          });
 
+         console.log(array);
+
          if (JSON.stringify(claves) !== JSON.stringify(array)) {
             // Evita actualización innecesaria
             setClaves(array);

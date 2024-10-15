@@ -238,110 +238,116 @@ export const updateIncidenceDocument = async (req: Request, res: Response) => {
       }
       //Update document contract
 
-      const inci = await prismaClient.incidenciaDocumento.findMany({
-         where: {
-            DocumentoContratoId: validatedData.DocumentoId,
-            Resuelta: false,
-         },
-      });
-
-      if (inci.length == 0) {
-         const cajaLote = await findCajaLoteById(validatedData.CajaLote!);
-
-         if (cajaLote) {
-            const docContraUpdated = await prismaClient.documentoContrato.update({
-               where: {
-                  DocumentoId: validatedData.DocumentoId,
-               },
-               data: {
-                  EstadoDoc: ContractDocumentStatusesEnum.PRESENT_CORRECT,
-                  CajaLote: {
-                     connect: {
-                        CajaLoteId: cajaLote.CajaLoteId,
-                     },
-                  },
-                  FechaEstado: new Date(),
-               },
-            });
-
-            const { ContratoId, ...dataD } = docContraUpdated;
-
-            const toSend = {
-               ...dataD,
-               Caja: cajaLote.Caja,
-               Lote: cajaLote.Lote,
-            };
-            await createContractDocumentHistory(toSend);
-         }
-      }
-      //}
-      const docContractIDs = await prismaClient.documentoContrato.findMany({
-         where: {
-            ContratoId: validatedData.ContratoId,
-         },
-         include: {
-            IncidenciaDocumento: true,
-         },
-      });
-
-      const ids = docContractIDs.map((doc) => doc.DocumentoId);
-
-      /*       const v = id.includes();
-       */
-      let cantidad = 0;
-      for (const id of ids) {
-         const cant = inci.map((inc) => inc.DocumentoContratoId == id && inc.Resuelta);
-         if (cant.length > 0) {
-            cantidad++;
-         }
-      }
-
-      const corrects = docContractIDs.map(
-         (doc) =>
-            doc.EstadoDoc == ContractDocumentStatusesEnum.CORRECT ||
-            doc.EstadoDoc == ContractDocumentStatusesEnum.PRESENT_CORRECT,
-      );
-
-      if (cantidad == 0 && corrects.length == docContractIDs.length) {
-         const contract = await prismaClient.contrato.findFirstOrThrow({
-            where: {
-               ContratoId: validatedData.ContratoId,
-            },
-         });
-
-         if (contract) {
-            const updated = await prismaClient.contrato.update({
-               where: {
-                  ContratoId: contract.ContratoId,
-               },
-               data: {
-                  EstadoContrato: 'TRAMITADA',
-                  updatedAt: new Date(),
-                  TipoConciliacionId: 13,
-                  FechaGrabacion: new Date(),
-               },
-            });
-
-            const {
-               Activo,
-
-               TipoOperacion,
-               updatedAt,
-               TipoConciliacionId,
-               UsuarioId,
-
-               ...data
-            } = updated;
-            const dataH: ContractHistoryData = data;
-
-            await createContractHistory(dataH, OPERACION_CONTRATO.ACTUALIZADO);
-         }
-      }
-
       res.json(updatedIncidenceDocument);
    } catch (error) {
       throw new InternalException('Something went wrong!', error, ErrorCode.INTERNAL_EXCEPTION);
    }
+};
+
+export const findIncidencesDocumentsAndUpdateStatus = async (req: Request, res: Response) => {
+   const validatedData = updateIncidenciaDocumentoSchema.parse(req.body);
+
+   const inci = await prismaClient.incidenciaDocumento.findMany({
+      where: {
+         DocumentoContratoId: validatedData.DocumentoId,
+         Resuelta: false,
+      },
+   });
+
+   if (inci.length == 0) {
+      const cajaLote = await findCajaLoteById(validatedData.CajaLote!);
+
+      if (cajaLote) {
+         const docContraUpdated = await prismaClient.documentoContrato.update({
+            where: {
+               DocumentoId: validatedData.DocumentoId,
+            },
+            data: {
+               EstadoDoc: ContractDocumentStatusesEnum.PRESENT_CORRECT,
+               CajaLote: {
+                  connect: {
+                     CajaLoteId: cajaLote.CajaLoteId,
+                  },
+               },
+               FechaEstado: new Date(),
+            },
+         });
+
+         const { ContratoId, ...dataD } = docContraUpdated;
+
+         const toSend = {
+            ...dataD,
+            Caja: cajaLote.Caja,
+            Lote: cajaLote.Lote,
+         };
+         await createContractDocumentHistory(toSend);
+      }
+   }
+   //}
+   const docContractIDs = await prismaClient.documentoContrato.findMany({
+      where: {
+         ContratoId: validatedData.ContratoId,
+      },
+      include: {
+         IncidenciaDocumento: true,
+      },
+   });
+
+   const ids = docContractIDs.map((doc) => doc.DocumentoId);
+
+   /*       const v = id.includes();
+    */
+   let cantidad = 0;
+   for (const id of ids) {
+      const cant = inci.map((inc) => inc.DocumentoContratoId == id && inc.Resuelta);
+      if (cant.length > 0) {
+         cantidad++;
+      }
+   }
+
+   const corrects = docContractIDs.map(
+      (doc) =>
+         doc.EstadoDoc == ContractDocumentStatusesEnum.CORRECT ||
+         doc.EstadoDoc == ContractDocumentStatusesEnum.PRESENT_CORRECT,
+   );
+
+   if (cantidad == 0 && corrects.length == docContractIDs.length) {
+      const contract = await prismaClient.contrato.findFirstOrThrow({
+         where: {
+            ContratoId: validatedData.ContratoId,
+         },
+      });
+
+      if (contract) {
+         const updated = await prismaClient.contrato.update({
+            where: {
+               ContratoId: contract.ContratoId,
+            },
+            data: {
+               EstadoContrato: 'TRAMITADA',
+               updatedAt: new Date(),
+               TipoConciliacionId: 13,
+               FechaGrabacion: new Date(),
+            },
+         });
+
+         const {
+            Activo,
+
+            TipoOperacion,
+            updatedAt,
+            TipoConciliacionId,
+            UsuarioId,
+
+            ...data
+         } = updated;
+         const dataH: ContractHistoryData = data;
+
+         await createContractHistory(dataH, OPERACION_CONTRATO.ACTUALIZADO);
+      }
+   }
+
+   res.json();
 };
 
 export const getIncidenceDocumentById = async (req: Request, res: Response) => {

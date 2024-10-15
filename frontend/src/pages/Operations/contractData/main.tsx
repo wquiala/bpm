@@ -10,6 +10,7 @@ import DocumentList from './components/DocumentList';
 import ReclamationList from './Reclamations/reclamationList';
 import DigitalSignatureList from './DigitalSignature/digitalSignatureList';
 import { useEffect } from 'react';
+import { useAppSelector } from '@/stores/hooks';
 
 type Props = {
    selectedContract: any;
@@ -75,6 +76,7 @@ const ContractData = ({ selectedContract, setSelectedContract }: Props) => {
          });
 
          reset({
+            Compania: selectedContract.Compania.Descripcion,
             ClaveOperacion: selectedContract.ClaveOperacion,
             EstadoContrato: selectedContract.EstadoContrato,
             CCC: selectedContract?.CCC,

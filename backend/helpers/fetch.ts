@@ -71,14 +71,7 @@ export const fetchBranch = async (err: { [key: string]: string }, code: string =
          err['Producto'] =
             'El producto no se encuentra registrado en la tabla maestra de productos del sistema, actualícela';
    }
-   /* if (query) {
-      producto = query;
-   } else {
-      producto = await prismaClient.producto.findFirst({
-         where: { Codigo: 'Sin Producto' },
-      });
 
-      } */
    return producto;
 };
 
@@ -95,23 +88,9 @@ export const fetchMediator = async (err: { [key: string]: string }, code: string
          err['Mediador'] =
             'El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, actualícela';
    }
-   /*  if (query) {
-      mediador = query;
-   } else {
-      mediador = await prismaClient.mediador.findFirst({
-         where: { Codigo: 'Sin Mediador' },
-      });
 
-      if (err['mediador'])
-         err['mediador'] +=
-            '. El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal';
-      else
-         err['mediador'] =
-            'El mediador no se encuentra registrado en la tabla maestra de mediadores del sistema, se asignará un código de mediador temporal';
-   } */
    return mediador;
 };
-
 
 export const fetchCompany = async (err: { [key: string]: string }, code?: string) => {
    let companyCode = code;
@@ -135,21 +114,6 @@ export const fetchCompany = async (err: { [key: string]: string }, code?: string
          err['Compania'] =
             'Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, actualícela';
    }
-
-   /*  if (query!) {
-      comp = query!;
-   } else {
-      comp = prismaClient.compania.findFirst({
-         where: { Nombre: 'Sin Companía' },
-      });
-
-      if (err['compania'])
-         err['compania'] +=
-            '. Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal';
-      else
-         err['compania'] =
-            'Esta compañia no se encuentra registrada en la tabla maestra de compañias del sistema, se asignará un código de compañia temporal';
-   } */
 
    return query;
 };

@@ -48,12 +48,13 @@ const DocumentList = ({ control, selectedContract, setSelectedContract }: Props)
    fields.forEach((doc: any) => {
       doc.incidences.forEach((inci: any) => {
          if (!inci.Resuelta) {
+            console.log(inci);
             incidencesList.push({
                Familia_Documento: doc.Familia,
                Incidencia: inci.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                Comentarios: inci.Nota,
                Estado_Incidencia: inci.Resuelta ? 'Resuelta' : 'No resuelta',
-               Fecha_estado: inci.FechaEstado ? new Date(inci.FechaEstado).toLocaleDateString() : 'Sin fecha',
+               FechaEstado: inci.updatedAt ? new Date(inci.updatedAt).toLocaleString() : 'Sin fecha',
                FechaAltaIncidencia: new Date(inci.createdAt).toLocaleDateString(),
                FechaUltimaReclamacion: selectedContract.FechaReclamacion
                   ? new Date(selectedContract.FechaReclamacion).toLocaleDateString()

@@ -63,11 +63,11 @@ const MONITOR_NAVIGATION: Array<Menu> = [
             pathname: '/por-enviar',
             title: 'Comunicaciones por enviar',
          },
-         {
+         /*  {
             icon: 'MailCheck',
             pathname: '/enviadas',
             title: 'Comunicaciones enviadas',
-         },
+         }, */
          {
             icon: 'Check',
             pathname: '/revisar-envio',

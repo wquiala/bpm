@@ -17,6 +17,7 @@ import { digitalSignatureCreator } from '../digitalSignature/digitalSignature';
 import { createContractDocumentHistory, createDocuments } from '../../contractDocuments/contractDocuments';
 import { fetchBranch, fetchClave, fetchCompany, fetchContrato, fetchMediator } from '../../../helpers/fetch';
 import { handleIncidences } from '../../incidenciasDocumentos/incidenciaDocumento';
+import { objetInspectElement } from '../../../helpers/objetcInspect';
 
 export const policyCreator = async (
    record: RecordDiaria,
@@ -157,20 +158,12 @@ export const policyCreator = async (
                   },
                });
 
-               /*  const exist = await findContractDocumentHistory({
-                  DocId: updateDoc.DocId,
-                  DocumentoId: updateDoc.DocumentoId,
-                  EstadoDoc: updateDoc.EstadoDoc,
-               });
-
-               if (!exist) { */
                const { ContratoId, ...dataD } = updateDoc;
                const toSend = {
                   ...dataD,
                };
 
                await createContractDocumentHistory(toSend);
-               //  }
             }
          }
 
@@ -354,16 +347,9 @@ export const policyCreator = async (
          //Aqui lo desechamos porque ni inserta ni actualiza
       }
 
-      for (const key in err) {
-         if (err.hasOwnProperty(key)) {
-            const value = err[key];
-            if (value) {
-               hasError = true;
-               conError++;
-            }
-         }
-         if (conError > 0) break;
-      }
+      const withElement = objetInspectElement(err);
+
+      hasError = withElement;
    }
 
    return {

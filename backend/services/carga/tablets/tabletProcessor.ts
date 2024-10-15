@@ -4,6 +4,7 @@ import { prismaClient } from '../../../server';
 import { TabletaRecord } from '../../../interfaces/contractsInterfaces';
 import { tabletValidator } from '../../../helpers/tabletValidator';
 import { contractUpdater } from './contractUpdater';
+import { objetInspectElement } from '../../../helpers/objetcInspect';
 
 export const processTabletData = async (records: TabletaRecord[], user: { UsuarioId: any }) => {
    let actualizados = 0;
@@ -21,14 +22,28 @@ export const processTabletData = async (records: TabletaRecord[], user: { Usuari
    });
 
    for await (let record of records) {
-      let hasError = false;
-      let errors: any[] = [];
-
       const { error: errs } = await tabletValidator(record);
 
-      const { updated } = await contractUpdater(record, systemUser as Usuario, user, details, errs);
+      const withElements = objetInspectElement(errs);
 
-      updated ? actualizados++ : Desechados++;
+      if (!record.CCC || !record.CODIGO_INTERNO_FORMULARIO || !record.FECHA_FIRMA) {
+         details.push({
+            ...record,
+            estado: 'DESECHADO SIN INFORMACIÓN SUFICIENTE PARA ACTUALIZAR',
+         });
+         Desechados++;
+      } else if (withElements) {
+         details.push({
+            ...record,
+            estado: 'DESECHADO CONTRATO NO ENCONTRADO',
+            errores: errs,
+         });
+         Desechados++;
+      } else {
+         const { updated } = await contractUpdater(record, systemUser as Usuario, user, details, errs);
+
+         updated ? actualizados++ : Desechados++;
+      }
    }
 
    return {

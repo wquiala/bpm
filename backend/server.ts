@@ -1,12 +1,12 @@
 import express, { Express, NextFunction, Response, Request } from 'express';
-import cron from 'node-cron';
+//import cron from 'node-cron';
 import rootRouter from './routes';
 import { PrismaClient } from '@prisma/client';
 import { NODE_ENV, PORT } from './secrets';
 import { errorMiddleware } from './middlewares/errors';
 import path from 'path';
 import cors from 'cors';
-import { sendEmailWithIncidencesByContract } from './jobs/sendEmailWithIncidencesByContract';
+//import { sendEmailWithIncidencesByContract } from './jobs/sendEmailWithIncidencesByContract';
 import logger from './logger';
 
 /* import { checkNoLoadedContracts } from './jobs/checkNoLoadedContracts';
@@ -37,6 +37,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
    logger.error('Error occurred: %o', err);
    res.status(500).send('Something went wrong!');
 });
+app.use('/api/files', express.static(path.join(__dirname, './files/emails/emailsCopy/')));
 
 app.use(express.json());
 

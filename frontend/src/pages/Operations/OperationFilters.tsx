@@ -20,8 +20,7 @@ const OperationFilters = ({ onFilter }: Props) => {
    const [, setAlert] = useContext(AlertContext);
    const [, setLoading] = useContext(LoadingContext);
 
-   const [conciliationTypes, setConciliationTypes] = useState<any[]>([]);
-   const [operationType, setOperationType] = useState<any[]>([{ value: 'Alta', label: 'Alta' }]);
+   const [, setConciliationTypes] = useState<any[]>([]);
 
    const defaultValue = {
       nif: '',

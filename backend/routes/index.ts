@@ -17,6 +17,8 @@ import digitalSignatureRouter from './digitalSignature';
 
 const rootRouter: Router = Router();
 
+//rootRouter.use('/imprimir', )
+
 rootRouter.use('/auth', authRoutes);
 rootRouter.use('/users', userRoutes);
 rootRouter.use('/load', loadRoutes);

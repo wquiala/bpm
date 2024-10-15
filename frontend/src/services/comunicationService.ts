@@ -18,4 +18,8 @@ export default {
    sendEmail(data: any) {
       return api.post(`${baseUrl}/send-emails`, data);
    },
+
+   downloadEmail(clave: string, data: any) {
+      return api.post(`${baseUrl}/send-emails/${clave}`, data);
+   },
 };

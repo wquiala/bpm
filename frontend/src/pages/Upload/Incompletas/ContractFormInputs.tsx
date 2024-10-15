@@ -41,7 +41,7 @@ const ContractFormInputsIncompletas = ({ control }: Props) => {
                <InputField control={control} name="CodigoPoliza" type="text" label="PolicyCode" />
             </div>
             <div className="w-full sm:w-1/2">
-               <InputField control={control} name="FechaOperacion" type="date" label="RegistrationDateRequest" />
+               <InputField control={control} name="FechaOperacion" type="text" label="Fecha Operación" />
             </div>
             <div className="w-full sm:w-1/2">
                <InputField control={control} name="TipoOperacion" type="text" label="Tipo Operación" />

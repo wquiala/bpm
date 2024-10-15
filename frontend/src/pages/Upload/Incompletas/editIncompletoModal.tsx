@@ -62,7 +62,7 @@ export const EditIncompletoModal = ({ showEdit, setShowEdit, incompletaData }: P
             Compania: incompletaData.Compania,
             Producto: incompletaData.Producto,
             FechaOperacion: incompletaData.FechaOperacion,
-            TipoOperacion: 'ALTA',
+            TipoOperacion: incompletaData.TipoOperacion,
             CCC: incompletaData.CCC,
             CodigoSolicitud: incompletaData.CodigoSolicitud,
             CodigoPoliza: incompletaData.CodigoPoliza,
@@ -85,7 +85,6 @@ export const EditIncompletoModal = ({ showEdit, setShowEdit, incompletaData }: P
             IndicadorFDCON: incompletaData.IndicadorFDCON,
             TipoEnvioCON: incompletaData.TipoEnvioCON,
             ResultadoFDCON: incompletaData.ResultadoFDCON,
-
             Revisar: incompletaData.Revisar,
             Conciliar: incompletaData.Conciliar,
          });

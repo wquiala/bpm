@@ -1,6 +1,7 @@
 import * as yup from 'yup';
 
 export const defaultValues = {
+   Compania: '',
    EstadoContrato: '',
    ClaveOperacion: '',
    CCC: '',
@@ -46,6 +47,8 @@ export const defaultValues = {
 
 export const schema = (t: any) =>
    yup.object().shape({
+      Compania: yup.string(),
+
       EstadoContrato: yup.string(),
       ClaveOperacion: yup.string().required(t('errors.required')),
       CCC: yup.string(),

@@ -15,6 +15,9 @@ const ContractHeaderInputs = ({ control }: Props) => {
          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex flex-col gap-0 w-full sm:w-1/3">
                <div className="w-full">
+                  <InputField control={control} name="Compania" type="text" label="Compañia" disabled />
+               </div>
+               <div className="w-full">
                   <InputField control={control} name="CCC" type="text" label="CCC" disabled />
                </div>
                <div className="w-full">

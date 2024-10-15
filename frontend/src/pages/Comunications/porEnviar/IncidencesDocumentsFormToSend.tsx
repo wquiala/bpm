@@ -10,7 +10,7 @@ import { LoadingContext } from '@/utils/Contexts/LoadingContext';
 import InputField from '@/custom-components/FormElements/InputField';
 
 import { defaultValues, schema } from '../common-components/schemasRevisar';
-import { sendEmail } from '@/helpers/FetchData/comunications';
+import { downloadEmail, sendEmail } from '@/helpers/FetchData/comunications';
 
 type Props = {
    incidencesDocuments: any;
@@ -23,6 +23,7 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
 
    const [, setLoading] = useContext(LoadingContext);
    const [claves, setClaves] = useState<any>([]);
+   //const [dataEmail, setDataEmil] = useState();
 
    const {
       control,
@@ -36,11 +37,21 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
       defaultValues: defaultValues,
    });
 
-   const handleImprimir = () => {
-      console.log('Vamos a imprimir');
+   //const handleImprimir = () => {};
+
+   const habndleDownloadEmail = async (clave: string) => {
+      const incidencesByClave = claves.find((claver: any) => claver[0].claveOperacion == clave);
+
+      const { data } = await downloadEmail(clave, incidencesByClave);
+
+      const fileUrl = data.fileUrl;
+
+      // Abre el archivo en una nueva ventana o pestaña del navegador
+      window.open(fileUrl, '_blank');
    };
+
    const onSubmit = async (data: any) => {
-      setLoading(true);
+      //setLoading(true);
       const incidences: any[] = [];
       for (const inci of data.incidences) {
          for (const incidence of inci) {
@@ -48,7 +59,16 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
          }
       }
 
-      await sendEmail(incidences);
+      /* const { data: d } =  */ await sendEmail(incidences);
+      /*  const test = d.arrayList[0].pathDoc;
+      const printWindow = window.open(test);
+
+      // Espera a que el documento cargue completamente y luego llama a `print`
+      if (printWindow) {
+         printWindow.addEventListener('load', () => {
+            printWindow.print();
+         });
+      } */
       setLoading(false);
       // navigate('/');
    };
@@ -66,8 +86,8 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
                claveOperacion: incidencesDocument.DocumentoContrato.Contrato.ClaveOperacion,
                incidenciaNombre: incidencesDocument.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                mediador: incidencesDocument.DocumentoContrato.Contrato.Mediador.Nombre,
-               enviada: incidencesDocument.Enviar,
                emailTo: incidencesDocument.DocumentoContrato.Contrato.Mediador.Email,
+               nota: incidencesDocument.Nota,
             });
          }
 
@@ -100,10 +120,6 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
          });
       }
    }, [claves]); // Dependencia solo de claves
-
-   const habndleDownloadEmail = (groupIndex: any) => {
-      console.log('descargar email' + groupIndex);
-   };
 
    return (
       <form className="flex flex-col mt-4 box" onSubmit={handleSubmit(onSubmit)}>
@@ -170,7 +186,7 @@ const IncidencesDocumentsFormToSend = ({ incidencesDocuments, setIncidencesDocum
             </Button>
             {Array.isArray(incidencesDocuments) && incidencesDocuments.length > 0 && (
                <div className="flex gap-3">
-                  <Button variant="primary" disabled={!isValid} type="button" onClick={handleImprimir}>
+                  <Button variant="primary" disabled={!isValid} type="submit">
                      Imprimir
                   </Button>
                   <Button variant="primary" disabled={!isValid} type="submit">

@@ -81,8 +81,10 @@ const IncompletosComponent = ({ show, setShow, selectedRow, select, onRefresh }:
    };
    const handleRecargar = async () => {
       setLoading(true);
+
       const dataP = incompletosData.map((d: any) => {
          const { incompletaId, errores, createdAt, Insertada, ...rest } = d;
+
          return rest;
       });
 

@@ -28,7 +28,7 @@ export const HistoryIncidences = ({ show, setShow, control }: Props) => {
                            Incidencia: inci.TipoDocumentoIncidencia.MaestroIncidencias.Nombre,
                            Comentarios: h.Nota,
                            EstadoIncidencia: h.Resuelta ? 'Resuelta' : 'No resuelta',
-                           Fecha_estado: new Date(h.FechaEstado).toLocaleString(),
+                           Fecha_estado: new Date(h.updatedAt).toLocaleString(),
                         });
                      });
                   });

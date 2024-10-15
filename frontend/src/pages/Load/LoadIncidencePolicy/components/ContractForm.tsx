@@ -222,11 +222,19 @@ const ContractForm = ({ selectedContract, setSelectedContract }: Props) => {
                      Resuelta: true,
                      Incidencia: incidence.IncidenciaId,
                   };
-                  console.log('aqui estamos ');
 
                   await handlePromise(DocumentIncidenceService.updateDocumentIncidence(f.IncidenciaDocId, toSend));
                }
             }
+
+            /*  const toSend = {
+               ContratoId: selectedContract.ContratoId,
+               DocumentoId: doc.id,
+            }; */
+
+            //await findIncidencesDocumentsAndUpdateStatus(doc.id, toSend);
+
+            //Chequeamos el estasdo del documento y lo modificamos si es necesario
 
             if (doc.notCorrect && !inci && !doc.correct) {
                setLoading(false);

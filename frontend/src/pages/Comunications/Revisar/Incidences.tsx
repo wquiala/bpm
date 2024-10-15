@@ -17,14 +17,7 @@ export const Incidences = ({ incidences, control }: Props) => {
       name: 'incidences',
    });
 
-   const {
-      reset,
-      setValue,
-      watch,
-      getValues,
-      formState: { errors, isValid },
-      handleSubmit,
-   } = useForm({
+   const {} = useForm({
       mode: 'onChange',
       resolver: yupResolver(schema(t)),
       defaultValues: defaultValues,

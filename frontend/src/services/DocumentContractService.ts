@@ -17,4 +17,8 @@ export default {
    getDocumentByContract(id: string) {
       return api.get(`${baseUrl}/${id}`);
    },
+
+   findIncidencesDocumentsAndUpdateStatus(data: any) {
+      return api.post(`${baseUrl}/`, data);
+   },
 };

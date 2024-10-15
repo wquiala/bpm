@@ -3,6 +3,7 @@ import { prismaClient } from '../server';
 import { NotFoundException } from '../exceptions/not-found';
 import { ErrorCode } from '../exceptions/root';
 import { CompanyCreateSchema, CompanyUpdateSchema } from '../schema/company';
+import { getCompanyByIdService } from '../services/company/company';
 
 export const getCompanies = async (req: Request, res: Response) => {
    const companies = await prismaClient.compania.findMany({});
@@ -115,18 +116,10 @@ export const updateCompany = async (req: Request, res: Response) => {
    res.json(updatedCompany);
 };
 
-export const getCompanyById = async (req: Request, res: Response) => {
-   try {
-      const company = await prismaClient.compania.findFirstOrThrow({
-         where: {
-            CompaniaId: parseInt(req.params.id),
-         },
-      });
+export const getCompanyByIdController = async (req: Request, res: Response) => {
+   const company = await getCompanyByIdService(parseInt(req.params.id));
 
-      res.json(company);
-   } catch (error) {
-      throw new NotFoundException('Compañía not found', ErrorCode.COMPANY_NOT_FOUND);
-   }
+   res.json(company);
 };
 
 export const deleteCompany = async (req: Request, res: Response) => {

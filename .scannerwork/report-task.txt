@@ -1,0 +1,6 @@
+projectKey=bpm
+serverUrl=http://127.0.0.1:9000
+serverVersion=10.7.0.96327
+dashboardUrl=http://127.0.0.1:9000/dashboard?id=bpm
+ceTaskId=1f398999-4baa-4602-8193-933b3dce4dcf
+ceTaskUrl=http://127.0.0.1:9000/api/ce/task?id=1f398999-4baa-4602-8193-933b3dce4dcf

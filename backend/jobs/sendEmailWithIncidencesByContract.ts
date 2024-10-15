@@ -105,7 +105,7 @@ export const sendEmailWithIncidencesByContract = async () => {
          }); */
 
          if (incidencesToSend.length > 0) {
-            const incidences = incidencesToSend.reduce((acc: any, incidenciaDoc: any) => {
+            incidencesToSend.reduce((acc: any, incidenciaDoc: any) => {
                const nombreDocumento = incidenciaDoc.nombreDocumento;
 
                if (!acc[nombreDocumento]) {
@@ -210,7 +210,7 @@ export const buildDocumentsWithIncidences = async (contract: any) => {
    return incidences;
 };
 
-export const generateDocument = (data: any, content: any) => {
+export const generateDocument = async (data: any, content: any) => {
    // Cargar la plantilla .docx
    // Cargar la plantilla en un zip usando PizZip
    const zip = new PizZip(content);
@@ -222,7 +222,7 @@ export const generateDocument = (data: any, content: any) => {
    });
 
    // Reemplazar las variables en la plantilla con los valores de 'data'
-   const test = doc.setData(data);
+   doc.setData(data);
 
    try {
       // Rellenar los campos en el documento
@@ -240,43 +240,14 @@ export const generateDocument = (data: any, content: any) => {
 
    // Guardar el archivo generado
 
-   const outputPath = path.resolve(
-      __dirname,
-      `../files/emails/emailsCopy/${data.claveOperacion}_${new Date().toISOString()}.docx`,
-   );
-   fs.writeFileSync(outputPath, output);
+   const outputPath = path.resolve(__dirname, `../files/emails/emailsCopy/${data.claveOperacion}.docx`);
 
-   mammoth
-      .extractRawText({ path: outputPath })
-      .then((result) => {
-         console.log('Contenido del documento:');
-         console.log(result.value); // Texto extraído del documento .docx
-      })
-      .catch((err) => {
-         console.error('Error al extraer texto del documento:', err);
-      });
+   fs.writeFileSync(outputPath, output);
+   const text = await mammoth.extractRawText({ path: outputPath });
+
+   return { docText: text.value, pathDoc: outputPath };
 };
 
-interface DocumentData {
-   nombreCompania?: string;
-   claveOperacion?: string;
-   DNITomador?: string;
-   DNIAsegurado?: string;
-   nombreAsegurado?: string;
-
-   nombreProducto?: string;
-   nombreTomador?: string;
-   comentarios?: string;
-   documentosPendiente?: string;
-   Observaciones?: string;
-   tipo?: string;
-   IncidencesDocuments?: string;
-   DocumentNoRecivida?: string;
-   FechaOperacion?: string;
-   CCC?: string;
-   CodigoPoliza?: string;
-   CdigoSolicitud?: string;
-}
 export const sendPolicyWithIncidenceReminder = async (
    to: string,
    cc: string,
@@ -288,118 +259,6 @@ export const sendPolicyWithIncidenceReminder = async (
 ) => {
    let ruta;
 
-   if (contrato.Compania.Nombre == 'PLV') {
-      let fullInciden: string = '';
-
-      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_PLV.docx'));
-      Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
-         const inciList: any[] = [];
-         let incidoc;
-
-         const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
-         const documento = nombreDocumento;
-         incidencias.forEach((element: any) => {
-            inciList.push(element.incidenciaNombre);
-         });
-
-         incidoc = `${nombreDocumento}: \n\n     •  ${inciList.join('\n     •  ')}\n\n`;
-
-         fullInciden += incidoc;
-      });
-
-      const data: DocumentData = {
-         tipo: contrato.CodigoPoliza ? 'póliza' : 'solicitud',
-         IncidencesDocuments: fullInciden.length > 0 ? 'Documentación recibida con incidencias' : '',
-         DocumentNoRecivida: pendings.length > 0 ? 'Documentación no recibida' : '',
-         nombreCompania: contrato.Compania.Descripcion,
-         claveOperacion: contrato.ClaveOperacion,
-         DNITomador: contrato.DNITomador,
-         nombreProducto: contrato.Producto.Descripcion,
-         nombreTomador: contrato.NombreTomador,
-         comentarios: fullInciden,
-         documentosPendiente: pendings.map((element: any) => `• ${element.nombre}\n`),
-         Observaciones: 'Prueba',
-      };
-
-      generateDocument(data, content);
-   } else if (contrato.Compania.Nombre == 'UNI') {
-      let fullInciden: string = '';
-
-      let incidoc;
-      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_Unicorp.docx'));
-      Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
-         const inciList: any[] = [];
-         const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
-         const documento = nombreDocumento;
-         incidencias.forEach((element: any) => {
-            inciList.push(element.incidenciaNombre);
-         });
-
-         incidoc = `${nombreDocumento}: \n\n     •  ${inciList.join('\n     •  ')}\n\n`;
-
-         fullInciden += incidoc;
-      });
-
-      const data: DocumentData = {
-         nombreCompania: contrato.Compania.Descripcion,
-         claveOperacion: contrato.ClaveOperacion,
-         DNITomador: contrato.DNITomador,
-         nombreProducto: contrato.Producto.Descripcion,
-         nombreTomador: contrato.NombreTomador,
-         IncidencesDocuments: fullInciden.length > 0 ? 'Documentación recibida con incidencias' : '',
-
-         DocumentNoRecivida: pendings.length > 0 ? 'Documentación no recibida' : '',
-         CCC: contrato.CCC,
-
-         comentarios: incidoc,
-
-         documentosPendiente: pendings.map((element: any) => element.nombre),
-         FechaOperacion: new Date(contrato.FechaOperacion).toLocaleString(),
-         CodigoPoliza: contrato.CodigoPoliza,
-         CdigoSolicitud: contrato.CodigoSolicitud,
-         nombreAsegurado: contrato.NombreAsegurado,
-         DNIAsegurado: contrato.DNIAsegurado,
-         Observaciones: 'Prueba',
-      };
-
-      generateDocument(data, content);
-   } else {
-      let fullInciden: string = '';
-
-      let incidoc;
-      const content = fs.readFileSync(path.resolve(__dirname, '../files/emails/templates/Plantilla_AVP.docx'));
-      Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
-         const inciList: any[] = [];
-         const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
-         const documento = nombreDocumento;
-         incidencias.forEach((element: any) => {
-            inciList.push(element.incidenciaNombre);
-         });
-
-         incidoc = `${nombreDocumento}: \n\n     •  ${inciList.join('\n     •  ')}\n\n`;
-
-         fullInciden += incidoc;
-      });
-
-      const data: DocumentData = {
-         nombreCompania: contrato.Compania.Descripcion,
-         claveOperacion: contrato.ClaveOperacion,
-         DNITomador: contrato.DNITomador,
-         nombreProducto: contrato.Producto.Descripcion,
-         nombreTomador: contrato.NombreTomador,
-
-         IncidencesDocuments: fullInciden.length > 0 ? 'Documentación recibida con incidencias' : '',
-         DocumentNoRecivida: pendings.length > 0 ? 'Documentación no recibida' : '',
-
-         comentarios: incidoc,
-
-         documentosPendiente: pendings.map((element: any) => element.nombre),
-         Observaciones: 'Prueba',
-      };
-
-      generateDocument(data, content);
-   }
-   const plantilla = ``;
    let html = '';
    let incitoUpdate: any = [];
    const pendingsNames = `<div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f5f5f5;">
@@ -418,9 +277,8 @@ export const sendPolicyWithIncidenceReminder = async (
    if (Object.keys(documentsWhitIncidencesToSend).length > 0) {
       Object.keys(documentsWhitIncidencesToSend).forEach((nombreDocumento) => {
          const incidencias = documentsWhitIncidencesToSend[nombreDocumento];
-         const documento = nombreDocumento;
          caja = `<div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f5f5f5;">
-                      <h1><strong>Documento:</strong> ${documento}</h1>`;
+                      <h1><strong>Documento:</strong> ${nombreDocumento}</h1>`;
 
          incidencias.forEach((incidencia: any, index: number) => {
             incitoUpdate.push(incidencia);

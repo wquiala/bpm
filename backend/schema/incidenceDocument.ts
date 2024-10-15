@@ -31,3 +31,6 @@ export const updateIncidenciaDocumentoSchema = z.object({
    TipoDocumentoincidenciaId: z.number().optional(),
    CajaLote: z.number().optional(),
 });
+
+
+

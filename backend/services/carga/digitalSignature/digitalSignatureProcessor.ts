@@ -2,6 +2,7 @@ import { Usuario } from '@prisma/client';
 import { prismaClient } from '../../../server';
 import { digitalSignatureValidator } from '../../../helpers/digitalSignatureValidator';
 import { contractUpdater } from './contractUpdater';
+import { objetInspectElement } from '../../../helpers/objetcInspect';
 
 export const processDigitalSignatureData = async (records: any[], user: { UsuarioId: any }) => {
    let actualizados = 0;
@@ -21,14 +22,22 @@ export const processDigitalSignatureData = async (records: any[], user: { Usuari
 
    for await (let record of records) {
       let hasError = false;
-      let errors: any[] = [];
 
       const { errors: err } = await digitalSignatureValidator(record);
 
-      if (!record['NUM_POLIZA']) {
+      const withElement = objetInspectElement(err);
+
+      if (!record['NUM_POLIZA'] || !record['RESULTADO']) {
          details.push({
             ...record,
-            estado: 'DESECHADO',
+            estado: 'DESECHADO SIN NUMERO DE PÓLIZA O RESULTADO',
+            errores: err,
+         });
+         Desechados++;
+      } else if (withElement) {
+         details.push({
+            ...record,
+            estado: 'DESECHADO SIN CONTRATO QUE ACTUALIZAR',
             errores: err,
          });
          Desechados++;

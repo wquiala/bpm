@@ -5,6 +5,7 @@ import { ErrorCode } from '../exceptions/root';
 import { createRamoSchema, updateRamoSchema } from '../schema/branch';
 import { BadRequestsException } from '../exceptions/bad-requests';
 import { InternalException } from '../exceptions/internal-exception';
+import { getProductoById } from '../services/producto/producto';
 
 export const getBranches = async (req: Request, res: Response) => {
    const branches = await prismaClient.producto.findMany({});
@@ -113,17 +114,9 @@ export const updateBranch = async (req: Request, res: Response) => {
 };
 
 export const getBranchById = async (req: Request, res: Response) => {
-   try {
-      const branch = await prismaClient.producto.findFirstOrThrow({
-         where: {
-            ProductoId: parseInt(req.params.id),
-         },
-      });
+   const producto = await getProductoById(parseInt(req.params.id));
 
-      res.json(branch);
-   } catch (error) {
-      throw new NotFoundException('Branch not found', ErrorCode.NOT_FOUND_EXCEPTION);
-   }
+   res.json(producto);
 };
 
 export const getBranchByCode = async (req: Request, res: Response) => {

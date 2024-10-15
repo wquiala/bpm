@@ -26,7 +26,8 @@ function Main() {
 
    useEffect(() => {
       const get = async () => {
-         const [data] = await handlePromise(DocumentIncidenceService.getIncidenceDocuments());
+         const [, , data] = await handlePromise(DocumentIncidenceService.getIncidenceDocuments());
+
          const incidencesToCheck = data.filter((inci: any) => !inci.Resuelta && !inci.Revisada);
          setIncidencesDocuments(incidencesToCheck);
       };

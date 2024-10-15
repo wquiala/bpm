@@ -28,6 +28,7 @@ export const findContractByClaveOperacion = async (clave: string) => {
             Mediador: true,
             Compania: true,
             Producto: true,
+            DetalleObservacion: true,
          },
       });
       return contrato;
@@ -37,23 +38,26 @@ export const findContractByClaveOperacion = async (clave: string) => {
 };
 
 export const updateContractService = async (id: number, data: any) => {
-   const contrato = await prismaClient.contrato.findFirst({
-      where: {
-         ContratoId: id,
-      },
-   });
-
-   if (contrato) {
-      return await prismaClient.contrato.update({
+   try {
+      const contrato = await prismaClient.contrato.findFirst({
          where: {
             ContratoId: id,
+         },
+      });
+
+      const updated = await prismaClient.contrato.update({
+         where: {
+            ContratoId: contrato?.ContratoId,
          },
          data: {
             ...data,
          },
       });
+
+      return updated;
+   } catch (error) {
+      throw new BadRequestsException('Error al actualizar el contrato', ErrorCode.BAD_REQUEST_EXCEPTION);
    }
-   return false;
 };
 
 export const handlePreLoadConciliation = async (createdContract: any) => {
@@ -123,7 +127,7 @@ export const createContractHistory = async (
         });
 };
 
-export const getContracById = async (id: number) => {
+export const getContracById = async (id: number | undefined) => {
    try {
       const contract = await prismaClient.contrato.findFirstOrThrow({
          where: {
@@ -135,4 +139,22 @@ export const getContracById = async (id: number) => {
    } catch (error) {
       throw new NotFoundException('Contrato no encontrado', ErrorCode.NOT_FOUND_EXCEPTION);
    }
+};
+
+export const findContractByCode = async (code: string) => {
+   const contract = await prismaClient.contrato.findFirst({
+      where: {
+         OR: [{ CodigoPoliza: code }, { CodigoSolicitud: code }],
+      },
+      include: {
+         DocumentoContrato: {
+            include: {
+               IncidenciaDocumento: true,
+               MaestroDocumentos: true,
+            },
+         },
+      },
+   });
+
+   return contract;
 };

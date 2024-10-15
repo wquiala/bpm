@@ -36,9 +36,6 @@ const AltaManualForm = () => {
 
    const onSubmit = async (data: any) => {
       console.log(data);
-      let contractCreated;
-
-      let inci;
 
       setLoading(true);
 
@@ -88,8 +85,8 @@ const AltaManualForm = () => {
          NombreTomador: data.NombreTomador ?? '',
          Operador: data.Operador ?? '',
          FechaGrabacion: new Date(),
-         Revisar: data.Revisar,
-         Conciliar: data.Conciliar,
+         Revisar: false,
+         Conciliar: false,
          FechaProximaReclamacion: in30days,
       };
 
@@ -136,7 +133,9 @@ const AltaManualForm = () => {
             <Button variant="secondary" onClick={() => navigate('/')}>
                {t('goBack')}
             </Button>
-            <Button variant="danger" /* onClick={() => setSelectedContract(null)} */>{t('clearForm')}</Button>
+            <Button variant="danger" onClick={() => reset()}>
+               {t('clearForm')}
+            </Button>
             <Button variant="primary" /* disabled={!isValid} */ type="submit">
                Grabar
             </Button>

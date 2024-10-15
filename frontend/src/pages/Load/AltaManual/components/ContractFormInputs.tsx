@@ -1,14 +1,6 @@
-import { FormSelect } from '@/components/Base/Form';
-import TomSelect from '@/components/Base/TomSelect';
 import CheckBoxField from '@/custom-components/FormElements/CheckBoxField';
 import InputField from '@/custom-components/FormElements/InputField';
 import { useAppSelector } from '@/stores/hooks';
-import { InputFieldDynamic } from './InputFieldDynamic';
-import { useFieldArray } from 'react-hook-form';
-import { useEffect, useState } from 'react';
-import { getMediadorByCode, getMediadores } from '@/helpers/FetchData/mediador';
-import { string } from 'yup';
-import { getProducts, getProductsByCodigo } from '@/helpers/FetchData/products';
 
 type Props = {
    control: any;
@@ -16,56 +8,19 @@ type Props = {
    setValue: any;
 };
 
-const ContractFormInputs = ({ control, getValue, setValue }: Props) => {
-   const [products, setProducts] = useState<{ name: string; codigo: string }[]>([]);
-   const [mediadores, setMediadores] = useState<{ name: string; codigo: string }[]>([]);
-
-   const { caja, lote, companyList, company } = useAppSelector((state) => state.settings);
-   useEffect(() => {
-      const resetFormFields = async () => {
-         /*          const docList = ;
-          */
-         const productList = [];
-         const mediadorList = [];
-
-         for (const product of company!.Producto) {
-            productList.push({
-               name: product.Descripcion,
-               codigo: product.Codigo,
-            });
-         }
-
-         setProducts(productList);
-
-         const { data } = await getMediadores();
-
-         for (const mediador of company!.Mediador) {
-            mediadorList.push({
-               name: mediador.Nombre,
-               codigo: mediador.Codigo,
-            });
-         }
-         setMediadores(mediadorList);
-      };
-
-      if (company) {
-         resetFormFields();
-      }
-   }, [company, getValue(`ProductoNombre`), getValue(`MediadorNombre`)]);
+const ContractFormInputs = ({ control }: Props) => {
+   const { company } = useAppSelector((state) => state.settings);
 
    return (
       <div className="box p-4 m-4 mb-2">
          {/* Primera Fila */}
          <div className="flex flex-col sm:flex-row gap-0  sm:gap-4">
             <div className="w-full sm:w-1/2 self-center ">
-               <CheckBoxField control={control} name="Revisar" label="Revisar" />
+               <CheckBoxField control={control} name="" label="Revisar" disabled />
             </div>{' '}
             <div className="w-full sm:w-1/2 self-center ">
-               <CheckBoxField control={control} name="Conciliar" label="Conciliar" />
+               <CheckBoxField control={control} name="" label="Conciliar" disabled />
             </div>
-            {/*  <div className="w-full sm:w-1/2 self-center ">
-               <CheckBoxField control={control} name="AnuladoSEfecto" label="Anular" />
-            </div> */}
          </div>
          {/* Segunda Fila */}
          <div className="flex flex-col sm:flex-row gap-0  sm:gap-4">

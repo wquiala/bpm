@@ -36,9 +36,11 @@ const UploadDetailData = ({ show, setShow, selectedRow, select, onRefresh }: Pro
    }
 
    const data: any[] = mostrar.map((m) => ({
-      erroes: JSON.stringify(m.err),
       ...m,
+      errores: JSON.stringify(m.errores),
    }));
+
+   console.log(data);
    const handleDownload = () => {
       // Convertir los datos JSON a CSV
       const csv = Papa.unparse(data, { delimiter: ';' });
